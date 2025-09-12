@@ -8,35 +8,35 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-   pwa: {
-    registerType: 'autoUpdate',
+  pwa: {
+    registerType: "autoUpdate",
     manifest: {
-      name: 'Can Do',
-      short_name: 'Can Do',
-      description: 'Your Voice, Your Power',
-      theme_color: '#33339C',
-      background_color: '#33339C',
-      display: 'standalone',
-      scope: '/',
-      start_url: '/',
+      name: "Can Do",
+      short_name: "Can Do",
+      description: "Your Voice, Your Power",
+      theme_color: "#33339C",
+      background_color: "#33339C",
+      display: "standalone",
+      scope: "/",
+      start_url: "/",
       icons: [
         {
-          src: '/android-chrome-192x192.png',
-          sizes: '192x192',
-          type: 'image/png'
+          src: "/android-chrome-192x192.png",
+          sizes: "192x192",
+          type: "image/png",
         },
         {
-          src: '/android-chrome-512x512.png',
-          sizes: '512x512',
-          type: 'image/png'
-        }
-      ]
+          src: "/android-chrome-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+        },
+      ],
     },
     workbox: {
-      navigateFallback: '/',
+      globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
     },
     devOptions: {
       enabled: true, // Enable PWA during development
     },
-  }
+  },
 });

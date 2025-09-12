@@ -3,3 +3,8 @@
     <NuxtPage />
   </div>
 </template>
+<script setup lang="ts">
+useHead({
+  link: [{ rel: "manifest", href: "/site.webmanifest" }],
+});
+</script>
