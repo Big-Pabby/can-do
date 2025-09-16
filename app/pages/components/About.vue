@@ -108,23 +108,33 @@
       </ol>
     </div>
     <div class="flex gap-2 items-center">
-      <input id="agree" type="radio" class="w-[24px] h-[24px]" />
+      <input
+        id="agree"
+        type="checkbox"
+        class="w-[24px] h-[24px]"
+        v-model="hasConsented"
+      />
       <label for="agree" class="text-[#33339C] text-sm">
-        I agree with the statements and labelrovide consent
+        I agree with the statements and provide consent
       </label>
     </div>
     <div class="mt-6">
       <button
         type="button"
         @click="onToggle('info')"
-        class="flex w-full items-center gap-2 bg-primary text-white justify-center rounded-full py-4 px-5 font-medium"
+        :disabled="!hasConsented"
+        class="flex w-full items-center gap-2 justify-center rounded-full py-4 px-5 font-medium transition-all duration-200"
+        :class="{
+          'bg-primary text-white': hasConsented,
+          'bg-gray-300 text-gray-500 cursor-not-allowed': !hasConsented,
+        }"
       >
         Next
         <Icon
           icon="majesticons:arrow-right"
           width="20"
           height="20"
-          style="color: #ffffff"
+          :style="{ color: hasConsented ? '#ffffff' : '#9CA3AF' }"
         />
       </button>
     </div>
@@ -133,9 +143,18 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { ref } from "vue";
+
 const props = defineProps<{
   onToggle: (item: string) => void;
 }>();
+
+const hasConsented = ref<boolean>(false);
 </script>
 
-<style></style>
+<style scoped>
+input[type="checkbox"] {
+  outline: none;
+  accent-color: #33339c;
+}
+</style>
