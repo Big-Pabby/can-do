@@ -630,7 +630,7 @@ const transcriptMutation = useTranscript();
 const uploadRecordingAndTranscribe = async () => {
   try {
     if (!audioBlob.value) return;
-console.log(audioBlob.value)
+    console.log(audioBlob.value);
     const form = new FormData();
     // append the file - backend expects 'file' (or adjust if different)
     form.append("file", audioBlob.value, "recording.webm");
@@ -673,16 +673,10 @@ console.log(audioBlob.value)
       transcriptResp && transcriptResp.data
         ? transcriptResp.data
         : transcriptResp;
+    transcriptResp.data.text;
     // Try to extract text from response
-    if (tdata && typeof tdata === "object") {
-      if (tdata.text) transcript.value = tdata.text;
-      else if (tdata.transcript) transcript.value = tdata.transcript;
-      else if (tdata.data && (tdata.data.text || tdata.data.transcript))
-        transcript.value = tdata.data.text || tdata.data.transcript;
-      else transcript.value = JSON.stringify(tdata);
-    } else if (typeof tdata === "string") {
-      transcript.value = tdata;
-    }
+
+    transcript.value = transcriptResp.data.text;
 
     // Emit extra once we have transcript
     if (transcript.value && transcript.value.trim()) {

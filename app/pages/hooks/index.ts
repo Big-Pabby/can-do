@@ -76,9 +76,11 @@ export function useUpload() {
 }
 export function useTranscript() {
   //   const queryClient = useQueryClient();
+  interface Response {
+    text: string; }
   return useMutation({
     mutationFn: async (payload: { audio_url: string }) => {
-      const response = await https.post(`v1/misc/audio2text`, payload);
+      const response = await https.post<Response>(`v1/misc/audio2text`, payload);
       return response;
     },
     // onSuccess: () => {
