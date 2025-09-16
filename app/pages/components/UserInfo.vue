@@ -11,11 +11,21 @@
       </h4>
       <div class="flex gap-4">
         <label class="flex gap-2 items-center text-sm">
-          <input type="radio" value="agree" v-model="form.agree" />
+          <input
+            type="radio"
+            value="agree"
+            v-model="form.agree"
+            @change="clearError('agree')"
+          />
           <span class="text-[#4B5563]">Agree</span>
         </label>
         <label class="flex gap-2 items-center text-sm">
-          <input type="radio" value="disagree" v-model="form.agree" />
+          <input
+            type="radio"
+            value="disagree"
+            v-model="form.agree"
+            @change="clearError('agree')"
+          />
           <span class="text-[#4B5563]">Disagree</span>
         </label>
       </div>
@@ -32,6 +42,7 @@
           type="text"
           v-model="form.first_name"
           class="w-full h-full text-sm"
+          @input="clearError('first_name')"
         />
       </div>
       <p v-if="errors.first_name" class="text-red-500 text-xs mt-1">
@@ -47,6 +58,7 @@
           type="text"
           v-model="form.last_name"
           class="w-full h-full text-sm"
+          @input="clearError('last_name')"
         />
       </div>
       <p v-if="errors.last_name" class="text-red-500 text-xs mt-1">
@@ -60,6 +72,7 @@
           type="email"
           v-model="form.email"
           class="w-full h-full text-sm"
+          @input="clearError('email')"
         />
       </div>
       <p v-if="errors.email" class="text-red-500 text-xs mt-1">
@@ -73,6 +86,7 @@
           type="tel"
           v-model="form.phone_number"
           class="w-full h-full text-sm"
+          @input="clearError('phone_number')"
         />
       </div>
       <p v-if="errors.phone_number" class="text-red-500 text-xs mt-1">
@@ -133,6 +147,7 @@
           type="number"
           v-model.number="form.age"
           class="w-full h-full text-sm"
+          @input="clearError('age')"
         />
       </div>
       <p v-if="errors.age" class="text-red-500 text-xs mt-1">
@@ -149,6 +164,7 @@
             type="radio"
             value="Asian or Asian British"
             v-model="form.ethnicity"
+            @change="clearError('ethnicity')"
           />
           Asian or Asian British</label
         >
@@ -173,13 +189,19 @@
           White</label
         >
         <label class="flex gap-2 items-center">
-          <input type="radio" value="Other" v-model="form.ethnicity" />
           <input
-           
+            type="radio"
+            value="Other"
+            v-model="form.ethnicity"
+            @change="clearError('ethnicity')"
+          />
+          <input
+            v-if="form.ethnicity === 'Other'"
             type="text"
             placeholder="Other"
             v-model="form.ethnicityOther"
             class="h-[48px] border rounded-[10px] px-4"
+            @input="clearError('ethnicity')"
           />
         </label>
         <p v-if="errors.ethnicity" class="text-red-500 text-xs mt-1">
@@ -265,7 +287,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, nextTick } from "vue";
 import { useConsent } from "../hooks";
 const props = defineProps<{
   onToggle: (item: string) => void;
@@ -345,7 +367,26 @@ function validate(): boolean {
   return valid;
 }
 
+function clearError(field: string) {
+  if (errors[field]) delete errors[field];
+}
+
 async function handleSubmit() {
+  // Force active input to blur so mobile keyboards commit current value
+  try {
+    if (
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+    ) {
+      document.activeElement.blur();
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Wait a tick for v-model updates to propagate (especially on mobile)
+  await nextTick();
+
   // Validate required fields before sending
   if (!validate()) return;
 
