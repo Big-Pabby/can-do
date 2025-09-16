@@ -1,8 +1,7 @@
 <template>
   <form
     class="flex-1 w-full bg-white text-[#111827] rounded-t-[24px] px-4 py-6 space-y-4"
-    @submit.prevent="handleSubmit"
-    novalidate
+   
   >
     <!-- 1. Agree -->
     <div class="space-y-2">
@@ -96,7 +95,7 @@
 
     <!-- 4. Location -->
     <div class="space-y-2">
-      <h4 class="font-medium">4. Location</h4>
+      <h4 class="font-medium">5. Location</h4>
       <div class="flex gap-4">
         <label class="flex gap-2 items-center text-sm">
           <input type="radio" value="Bury" v-model="form.location" />
@@ -115,7 +114,7 @@
 
     <!-- 5. Gender -->
     <div class="space-y-2">
-      <h4 class="font-medium">5. What is your gender</h4>
+      <h4 class="font-medium">6. What is your gender</h4>
       <div class="flex flex-col text-sm gap-2">
         <label class="text-[#4B5563] flex gap-2 items-center text-sm"
           ><input type="radio" value="Male" v-model="form.gender" /> Male</label
@@ -141,7 +140,7 @@
 
     <!-- 6. Age -->
     <div class="space-y-2">
-      <h4 class="font-medium">6. How old are you?</h4>
+      <h4 class="font-medium">7. How old are you?</h4>
       <div class="h-[48px] border rounded-[10px] px-4">
         <input
           type="number"
@@ -157,7 +156,7 @@
 
     <!-- 7. Ethnicity -->
     <div class="space-y-2">
-      <h4 class="font-medium">7. Ethnicity</h4>
+      <h4 class="font-medium">8. Ethnicity</h4>
       <div class="flex flex-col text-sm gap-2">
         <label class="text-[#4B5563] flex gap-2 items-center text-sm"
           ><input
@@ -196,7 +195,7 @@
             @change="clearError('ethnicity')"
           />
           <input
-            v-if="form.ethnicity === 'Other'"
+           
             type="text"
             placeholder="Other"
             v-model="form.ethnicityOther"
@@ -212,7 +211,7 @@
 
     <!-- 8. Recovery journey -->
     <div class="space-y-2">
-      <h4 class="font-medium">8. Recovery journey</h4>
+      <h4 class="font-medium">9. Recovery journey</h4>
       <div class="flex flex-col text-sm gap-2">
         <label class="text-[#4B5563] flex gap-2 items-center text-sm"
           ><input
@@ -276,7 +275,8 @@
     <!-- Submit -->
     <div class="pt-6">
       <button
-        type="submit"
+      @click="handleSubmit"
+        type="button"
         class="w-full bg-primary text-white rounded-full py-4 px-5 font-medium"
         :disabled="isLoading"
       >

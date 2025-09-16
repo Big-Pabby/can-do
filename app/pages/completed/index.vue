@@ -40,11 +40,11 @@
             style="color: #d97706"
           />
         </div>
-        <p class="text-white font-medium">£10 Phone Credit</p>
+        <p class="text-white font-medium">Your Free Gift</p>
         <p class="text-sm text-white">Will be sent within 24 hours</p>
       </div>
       <div
-        class=" mt-4 space-y-2 bg-[#F0F8FF] p-4 rounded-[16px] border border-[#B3DAFF] w-full text-[#0067C7]"
+        class="mt-4 space-y-2 bg-[#F0F8FF] p-4 rounded-[16px] border border-[#B3DAFF] w-full text-[#0067C7]"
       >
         <h4 class="font-medium">What happens with what you've shared</h4>
         <ul class="list-disc list-inside text-sm space-y-1">
