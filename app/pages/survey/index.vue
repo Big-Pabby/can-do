@@ -60,6 +60,13 @@ const surveyData = reactive({
   extra_personal_information: "",
 });
 
+onMounted(() => {
+  const consentId = localStorage.getItem("consent_id");
+
+  if (!consentId) {
+    useRouter().push("/"); // or navigateTo("/consent")
+  }
+});
 // Get the consent insight mutation
 const consentInsightMutation = useConsentInsight();
 
@@ -100,6 +107,7 @@ const submitSurvey = async () => {
 
     // Navigate to success page or show success message
     useRouter().push("/completed");
+    localStorage.removeItem("consent_id");
   } catch (error) {
     console.error("Error submitting survey:", error);
     // Handle error (show error message, etc.)

@@ -688,19 +688,19 @@ const submitForm = () => {
 const permissions = [
   {
     title: "Greggs Vouchers",
-    subtitle: "The familiar favourite (£2-£10)",
+    subtitle: "The familiar favourite ",
   },
   {
     title: "Phone Credit",
-    subtitle: "Bus/train tickets for accessibility (£5-£15)",
+    subtitle: "Bus/train tickets for accessibility",
   },
   {
     title: "Transport Vouchers",
-    subtitle: "Bus/train tickets for accessibility (£5-£15)",
+    subtitle: "Bus/train tickets for accessibility",
   },
   {
     title: "Shopping Vouchers",
-    subtitle: "Tesco, ASDA, Sainsbury's (£5-£15)",
+    subtitle: "Tesco, ASDA, Sainsbury's",
   },
 ];
 </script>
