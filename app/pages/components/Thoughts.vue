@@ -194,7 +194,7 @@
 
               <!-- Recording Duration -->
               <span v-if="hasRecording" class="text-sm text-[#6B7280] ml-2">
-                {{ formatTime(audioDuration) }}
+                {{ formatTime(audioDuration || recordingTime) }}
               </span>
             </div>
 
@@ -361,6 +361,11 @@ const initializeWaveform = () => {
 
 // Format time helper
 const formatTime = (seconds: number): string => {
+  // Handle invalid values
+  if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds < 0) {
+    return "00:00";
+  }
+
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins.toString().padStart(2, "0")}:${secs
@@ -434,9 +439,39 @@ const startRecording = async () => {
 
         // Create audio element for playback
         audioElement.value = new Audio(audioUrl.value);
-        audioElement.value.onloadedmetadata = () => {
-          audioDuration.value = audioElement.value?.duration || 0;
-        };
+
+        // Handle audio loading and duration calculation
+        audioElement.value.addEventListener("loadedmetadata", () => {
+          if (
+            audioElement.value &&
+            !isNaN(audioElement.value.duration) &&
+            isFinite(audioElement.value.duration)
+          ) {
+            audioDuration.value = Math.floor(audioElement.value.duration);
+            console.log("Audio duration loaded:", audioDuration.value);
+          } else {
+            console.warn(
+              "Invalid audio duration, using recording time instead"
+            );
+            audioDuration.value = recordingTime.value;
+          }
+        });
+
+        audioElement.value.addEventListener("error", (e) => {
+          console.error("Audio loading error:", e);
+          audioDuration.value = recordingTime.value;
+        });
+
+        // Fallback: if metadata doesn't load within 3 seconds, use recording time
+        setTimeout(() => {
+          if (audioDuration.value === 0 && recordingTime.value > 0) {
+            audioDuration.value = recordingTime.value;
+            console.log(
+              "Using recording time as fallback duration:",
+              audioDuration.value
+            );
+          }
+        }, 3000);
 
         // Generate transcript (simulated - in real app, use speech-to-text API)
         generateTranscript();
@@ -540,6 +575,7 @@ const deleteRecording = () => {
   isPlaying.value = false;
   transcript.value = "";
   audioDuration.value = 0;
+  recordingTime.value = 0;
 
   if (audioElement.value) {
     audioElement.value.pause();
