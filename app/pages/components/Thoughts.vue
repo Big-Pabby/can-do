@@ -674,7 +674,7 @@ const selectItem = (item: string) => {
 };
 
 const submitForm = () => {
-  // if (props.isSubmitting) return; // Prevent double submission
+  // if (props.isSubmitting) return; // Prevent double submiss
 
   // Emit any additional thoughts as extra personal information
   if (additionalThoughts.value.trim()) {
