@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <div class="px-5 pt-16 text-white space-y-2">
-      <h4 class="font-bold text-xl">Lived Expert</h4>
+      <h4 class="font-bold text-xl">{{onboard === 'submit' ? 'Form Submitted Successfully' : 'Lived Expert'}}</h4>
       <p class="text-sm">
         Suffolk Follow Up Group Information Sheet & Consent Form
       </p>

@@ -3,11 +3,12 @@
     <Introduction
       v-if="onboard === 'introduction'"
       v-on:toggle="toggleScreen"
+      v-on:select="updateSurveyData('current_feeling', $event)"
     />
     <Experience
       v-else-if="onboard === 'experience'"
       v-on:toggle="toggleScreen"
-      v-on:select="updateSurveyData('current_feeling', $event)"
+      v-on:select="updateSurveyData('support_experience', $event)"
     />
     <Explore
       v-else-if="onboard === 'explore'"
@@ -28,7 +29,9 @@
       v-else-if="onboard === 'thoughts'"
       v-on:toggle="toggleScreen"
       v-on:select="updateSurveyData('preferred_insight_appreciation', $event)"
+      v-on:extra="updateSurveyData('extra_personal_information', $event)"
       v-on:submit="submitSurvey"
+      :is-submitting="consentInsightMutation.isPending.value"
     />
   </div>
 </template>
@@ -54,6 +57,7 @@ const surveyData = reactive({
   preferred_support_process: "",
   offered_support_feeling: "",
   preferred_insight_appreciation: "",
+  extra_personal_information: "",
 });
 
 // Get the consent insight mutation
@@ -88,13 +92,14 @@ const submitSurvey = async () => {
         offered_support_feeling: surveyData.offered_support_feeling,
         preferred_insight_appreciation:
           surveyData.preferred_insight_appreciation,
+        extra_personal_information: surveyData.extra_personal_information,
       },
     };
 
     await consentInsightMutation.mutateAsync(payload);
 
     // Navigate to success page or show success message
-    console.log("Survey submitted successfully");
+    useRouter().push("/completed");
   } catch (error) {
     console.error("Error submitting survey:", error);
     // Handle error (show error message, etc.)

@@ -251,11 +251,12 @@ async function handleSubmit() {
     location: form.location,
     ethincity:
       form.ethnicity === "Other" ? form.ethnicityOther : form.ethnicity,
-    recovery_status: form.recovery_status.join(", "), // API expects string?
+    recovery_status: form.recovery_status, // API expects string?
   };
   mutate(payload, {
-    onSuccess(data) {
-      props.onToggle('submit')
+    onSuccess({ data }) {
+      localStorage.setItem("consent_id", data.id);
+      props.onToggle("submit");
       console.log(data);
     },
     onError(error) {
@@ -270,7 +271,8 @@ input {
   outline: none;
   accent-color: #33339c;
 }
-input[type=radio], input[type=checkbox]{
+input[type="radio"],
+input[type="checkbox"] {
   width: 20px;
   height: 20px;
 }

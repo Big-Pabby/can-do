@@ -2,7 +2,7 @@
   <div class="space-y-6 flex flex-col h-full">
     <div class="px-5 pt-16 space-y-2">
       <nuxt-link
-      to="/"
+        to="/"
         class="w-[40px] h-[40px] rounded-full bg-[#F3F4F633] p-2 flex items-center justify-center mb-4"
       >
         <Icon
@@ -43,7 +43,14 @@
         <div
           v-for="(item, index) in permissions"
           :key="index"
-          class="border mt-2 border-[#F3F4F6] hover:border-[#33339C80] bg-[#F9FAFB] hover:bg-[#F4F4FF] rounded-[16px] text-[#4B5563] hover:text-[#33339C] p-4"
+          class="border mt-2 rounded-[16px] p-4 cursor-pointer transition-all duration-200"
+          :class="{
+            'border-[#33339C] bg-[#F4F4FF] text-[#33339C]':
+              selectedValue === item,
+            'border-[#F3F4F6] bg-[#F9FAFB] text-[#4B5563] hover:border-[#33339C80] hover:bg-[#F4F4FF] hover:text-[#33339C]':
+              selectedValue !== item,
+          }"
+          @click="selectItem(item)"
         >
           {{ item }}
         </div>
@@ -61,11 +68,18 @@
       <div class="space-y-4 w-full">
         <button
           @click="onToggle('experience')"
-          class="flex w-full items-center gap-2 bg-primary text-white justify-center rounded-full py-4 px-5 font-medium"
+          :disabled="!selectedValue"
+          class="flex w-full items-center gap-2 justify-center rounded-full py-4 px-5 font-medium transition-all duration-200"
+          :class="{
+            'bg-primary text-white': selectedValue,
+            'bg-gray-300 text-gray-500 cursor-not-allowed': !selectedValue,
+          }"
         >
-          Continue when you’re ready
+          Continue when you're ready
         </button>
-        <h4 class="font-medium text-[#374151] text-center">Stop here and get reward</h4>
+        <h4 class="font-medium text-[#374151] text-center">
+          Stop here and get reward
+        </h4>
       </div>
     </div>
   </div>
@@ -73,9 +87,23 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { ref } from "vue";
+
 const props = defineProps<{
   onToggle: (item: string) => void;
 }>();
+
+const emit = defineEmits<{
+  select: [value: string];
+}>();
+
+const selectedValue = ref<string>("");
+
+const selectItem = (item: string) => {
+  selectedValue.value = item;
+  emit("select", item);
+};
+
 const permissions = [
   "Having a tough time",
   "Getting by okay",
@@ -87,8 +115,7 @@ const permissions = [
 
 <style scoped>
 input {
-    outline: none;
-    accent-color: #33339C;
+  outline: none;
+  accent-color: #33339c;
 }
 </style>
-

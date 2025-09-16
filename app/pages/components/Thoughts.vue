@@ -259,7 +259,7 @@
               />
             </button>
 
-            <button
+            <!-- <button
               @click="submitForm"
               :disabled="!additionalThoughts && !transcript"
               class="w-10 h-10 rounded-[8px] flex justify-center items-center transition-all"
@@ -271,7 +271,7 @@
               }"
             >
               <Icon icon="mi:send" width="16" height="16" style="color: #fff" />
-            </button>
+            </button> -->
           </div>
 
           <!-- Mobile Permission Help -->
@@ -305,15 +305,25 @@
 
       <div class="space-y-4 w-full">
         <button
-          @click="onToggle('thoughts')"
-          :disabled="!selectedValue"
+          @click="submitForm"
+          :disabled="!selectedValue || props.isSubmitting"
           class="flex w-full items-center gap-2 justify-center rounded-full py-4 px-5 font-medium transition-all duration-200"
           :class="{
-            'bg-primary text-white': selectedValue,
-            'bg-gray-300 text-gray-500 cursor-not-allowed': !selectedValue,
+            'bg-primary text-white': selectedValue && !props.isSubmitting,
+            'bg-gray-300 text-gray-500 cursor-not-allowed':
+              !selectedValue || props.isSubmitting,
           }"
         >
-          I appreciate your honesty
+          <Icon
+            v-if="props.isSubmitting"
+            icon="material-symbols:refresh"
+            width="20"
+            height="20"
+            class="animate-spin"
+            style="color: #fff"
+          />
+          <span v-if="props.isSubmitting">Submitting...</span>
+          <span v-else>I appreciate your honesty</span>
         </button>
         <h4 class="font-medium text-[#374151] text-center">
           Actually. I'll Continue
@@ -325,14 +335,16 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 
 const props = defineProps<{
   onToggle: (item: string) => void;
+  isSubmitting?: boolean;
 }>();
 
 const emit = defineEmits<{
   select: [value: string];
+  extra: [value: string];
   submit: [];
 }>();
 
@@ -613,6 +625,8 @@ const generateTranscript = () => {
 // Use transcript
 const useTranscript = () => {
   additionalThoughts.value = transcript.value;
+  // Emit the additional thoughts as extra personal information
+  emit("extra", additionalThoughts.value);
 };
 
 // Test microphone access
@@ -628,6 +642,13 @@ const testMicrophoneAccess = async () => {
     return false;
   }
 };
+
+// Watch for changes in additional thoughts and emit them
+watch(additionalThoughts, (newValue) => {
+  if (newValue && newValue.trim()) {
+    emit("extra", newValue.trim());
+  }
+});
 
 // Component lifecycle
 onMounted(async () => {
@@ -653,6 +674,14 @@ const selectItem = (item: string) => {
 };
 
 const submitForm = () => {
+  if (props.isSubmitting) return; // Prevent double submission
+
+  // Emit any additional thoughts as extra personal information
+  if (additionalThoughts.value.trim()) {
+    emit("extra", additionalThoughts.value);
+  }
+
+  // Emit submit event
   emit("submit");
 };
 
