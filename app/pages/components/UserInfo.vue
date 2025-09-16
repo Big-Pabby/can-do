@@ -175,7 +175,7 @@
         <label class="flex gap-2 items-center">
           <input type="radio" value="Other" v-model="form.ethnicity" />
           <input
-            v-if="form.ethnicity === 'Other'"
+           
             type="text"
             placeholder="Other"
             v-model="form.ethnicityOther"
