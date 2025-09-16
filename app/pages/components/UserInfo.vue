@@ -10,11 +10,11 @@
       </h4>
       <div class="flex gap-4">
         <label class="flex gap-2 items-center text-sm">
-          <input type="radio" value="agree" v-model="form.agree" />
+          <input required type="radio" value="agree" v-model="form.agree" />
           <span class="text-[#4B5563]">Agree</span>
         </label>
         <label class="flex gap-2 items-center text-sm">
-          <input type="radio" value="disagree" v-model="form.agree" />
+          <input required type="radio" value="disagree" v-model="form.agree" />
           <span class="text-[#4B5563]">Disagree</span>
         </label>
       </div>
@@ -25,6 +25,7 @@
       <h4 class="font-medium">2. First Name</h4>
       <div class="h-[48px] border rounded-[10px] px-4">
         <input
+          required
           type="text"
           v-model="form.first_name"
           class="w-full h-full text-sm"
@@ -37,8 +38,31 @@
       <h4 class="font-medium">3. Surname</h4>
       <div class="h-[48px] border rounded-[10px] px-4">
         <input
+        required
           type="text"
           v-model="form.last_name"
+          class="w-full h-full text-sm"
+        />
+      </div>
+    </div>
+    <div class="space-y-2">
+      <h4 class="font-medium">4. Email</h4>
+      <div class="h-[48px] border rounded-[10px] px-4">
+        <input
+          required
+          type="email"
+          v-model="form.email"
+          class="w-full h-full text-sm"
+        />
+      </div>
+    </div>
+    <div class="space-y-2">
+      <h4 class="font-medium">4. Phone Number</h4>
+      <div class="h-[48px] border rounded-[10px] px-4">
+        <input
+          required
+          type="tel"
+          v-model="form.phone_number"
           class="w-full h-full text-sm"
         />
       </div>
@@ -57,7 +81,7 @@
           <span class="text-[#4B5563]">Ipswich</span>
         </label>
         <label class="flex gap-2 items-center text-sm">
-          <input type="radio" value="Lowestoft" v-model="form.location" />
+          <input type="radio" value="Lowesoft" v-model="form.location" />
           <span class="text-[#4B5563]">Lowestoft</span>
         </label>
       </div>
@@ -94,6 +118,7 @@
       <h4 class="font-medium">6. How old are you?</h4>
       <div class="h-[48px] border rounded-[10px] px-4">
         <input
+          required
           type="number"
           v-model.number="form.age"
           class="w-full h-full text-sm"
@@ -107,6 +132,7 @@
       <div class="flex flex-col text-sm gap-2">
         <label class="text-[#4B5563] flex gap-2 items-center text-sm"
           ><input
+            required
             type="radio"
             value="Asian or Asian British"
             v-model="form.ethnicity"
@@ -115,6 +141,7 @@
         >
         <label class="text-[#4B5563] flex gap-2 items-center text-sm"
           ><input
+            required
             type="radio"
             value="Black, Black British, Caribbean, or African"
             v-model="form.ethnicity"
@@ -123,6 +150,7 @@
         >
         <label class="text-[#4B5563] flex gap-2 items-center text-sm"
           ><input
+            required
             type="radio"
             value="Mixed or multiple ethnic groups"
             v-model="form.ethnicity"
@@ -130,12 +158,18 @@
           Mixed or multiple ethnic groups</label
         >
         <label class="text-[#4B5563] flex gap-2 items-center text-sm"
-          ><input type="radio" value="White" v-model="form.ethnicity" />
+          ><input
+            required
+            type="radio"
+            value="White"
+            v-model="form.ethnicity"
+          />
           White</label
         >
         <label class="flex gap-2 items-center">
-          <input type="radio" value="Other" v-model="form.ethnicity" />
+          <input required type="radio" value="Other" v-model="form.ethnicity" />
           <input
+            required
             type="text"
             placeholder="Other"
             v-model="form.ethnicityOther"
@@ -233,6 +267,8 @@ const { mutate, isPending: isLoading } = useConsent();
 const form = reactive({
   agree: "",
   first_name: "",
+  phone_number: "",
+  email: "",
   last_name: "",
   location: "",
   gender: "",
@@ -246,6 +282,8 @@ async function handleSubmit() {
   const payload = {
     first_name: form.first_name,
     last_name: form.last_name,
+    phone_number: form.phone_number,
+    email: form.email,
     age: form.age ?? 0,
     gender: form.gender,
     location: form.location,

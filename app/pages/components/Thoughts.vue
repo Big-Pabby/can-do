@@ -325,9 +325,9 @@
           <span v-if="props.isSubmitting">Submitting...</span>
           <span v-else>I appreciate your honesty</span>
         </button>
-        <h4 class="font-medium text-[#374151] text-center">
+        <!-- <h4 class="font-medium text-[#374151] text-center">
           Actually. I'll Continue
-        </h4>
+        </h4> -->
       </div>
     </div>
   </div>

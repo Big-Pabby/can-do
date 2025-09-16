@@ -13,6 +13,8 @@ export function useConsent() {
       last_name: string;
       first_name: string;
       age: number;
+      phone_number: string;
+      email: string;
       gender: string;
       location: string;
       ethincity: string;
@@ -44,6 +46,36 @@ export function useConsentInsight() {
       const response = await https.post(
         `v1/consents/${payload.consent_id}/insight`,
         payload.data
+      );
+      return response;
+    },
+    // onSuccess: () => {
+    //   queryClient.invalidateQueries({ queryKey: ["business_products"] });
+    // },
+  });
+}
+export function useUpload() {
+  //   const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload) => {
+      const response = await https.post(
+        `v1/misc/upload`,
+        payload
+      );
+      return response;
+    },
+    // onSuccess: () => {
+    //   queryClient.invalidateQueries({ queryKey: ["business_products"] });
+    // },
+  });
+}
+export function useTranscript() {
+  //   const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {audio_url: string}) => {
+      const response = await https.post(
+        `v1/misc/audio2text`,
+        payload
       );
       return response;
     },

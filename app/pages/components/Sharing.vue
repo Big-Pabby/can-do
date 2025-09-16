@@ -109,9 +109,9 @@
         >
           I appreciate your honesty
         </button>
-        <h4 class="font-medium text-[#374151] text-center">
+        <!-- <h4 class="font-medium text-[#374151] text-center">
           Stop here and get reward
-        </h4>
+        </h4> -->
       </div>
     </div>
   </div>
