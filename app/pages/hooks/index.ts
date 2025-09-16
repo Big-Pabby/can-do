@@ -6,7 +6,7 @@ export function useConsent() {
     id: string;
     date_created: string;
     date_updated: string;
-}
+  }
   //   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
@@ -57,11 +57,16 @@ export function useConsentInsight() {
 export function useUpload() {
   //   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload) => {
-      const response = await https.post(
-        `v1/misc/upload`,
-        payload
-      );
+    mutationFn: async (payload: any) => {
+      // If payload is FormData (duck-typed), ensure axios sends multipart boundary and not JSON
+      if (payload && typeof (payload as any).append === "function") {
+        const response = await https.post(`v1/misc/upload`, payload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        return response;
+      }
+
+      const response = await https.post(`v1/misc/upload`, payload);
       return response;
     },
     // onSuccess: () => {
@@ -72,11 +77,8 @@ export function useUpload() {
 export function useTranscript() {
   //   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: {audio_url: string}) => {
-      const response = await https.post(
-        `v1/misc/audio2text`,
-        payload
-      );
+    mutationFn: async (payload: { audio_url: string }) => {
+      const response = await https.post(`v1/misc/audio2text`, payload);
       return response;
     },
     // onSuccess: () => {

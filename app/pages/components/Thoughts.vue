@@ -236,7 +236,7 @@
                 {{ transcript }}
               </p>
               <button
-                @click="useTranscript"
+                @click="applyTranscript"
                 class="mt-2 text-xs text-[#33339C] hover:text-[#2A2A7A] underline"
               >
                 Use this text
@@ -336,6 +336,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { ref, onMounted, onUnmounted, watch } from "vue";
+import { useUpload, useTranscript } from "../hooks/index";
 
 const props = defineProps<{
   onToggle: (item: string) => void;
@@ -443,7 +444,7 @@ const startRecording = async () => {
       }
     };
 
-    mediaRecorder.value.onstop = () => {
+    mediaRecorder.value.onstop = async () => {
       if (audioChunks.value.length > 0) {
         audioBlob.value = new Blob(audioChunks.value, { type: "audio/webm" });
         audioUrl.value = URL.createObjectURL(audioBlob.value);
@@ -486,7 +487,8 @@ const startRecording = async () => {
         }, 3000);
 
         // Generate transcript (simulated - in real app, use speech-to-text API)
-        generateTranscript();
+        // After recording stops, upload the audio and request transcript
+        await uploadRecordingAndTranscribe();
       }
 
       // Stop all tracks
@@ -603,10 +605,8 @@ const deleteRecording = () => {
   audioChunks.value = [];
 };
 
-// Generate transcript (simulated)
+// Generate transcript (simulated) - kept for fallback or demo
 const generateTranscript = () => {
-  // In a real application, you would send the audio blob to a speech-to-text service
-  // For now, we'll simulate a transcript
   const sampleTranscripts = [
     "I think the most important thing is having someone who actually listens and understands what I'm going through. Too often, services feel like they're just going through the motions.",
     "What would really help is if there was a way to find services that are actually available and not just listed but don't exist anymore. I've wasted so much time calling numbers that don't work.",
@@ -622,8 +622,82 @@ const generateTranscript = () => {
   }, 2000);
 };
 
-// Use transcript
-const useTranscript = () => {
+// Setup upload and transcript mutations
+const uploadMutation = useUpload();
+const transcriptMutation = useTranscript();
+
+// Upload the recorded audio (FormData) then request transcript
+const uploadRecordingAndTranscribe = async () => {
+  try {
+    if (!audioBlob.value) return;
+console.log(audioBlob.value)
+    const form = new FormData();
+    // append the file - backend expects 'file' (or adjust if different)
+    form.append("file", audioBlob.value, "recording.webm");
+    form.append("upload_target", "AUDIO");
+
+    // Call useUpload mutation
+    const uploadResp = await uploadMutation.mutateAsync(form as any);
+
+    // Try to extract audio url from response
+    // Axios responses in hooks return the full response object; check common locations
+    const data = uploadResp && uploadResp.data ? uploadResp.data : uploadResp;
+
+    // Possible shapes: { data: { url: '...' } } or { url: '...' } or { data: [{ url: '...' }] }
+    let audioUrlFromServer: string | undefined;
+
+    if (typeof data === "string") {
+      audioUrlFromServer = data;
+    } else if (data && typeof data === "object") {
+      if (data.url) audioUrlFromServer = data.url;
+      else if (data.file_url) audioUrlFromServer = data.file_url;
+      else if (data.data && data.data.url) audioUrlFromServer = data.data.url;
+      else if (Array.isArray(data.data) && data.data[0] && data.data[0].url)
+        audioUrlFromServer = data.data[0].url;
+      else if (data[0] && data[0].url) audioUrlFromServer = data[0].url;
+    }
+
+    if (!audioUrlFromServer) {
+      console.warn(
+        "Could not find audio url in upload response, using local object URL"
+      );
+      audioUrlFromServer = audioUrl.value; // fallback to object URL
+    }
+
+    // Call transcript endpoint
+    const transcriptResp = await transcriptMutation.mutateAsync({
+      audio_url: audioUrlFromServer,
+    });
+
+    const tdata =
+      transcriptResp && transcriptResp.data
+        ? transcriptResp.data
+        : transcriptResp;
+    // Try to extract text from response
+    if (tdata && typeof tdata === "object") {
+      if (tdata.text) transcript.value = tdata.text;
+      else if (tdata.transcript) transcript.value = tdata.transcript;
+      else if (tdata.data && (tdata.data.text || tdata.data.transcript))
+        transcript.value = tdata.data.text || tdata.data.transcript;
+      else transcript.value = JSON.stringify(tdata);
+    } else if (typeof tdata === "string") {
+      transcript.value = tdata;
+    }
+
+    // Emit extra once we have transcript
+    if (transcript.value && transcript.value.trim()) {
+      additionalThoughts.value = transcript.value;
+      emit("extra", additionalThoughts.value);
+    }
+  } catch (err) {
+    console.error("Upload/Transcript error:", err);
+    // keep the generated transcript as fallback
+    if (!transcript.value) generateTranscript();
+  }
+};
+
+// Apply transcript into the textarea / emit as extra
+const applyTranscript = () => {
   additionalThoughts.value = transcript.value;
   // Emit the additional thoughts as extra personal information
   emit("extra", additionalThoughts.value);
