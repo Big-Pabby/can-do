@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
+  plugins: ["~/plugins/vue-query-plugin"],
   modules: ["@vite-pwa/nuxt"],
   css: ["~/assets/main.css"],
   vite: {

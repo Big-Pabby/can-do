@@ -63,25 +63,49 @@
           Imagine your feedback leading to real changes that prevent others from
           facing the same barriers you've faced
         </p>
-        <div
+        <label
           v-for="(item, index) in permissions"
+          :for="`index-${index}`"
           :key="index"
-          class="flex gap-2 items-start border border-[#F3F4F6] bg-[#F9FAFB] p-4 rounded-[16px]"
+          class="flex gap-2 items-start border p-4 rounded-[16px] transition-all duration-200"
+          :class="{
+            'border-[#33339C] bg-[#F4F4FF]': selectedValue === item.title,
+            'border-[#F3F4F6] bg-[#F9FAFB]': selectedValue !== item.title,
+          }"
         >
-          <input type="radio" class="w-[24px] h-[24px]" />
+          <input
+            :id="`index-${index}`"
+            type="radio"
+            class="w-[24px] h-[24px]"
+            :name="'sharing-option'"
+            :value="item.title"
+            v-model="selectedValue"
+            @change="onSelect"
+          />
           <div class="flex-1 space-y-2">
-            <h5 class="font-medium text-base text-[#111827]">
+            <h5
+              class="font-medium text-base transition-colors duration-200"
+              :class="{
+                'text-[#33339C]': selectedValue === item.title,
+                'text-[#111827]': selectedValue !== item.title,
+              }"
+            >
               {{ item.title }}
             </h5>
             <p class="text-sm text-[#4B5563]">{{ item.subtitle }}</p>
           </div>
-        </div>
+        </label>
       </div>
 
       <div class="space-y-4 w-full">
         <button
           @click="onToggle('thoughts')"
-          class="flex w-full items-center gap-2 bg-primary text-white justify-center rounded-full py-4 px-5 font-medium"
+          :disabled="!selectedValue"
+          class="flex w-full items-center gap-2 justify-center rounded-full py-4 px-5 font-medium transition-all duration-200"
+          :class="{
+            'bg-primary text-white': selectedValue,
+            'bg-gray-300 text-gray-500 cursor-not-allowed': !selectedValue,
+          }"
         >
           I appreciate your honesty
         </button>
@@ -95,9 +119,24 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { ref } from "vue";
+
 const props = defineProps<{
   onToggle: (item: string) => void;
 }>();
+
+const emit = defineEmits<{
+  select: [value: string];
+}>();
+
+const selectedValue = ref<string>("");
+
+const onSelect = () => {
+  if (selectedValue.value) {
+    emit("select", selectedValue.value);
+  }
+};
+
 const permissions = [
   {
     title: "Having a conversation where I can explain my situation",
@@ -120,8 +159,7 @@ const permissions = [
 
 <style scoped>
 input {
-    outline: none;
-    accent-color: #33339C;
+  outline: none;
+  accent-color: #33339c;
 }
 </style>
-

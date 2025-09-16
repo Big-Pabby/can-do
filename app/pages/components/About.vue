@@ -108,10 +108,10 @@
       </ol>
     </div>
     <div class="flex gap-2 items-center">
-      <input type="radio" class="w-[24px] h-[24px]" />
-      <p class="text-[#33339C] text-sm">
-        I agree with the statements and provide consent
-      </p>
+      <input id="agree" type="radio" class="w-[24px] h-[24px]" />
+      <label for="agree" class="text-[#33339C] text-sm">
+        I agree with the statements and labelrovide consent
+      </label>
     </div>
     <div class="mt-6">
       <button

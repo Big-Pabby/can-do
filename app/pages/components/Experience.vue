@@ -2,7 +2,7 @@
   <div class="space-y-6 flex flex-col h-full">
     <div class="px-5 pt-16 space-y-2">
       <div
-      @click="onToggle('introduction')"
+        @click="onToggle('introduction')"
         class="w-[40px] h-[40px] rounded-full bg-[#F3F4F633] p-2 flex items-center justify-center mb-4"
       >
         <Icon
@@ -61,19 +61,49 @@
           Think about any time you've looked for housing, mental health support,
           benefits help, or any other services
         </p>
-        <div v-for="(item,index) in permissions" :key="index" class=" flex gap-2 items-start border border-[#F3F4F6] bg-[#F9FAFB] p-4 rounded-[16px]">
-            <input type="radio" class="w-[24px] h-[24px]">
-            <div class="flex-1 space-y-2">
-                <h5 class="font-medium text-base text-[#111827]">{{ item.title }}</h5>
-                <p class="text-sm text-[#4B5563]">{{ item.subtitle }}</p>
-            </div>
-        </div>
+        <label
+          v-for="(item, index) in permissions"
+          :key="index"
+          :for="`index-${index}`"
+          class="flex gap-2 items-start border p-4 rounded-[16px] transition-all duration-200"
+          :class="{
+            'border-[#33339C] bg-[#F4F4FF]': selectedValue === item.title,
+            'border-[#F3F4F6] bg-[#F9FAFB]': selectedValue !== item.title,
+          }"
+        >
+          <input
+            :id="`index-${index}`"
+            type="radio"
+            class="w-[24px] h-[24px]"
+            :name="'experience-option'"
+            :value="item.title"
+            v-model="selectedValue"
+            @change="onSelect"
+          />
+          <div class="flex-1 space-y-2">
+            <h5
+              class="font-medium text-base transition-colors duration-200"
+              :class="{
+                'text-[#33339C]': selectedValue === item.title,
+                'text-[#111827]': selectedValue !== item.title,
+              }"
+            >
+              {{ item.title }}
+            </h5>
+            <p class="text-sm text-[#4B5563]">{{ item.subtitle }}</p>
+          </div>
+        </label>
       </div>
-     
+
       <div class="space-y-4 w-full">
         <button
           @click="onToggle('explore')"
-          class="flex w-full items-center gap-2 bg-primary text-white justify-center rounded-full py-4 px-5 font-medium"
+          :disabled="!selectedValue"
+          class="flex w-full items-center gap-2 justify-center rounded-full py-4 px-5 font-medium transition-all duration-200"
+          :class="{
+            'bg-primary text-white': selectedValue,
+            'bg-gray-300 text-gray-500 cursor-not-allowed': !selectedValue,
+          }"
         >
           Thank you for sharing that
         </button>
@@ -87,38 +117,52 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { ref } from "vue";
+
 const props = defineProps<{
   onToggle: (item: string) => void;
 }>();
+
+const emit = defineEmits<{
+  select: [value: string];
+}>();
+
+const selectedValue = ref<string>("");
+
+const onSelect = () => {
+  if (selectedValue.value) {
+    emit("select", selectedValue.value);
+  }
+};
+
 const permissions = [
   {
-    title: 'I usually know where to look and find what I need',
-    subtitle: 'You have good networks or know the system well',
+    title: "I usually know where to look and find what I need",
+    subtitle: "You have good networks or know the system well",
   },
   {
-    title: 'Sometimes I find help, but it takes effort and time',
-    subtitle: 'You get there eventually but it\'s not always straightforward',
+    title: "Sometimes I find help, but it takes effort and time",
+    subtitle: "You get there eventually but it's not always straightforward",
   },
   {
-    title: 'It\'s often difficult and frustrating to find the right help',
-    subtitle: 'You face barriers, outdated information, or unhelpful responses',
+    title: "It's often difficult and frustrating to find the right help",
+    subtitle: "You face barriers, outdated information, or unhelpful responses",
   },
   {
-    title: 'I\'ve often given up because it feels impossible',
-    subtitle: 'The system feels so difficult that you stop trying',
+    title: "I've often given up because it feels impossible",
+    subtitle: "The system feels so difficult that you stop trying",
   },
   {
-    title: 'I avoid asking for help because of past experiences',
-    subtitle: 'Previous negative experiences make you reluctant to seek support',
+    title: "I avoid asking for help because of past experiences",
+    subtitle:
+      "Previous negative experiences make you reluctant to seek support",
   },
- 
 ];
 </script>
 
 <style scoped>
 input {
-    outline: none;
-    accent-color: #33339C;
+  outline: none;
+  accent-color: #33339c;
 }
 </style>
-
