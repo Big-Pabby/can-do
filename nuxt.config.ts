@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
-  plugins: ["~/plugins/vue-query-plugin"],
+  plugins: ["~/plugins/vue-query-plugin", "~/plugins/google-maps.client"],
   modules: ["@vite-pwa/nuxt"],
   css: ["~/assets/main.css"],
   vite: {
@@ -18,8 +18,7 @@ export default defineNuxtConfig({
       theme_color: "#33339C",
       background_color: "#33339C",
       display: "standalone",
-      scope: "/",
-      start_url: "/",
+     
       icons: [
         {
           src: "/android-chrome-192x192.png",
@@ -38,6 +37,11 @@ export default defineNuxtConfig({
     },
     devOptions: {
       enabled: true, // Enable PWA during development
+    },
+  },
+  runtimeConfig: {
+    public: {
+      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
     },
   },
 });
