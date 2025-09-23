@@ -10,7 +10,7 @@
         </div>
 
         <!-- Filters -->
-        <div class=" flex md:flex-row flex-col gap-4">
+        <div class="flex md:flex-row flex-col gap-4">
           <input
             v-model="searchQuery"
             type="text"
@@ -78,14 +78,14 @@
                 </span>
               </div>
               <div class="mt-4 border-t pt-4">
-                <p class="flex items-center text-sm text-muted-foreground line-clamp-1">
-                  
+                <p
+                  class="flex items-center text-sm text-muted-foreground line-clamp-1"
+                >
                   {{ service.details.address }}
                 </p>
                 <div
                   class="flex items-center mt-2 text-sm text-muted-foreground"
                 >
-                  
                   {{ service.details.hours }}
                 </div>
               </div>
@@ -114,27 +114,32 @@
       </div>
 
       <!-- Pagination -->
-      <div class="mt-8 flex w-full justify-center">
-        <nav
-          class="flex items-center space-x-1"
-          role="navigation"
-          aria-label="pagination"
+       <div class="mt-8 flex w-full justify-center">
+<nav
+        class="flex items-center space-x-1"
+        role="navigation"
+        aria-label="pagination"
+      >
+        <button
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
+          :disabled="currentPage === 1"
+          @click="prevPage"
         >
-          <button
-            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
-            :disabled="currentPage === 1"
-            @click="prevPage"
-          >
-            Previous
-          </button>
-          <div class="flex items-center space-x-1">
+          Previous
+        </button>
+        <div class="flex items-center space-x-1">
+          <template v-for="page in paginationPages" :key="page">
+            <span
+              v-if="page === '...'"
+              class="inline-flex items-center justify-center h-9 w-9 text-muted-foreground"
+              >...</span
+            >
             <button
-              v-for="page in totalPages"
-              :key="page"
-              @click="goToPage(page)"
+              v-else
+              @click="goToPage(page as number)"
               :class="{
                 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-9 w-9': true,
-                'bg-primary text-primary-foreground hover:bg-primary/90':
+                'bg-[#12A0D8] text-primary-foreground hover:bg-[#12A0D8]/90':
                   currentPage === page,
                 'border border-input bg-background hover:bg-accent hover:text-accent-foreground':
                   currentPage !== page,
@@ -142,16 +147,18 @@
             >
               {{ page }}
             </button>
-          </div>
-          <button
-            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
-            :disabled="currentPage === totalPages"
-            @click="nextPage"
-          >
-            Next
-          </button>
-        </nav>
-      </div>
+          </template>
+        </div>
+        <button
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
+          :disabled="currentPage === totalPages"
+          @click="nextPage"
+        >
+          Next
+        </button>
+      </nav>
+       </div>
+      
     </div>
   </div>
 </template>
@@ -170,6 +177,29 @@ const {
   prevPage,
   goToPage,
 } = useServices();
+const paginationPages = computed(() => {
+  const pages = [];
+  const total = typeof totalPages?.value === "number" ? totalPages.value : 1;
+  const current =
+    typeof currentPage?.value === "number" ? currentPage.value : 1;
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+    return pages;
+  }
+  pages.push(1);
+  if (current > 4) pages.push("...");
+  for (
+    let i = Math.max(2, current - 2);
+    i <= Math.min(total - 1, current + 2);
+    i++
+  ) {
+    if (i === 1 || i === total) continue;
+    pages.push(i);
+  }
+  if (current < total - 3) pages.push("...");
+  pages.push(total);
+  return pages;
+});
 </script>
 
 <style scoped>
