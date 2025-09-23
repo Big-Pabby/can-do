@@ -10,7 +10,7 @@
         </div>
 
         <!-- Filters -->
-        <div class=" flex gap-4">
+        <div class=" flex md:flex-row flex-col gap-4">
           <input
             v-model="searchQuery"
             type="text"
@@ -20,7 +20,7 @@
 
           <select
             v-model="selectedCategory"
-            class="flex h-12 rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-white"
+            class="flex h-12 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-white"
           >
             <option value="all">All Categories</option>
             <option
