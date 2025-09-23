@@ -1,6 +1,6 @@
 <template>
   <!-- <InstallBanner /> -->
-  <div class="bg-primary min-h-screen text-white max-w-[500px] w-full mx-auto">
+  <div class=" min-h-screen bg-[#F9FAFB] ">
     <NuxtPage />
   </div>
 </template>
