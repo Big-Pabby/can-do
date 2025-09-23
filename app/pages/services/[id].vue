@@ -20,19 +20,9 @@
         class="bg-card rounded-2xl shadow-xl p-8 transition hover:shadow-2xl"
       >
         <!-- Card Header -->
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex md:flex-row flex-col-reverse md:items-center  items-start justify-between gap-4 mb-6">
           <div class="flex items-center gap-3">
-            <div class="bg-primary/10 rounded-full p-3">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-8 w-8 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <circle cx="12" cy="12" r="10" stroke-width="2" />
-              </svg>
-            </div>
+           
             <div>
               <h1 class="text-2xl font-bold leading-tight">
                 {{ service.details.name }}
