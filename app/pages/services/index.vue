@@ -32,138 +32,200 @@
             </option>
           </select>
         </div>
+        <!-- Verification status filter row -->
+        
       </div>
     </div>
-    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <!-- Header -->
 
-      <!-- Services Grid -->
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div
-          v-for="(service, index) in paginatedServices"
-          :key="index"
-          class="rounded-lg border bg-card text-card-foreground shadow-sm transition-transform hover:scale-105"
-        >
-          <div class="p-6">
-            <div class="flex flex-col space-y-1.5">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold line-clamp-1">
-                  {{ service.details.name }}
-                </h3>
+    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Services Table -->
+
+      <div class="overflow-x-auto bg-white rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-200 sm:table-fixed">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:w-1/3"
+              >
+                Service
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:w-1/6"
+              >
+                Organization
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Categories
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Location
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Rating
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Verification Status
+              </th>
+              <th class="px-6 py-3 sm:w-[96px]"></th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr
+              v-for="(service, index) in paginatedServices"
+              :key="service.details?.service_id ?? index"
+              class="hover:bg-gray-50"
+            >
+              <td class="px-6 py-4 overflow-hidden">
+                <div class="text-sm font-medium text-gray-900">
+                  <div class="w-[250px]">
+                    <NuxtLink
+                      :to="`/services/${service.id}`"
+                      class="text-primary font-semibold hover:underline block truncate max-w-[14rem] sm:max-w-full"
+                      >{{ service.details?.name }}</NuxtLink
+                    >
+                    <div
+                      class="text-xs text-muted-foreground truncate max-w-[14rem] sm:max-w-full"
+                    >
+                      {{ service.details?.description }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <td
+                class="px-6 py-4 overflow-hidden text-sm text-muted-foreground truncate"
+              >
+                {{ service.details?.org_name }}
+              </td>
+
+              <td class="px-6 py-4 text-sm">
+                <div class="flex flex-wrap gap-2">
+                  <template
+                    v-for="cat in typeof service.details?.categories ===
+                    'string'
+                      ? service.details.categories
+                          .split(',')
+                          .map((c) => c.trim())
+                          .filter(Boolean)
+                      : []"
+                    :key="cat"
+                  >
+                    <span
+                      class="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground truncate"
+                      >{{ cat }}</span
+                    >
+                  </template>
+                </div>
+              </td>
+
+              <td
+                class="w-[200px] px-6 py-4 overflow-hidden text-sm text-muted-foreground truncate"
+              >
+                {{ service.details?.address }}
+              </td>
+
+              <td class="px-6 py-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="text-yellow-400">★</span>
+                  <span class="font-semibold">{{
+                    service.details?.avg_rating
+                  }}</span>
+                  <span class="text-muted-foreground"
+                    >({{ service.details?.review_count }})</span
+                  >
+                </div>
+              </td>
+
+              <!-- Verification status column (aligns with header) -->
+              <td class="px-6 py-4 text-sm text-muted-foreground">
                 <span
                   :class="{
-                    'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2': true,
-                    'bg-green-50 text-green-900 hover:bg-green-100':
-                      service.details.verification_status === 'Verified',
-                    'bg-yellow-50 text-yellow-900 hover:bg-yellow-100':
-                      service.details.verification_status === 'Pending',
+                    'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold': true,
+                    'bg-green-50 text-green-900':
+                      service.details?.verification_status === 'Verified',
+                    'bg-yellow-50 text-yellow-900':
+                      service.details?.verification_status === 'Pending',
+                    'bg-gray-100 text-gray-700':
+                      !service.details?.verification_status,
                   }"
                 >
-                  {{ service.details.verification_status }}
+                  {{ service.details?.verification_status ?? "Unverified" }}
                 </span>
-              </div>
-              <p class="text-sm text-muted-foreground">
-                {{ service.details.org_name }}
-              </p>
-            </div>
-            <div class="p-0">
-              <p class="text-sm text-muted-foreground mt-4 line-clamp-2">
-                {{ service.details.description }}
-              </p>
-              <div class="mt-4 flex flex-wrap gap-2">
-                <span
-                  class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              </td>
+
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                <NuxtLink
+                  :to="`/services/${service.id}`"
+                  class="inline-flex items-center rounded-md border px-3 py-1 text-sm font-medium bg-background hover:bg-accent"
+                  >Learn More</NuxtLink
                 >
-                  {{ service.details.categories }}
-                </span>
-              </div>
-              <div class="mt-4 border-t pt-4">
-                <p
-                  class="flex items-center text-sm text-muted-foreground line-clamp-1"
-                >
-                  {{ service.details.address }}
-                </p>
-                <div
-                  class="flex items-center mt-2 text-sm text-muted-foreground"
-                >
-                  {{ service.details.hours }}
-                </div>
-              </div>
-            </div>
-            <div class="mt-4 flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <div class="flex items-center">
-                  <span class="text-yellow-400">★</span>
-                  <span class="ml-1 text-sm">{{
-                    service.details.avg_rating
-                  }}</span>
-                </div>
-                <span class="text-sm text-muted-foreground"
-                  >{{ service.details.review_count }} reviews</span
-                >
-              </div>
-              <NuxtLink
-                :to="`/services/${service.id}`"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
-              >
-                Learn More
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Pagination -->
-       <div class="mt-8 flex w-full justify-center">
-<nav
-        class="flex items-center space-x-1"
-        role="navigation"
-        aria-label="pagination"
-      >
-        <button
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
-          :disabled="currentPage === 1"
-          @click="prevPage"
+      <div class="mt-8 flex w-full justify-center">
+        <nav
+          class="flex items-center space-x-1"
+          role="navigation"
+          aria-label="pagination"
         >
-          Previous
-        </button>
-        <div class="flex items-center space-x-1">
-          <template v-for="page in paginationPages" :key="page">
-            <span
-              v-if="page === '...'"
-              class="inline-flex items-center justify-center h-9 w-9 text-muted-foreground"
-              >...</span
-            >
-            <button
-              v-else
-              @click="goToPage(page as number)"
-              :class="{
-                'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-9 w-9': true,
-                'bg-[#12A0D8] text-primary-foreground hover:bg-[#12A0D8]/90':
-                  currentPage === page,
-                'border border-input bg-background hover:bg-accent hover:text-accent-foreground':
-                  currentPage !== page,
-              }"
-            >
-              {{ page }}
-            </button>
-          </template>
-        </div>
-        <button
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
-          :disabled="currentPage === totalPages"
-          @click="nextPage"
-        >
-          Next
-        </button>
-      </nav>
-       </div>
-      
+          <button
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
+            :disabled="currentPage === 1"
+            @click="prevPage"
+          >
+            Previous
+          </button>
+
+          <div class="flex items-center space-x-1">
+            <template v-for="page in paginationPages" :key="page">
+              <span
+                v-if="page === '...'"
+                class="inline-flex items-center justify-center h-9 w-9 text-muted-foreground"
+                >...</span
+              >
+              <button
+                v-else
+                @click="goToPage(page as number)"
+                :class="{
+                  'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-9 w-9': true,
+                  'bg-[#12A0D8] text-primary-foreground hover:bg-[#12A0D8]/90':
+                    currentPage === page,
+                  'border border-input bg-background hover:bg-accent hover:text-accent-foreground':
+                    currentPage !== page,
+                }"
+              >
+                {{ page }}
+              </button>
+            </template>
+          </div>
+
+          <button
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
+            :disabled="currentPage === totalPages"
+            @click="nextPage"
+          >
+            Next
+          </button>
+        </nav>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useServices } from "~/composables/useServices";
 
 const {
@@ -173,12 +235,15 @@ const {
   categories,
   searchQuery,
   selectedCategory,
+  verificationStatuses,
+  selectedVerification,
   nextPage,
   prevPage,
   goToPage,
 } = useServices();
+
 const paginationPages = computed(() => {
-  const pages = [];
+  const pages: (number | string)[] = [];
   const total = typeof totalPages?.value === "number" ? totalPages.value : 1;
   const current =
     typeof currentPage?.value === "number" ? currentPage.value : 1;

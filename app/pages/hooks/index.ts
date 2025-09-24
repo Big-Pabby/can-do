@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { https } from "#imports";
 
@@ -26,6 +27,19 @@ export function useConsent() {
     // onSuccess: () => {
     //   queryClient.invalidateQueries({ queryKey: ["business_products"] });
     // },
+  });
+}
+export function useServiceEdit(
+  serviceId: string,
+  onSuccess?: () => void,
+  onError?: (err: any) => void
+) {
+  return useMutation({
+    mutationFn: async (payload: Record<string, any>) => {
+      return await https.patch(`/v1/services/${serviceId}`, payload);
+    },
+    onSuccess,
+    onError,
   });
 }
 export function useConsentInsight() {
@@ -77,10 +91,14 @@ export function useUpload() {
 export function useTranscript() {
   //   const queryClient = useQueryClient();
   interface Response {
-    text: string; }
+    text: string;
+  }
   return useMutation({
     mutationFn: async (payload: { audio_url: string }) => {
-      const response = await https.post<Response>(`v1/misc/audio2text`, payload);
+      const response = await https.post<Response>(
+        `v1/misc/audio2text`,
+        payload
+      );
       return response;
     },
     // onSuccess: () => {

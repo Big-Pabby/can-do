@@ -8,7 +8,7 @@ export interface ServiceLocation {
 }
 
 export interface Service {
-    id: string;
+  id: string;
   details: {
     service_id: string;
     name: string;
@@ -36,6 +36,7 @@ export const useServices = () => {
   const itemsPerPage = ref(6);
   const searchQuery = ref("");
   const selectedCategory = ref("all");
+  const selectedVerification = ref("all");
 
   // Fetch services from API
   const { data, isLoading, isError, refetch } = useQuery({
@@ -68,6 +69,16 @@ export const useServices = () => {
     return Array.from(cats);
   });
 
+  // Get unique verification statuses
+  const verificationStatuses = computed(() => {
+    const set = new Set<string>();
+    services.value.forEach((service) => {
+      const v = service.details?.verification_status;
+      if (v) set.add(v);
+    });
+    return ["all", ...Array.from(set)];
+  });
+
   // Filter services based on search query and category
   const filteredServices = computed(() => {
     return services.value.filter((service) => {
@@ -91,7 +102,11 @@ export const useServices = () => {
         selectedCategory.value === "all" ||
         categoriesArr.includes(selectedCategory.value);
 
-      return matchesSearch && matchesCategory;
+      const matchesVerification =
+        selectedVerification.value === "all" ||
+        service.details?.verification_status === selectedVerification.value;
+
+      return matchesSearch && matchesCategory && matchesVerification;
     });
   });
 
@@ -132,8 +147,10 @@ export const useServices = () => {
     currentPage,
     totalPages,
     categories,
+    verificationStatuses,
     searchQuery,
     selectedCategory,
+    selectedVerification,
     nextPage,
     prevPage,
     goToPage,
