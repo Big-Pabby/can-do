@@ -18,9 +18,9 @@
 
       <div v-else-if="service" class="grid gap-6 md:grid-cols-2 grid-cols-1">
         <!-- Left: main service card (spans 2 cols on md+) -->
-        <div class="border bg-white rounded-2xl p-8  space-y-4 relative">
+        <div class="border bg-white rounded-2xl p-8 space-y-4 relative">
           <!-- Card Header -->
-          <span
+          <!-- <span
             :class="{
               'inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors': true,
               'bg-green-50 text-green-900 border-green-200':
@@ -32,23 +32,23 @@
             }"
           >
             {{ service.details.verification_status }}
-          </span>
-           <div class="flex justify-end">
-        <button
-          class="bg-[#12A0D8] py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="isPending"
-          @click="handleRerun"
-        >
-          <span v-if="rerunPending">Re-running...</span>
-          <span v-else>Re-run</span>
-        </button>
-        <span v-if="rerunError" class="ml-4 text-red-600 text-sm"
-          >Error: {{ error?.message || "Failed to re-run" }}</span
-        >
-        <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
-          >Re-run successful!</span
-        >
-      </div>
+          </span> -->
+          <div class="flex justify-end">
+            <button
+              class="bg-[#12A0D8] py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="isPending"
+              @click="handleRerun"
+            >
+              <span v-if="rerunPending">Re-running...</span>
+              <span v-else>Re-run</span>
+            </button>
+            <span v-if="rerunError" class="ml-4 text-red-600 text-sm"
+              >Error: {{ error?.message || "Failed to re-run" }}</span
+            >
+            <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
+              >Re-run successful!</span
+            >
+          </div>
           <div
             class="flex md:flex-row flex-col-reverse md:items-center items-start justify-between gap-4 mb-2"
           >
@@ -215,21 +215,21 @@
             </div>
             <div class="flex flex-col items-center gap-2">
               <i class="fas fa-clock text-primary"></i>
-              <span class="font-semibold">Hours:</span> <br>
+              <span class="font-semibold">Hours:</span> <br />
               <span class="text-muted-foreground">{{
                 service.details.hours
               }}</span>
             </div>
             <div class="flex flex-col items-center gap-2">
               <i class="fas fa-phone text-primary"></i>
-              <span class="font-semibold">Contact:</span> <br>
+              <span class="font-semibold">Contact:</span> <br />
               <span class="text-muted-foreground">{{
                 service.details.contact
               }}</span>
             </div>
             <div class="flex flex-col items-center gap-2">
               <i class="fas fa-user-check text-primary"></i>
-              <span class="font-semibold">Eligibility:</span> <br>
+              <span class="font-semibold">Eligibility:</span> <br />
               <span class="text-muted-foreground">{{
                 service.details.eligibility
               }}</span>
@@ -240,9 +240,7 @@
           <div class="flex items-center gap-6 border-t pt-6">
             <div class="flex items-center gap-2">
               <span class="text-yellow-400">★</span>
-              <span class="font-semibold">{{
-                service.details.rating
-              }}</span>
+              <span class="font-semibold">{{ service.details.rating }}</span>
               <span class="text-muted-foreground"
                 >({{ service.details.total_ratings }} reviews)</span
               >
@@ -251,10 +249,8 @@
         </div>
 
         <!-- Right: timeline card -->
-        <aside class="  rounded-2xl p-6 border h-fit">
-          <h3 class="text-lg font-semibold mb-4">
-            Change timeline
-          </h3>
+        <aside class="rounded-2xl p-6 border h-fit">
+          <h3 class="text-lg font-semibold mb-4">Change timeline</h3>
 
           <div
             v-if="isChangesLoading"
@@ -382,7 +378,7 @@ const {
 
 const service = data;
 function handleRerun() {
-  const selectedIds = [id]
+  const selectedIds = [id];
   rerunMutation(selectedIds);
 }
 
