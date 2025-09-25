@@ -116,6 +116,7 @@
               <td class="px-6 py-4 overflow-hidden">
                 <div class="text-sm font-medium text-gray-900">
                   <div class="w-[250px]">
+                    <Icon v-if="service.has_changes" icon="material-symbols:info-rounded" width="20" height="20"  style="color: #12A0D8" />
                     <NuxtLink
                       :to="`/services/${service.id}`"
                       class="text-primary font-semibold hover:underline block truncate max-w-[14rem] sm:max-w-full"
@@ -169,7 +170,7 @@
                     service.details?.rating
                   }}</span>
                   <span class="text-muted-foreground"
-                    >({{ service.details?.review_count }})</span
+                    >({{ service.details?.total_ratings }})</span
                   >
                 </div>
               </td>

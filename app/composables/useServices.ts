@@ -9,6 +9,7 @@ export interface ServiceLocation {
 
 export interface Service {
   id: string;
+  has_changes: boolean;
   details: {
     service_id: string;
     name: string;
@@ -22,7 +23,7 @@ export interface Service {
     access: string;
     evidence_links: string[];
     verification_status: string;
-    review_count: number;
+    total_ratings: number;
     rating: number;
     confidence: number;
     location?: ServiceLocation;

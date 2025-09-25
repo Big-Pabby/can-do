@@ -191,28 +191,28 @@
           <div class="grid grid-cols-1 gap-6 mb-6">
             <div class="flex items-center gap-2">
               <i class="fas fa-map-marker-alt text-primary"></i>
-              <span class="font-semibold">Address:</span>
+              <span class="font-semibold">Address:</span> <br>
               <span class="text-muted-foreground">{{
                 service.details.address
               }}</span>
             </div>
             <div class="flex items-center gap-2">
               <i class="fas fa-clock text-primary"></i>
-              <span class="font-semibold">Hours:</span>
+              <span class="font-semibold">Hours:</span> <br>
               <span class="text-muted-foreground">{{
                 service.details.hours
               }}</span>
             </div>
             <div class="flex items-center gap-2">
               <i class="fas fa-phone text-primary"></i>
-              <span class="font-semibold">Contact:</span>
+              <span class="font-semibold">Contact:</span> <br>
               <span class="text-muted-foreground">{{
                 service.details.contact
               }}</span>
             </div>
             <div class="flex items-center gap-2">
               <i class="fas fa-user-check text-primary"></i>
-              <span class="font-semibold">Eligibility:</span>
+              <span class="font-semibold">Eligibility:</span> <br>
               <span class="text-muted-foreground">{{
                 service.details.eligibility
               }}</span>
@@ -224,10 +224,10 @@
             <div class="flex items-center gap-2">
               <span class="text-yellow-400">★</span>
               <span class="font-semibold">{{
-                service.details.avg_rating
+                service.details.rating
               }}</span>
               <span class="text-muted-foreground"
-                >({{ service.details.review_count }} reviews)</span
+                >({{ service.details.total_ratings }} reviews)</span
               >
             </div>
           </div>
