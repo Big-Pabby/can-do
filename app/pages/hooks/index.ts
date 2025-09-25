@@ -1,3 +1,15 @@
+export function useFetchServiceUpdates(
+  
+) {
+  return useMutation({
+    mutationFn: async (serviceIds: string[]) => {
+      return await https.post(`/v1/services/fetch_updates/`, {
+        service_ids: serviceIds,
+      });
+    },
+   
+  });
+}
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { https } from "#imports";

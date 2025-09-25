@@ -20,7 +20,7 @@
 
           <select
             v-model="selectedCategory"
-            class="flex h-12 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-white"
+            class="flex h-12 flex-1 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-white"
           >
             <option value="all">All Categories</option>
             <option
@@ -33,17 +33,38 @@
           </select>
         </div>
         <!-- Verification status filter row -->
-        
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 space-y-4 py-8 sm:px-6 lg:px-8">
+      <div class="flex justify-end">
+        <button
+          class="bg-[#12A0D8] py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="selectedIds.length === 0 || isPending"
+          @click="handleRerun"
+        >
+          <span v-if="isPending">Re-running...</span>
+          <span v-else>Re-run</span>
+        </button>
+        <span v-if="isError" class="ml-4 text-red-600 text-sm"
+          >Error: {{ error?.message || "Failed to re-run" }}</span
+        >
+        <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
+          >Re-run successful!</span
+        >
+      </div>
+
       <!-- Services Table -->
 
       <div class="overflow-x-auto bg-white rounded-lg shadow">
         <table class="min-w-full divide-y divide-gray-200 sm:table-fixed">
           <thead class="bg-gray-50">
             <tr>
+              <th
+                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-8"
+              >
+                Select
+              </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:w-1/3"
               >
@@ -83,6 +104,15 @@
               :key="service.details?.service_id ?? index"
               class="hover:bg-gray-50"
             >
+              <td class="px-4 py-4 text-center">
+                <input
+                  type="checkbox"
+                  :value="service.id"
+                  v-model="selectedIds"
+                  class="form-checkbox accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
+                  :aria-label="`Select service ${service.details?.name}`"
+                />
+              </td>
               <td class="px-6 py-4 overflow-hidden">
                 <div class="text-sm font-medium text-gray-900">
                   <div class="w-[250px]">
@@ -225,8 +255,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { useServices } from "~/composables/useServices";
+import { useFetchServiceUpdates } from "../hooks/index";
+import { Icon } from "@iconify/vue";
 
 const {
   paginatedServices,
@@ -241,6 +273,21 @@ const {
   prevPage,
   goToPage,
 } = useServices();
+
+const selectedIds = ref<string[]>([]);
+
+const {
+  mutate: rerunMutation,
+  isPending,
+  isSuccess,
+  isError,
+  error,
+} = useFetchServiceUpdates();
+
+function handleRerun() {
+  if (selectedIds.value.length === 0 || isPending) return;
+  rerunMutation(selectedIds.value);
+}
 
 const paginationPages = computed(() => {
   const pages: (number | string)[] = [];
