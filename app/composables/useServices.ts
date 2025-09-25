@@ -150,6 +150,7 @@ export const useServices = () => {
     categories,
     verificationStatuses,
     searchQuery,
+    filteredServices,
     selectedCategory,
     selectedVerification,
     nextPage,

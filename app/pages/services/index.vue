@@ -100,7 +100,7 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr
-              v-for="(service, index) in paginatedServices"
+              v-for="(service, index) in filteredServices"
               :key="service.details?.service_id ?? index"
               class="hover:bg-gray-50"
             >
@@ -214,7 +214,7 @@
       </div>
 
       <!-- Pagination -->
-      <div class="mt-8 flex w-full justify-center">
+      <!-- <div class="mt-8 flex w-full justify-center">
         <nav
           class="flex items-center space-x-1"
           role="navigation"
@@ -259,7 +259,7 @@
             Next
           </button>
         </nav>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -276,6 +276,7 @@ const {
   totalPages,
   categories,
   searchQuery,
+  filteredServices,
   selectedCategory,
   verificationStatuses,
   selectedVerification,
