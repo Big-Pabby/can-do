@@ -282,6 +282,7 @@ const {
   nextPage,
   prevPage,
   goToPage,
+  refetch,
 } = useServices();
 
 const selectedIds = ref<string[]>([]);
@@ -297,6 +298,7 @@ const {
 function handleRerun() {
   console.log(selectedIds.value);
   rerunMutation(selectedIds.value);
+  refetch();
 }
 
 const paginationPages = computed(() => {
