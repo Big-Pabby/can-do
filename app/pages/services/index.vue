@@ -116,12 +116,21 @@
               <td class="px-6 py-4 overflow-hidden">
                 <div class="text-sm font-medium text-gray-900">
                   <div class="w-[250px]">
-                    <Icon v-if="service.has_changes" icon="material-symbols:info-rounded" width="20" height="20"  style="color: #12A0D8" />
-                    <NuxtLink
-                      :to="`/services/${service.id}`"
-                      class="text-primary font-semibold hover:underline block truncate max-w-[14rem] sm:max-w-full"
-                      >{{ service.details?.name }}</NuxtLink
-                    >
+                    <div class="flex gap-2 items-start">
+                      <Icon
+                        v-if="service.has_changes"
+                        icon="material-symbols:info-rounded"
+                        width="20"
+                        height="20"
+                        style="color: #12a0d8"
+                      />
+                      <NuxtLink
+                        :to="`/services/${service.id}`"
+                        class="text-primary font-semibold hover:underline block truncate max-w-[14rem] sm:max-w-full"
+                        >{{ service.details?.name }}</NuxtLink
+                      >
+                    </div>
+
                     <div
                       class="text-xs text-muted-foreground truncate max-w-[14rem] sm:max-w-full"
                     >
@@ -286,7 +295,7 @@ const {
 } = useFetchServiceUpdates();
 
 function handleRerun() {
- console.log(selectedIds.value)
+  console.log(selectedIds.value);
   rerunMutation(selectedIds.value);
 }
 
