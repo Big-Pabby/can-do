@@ -206,28 +206,28 @@
 
           <!-- Info Grid -->
           <div class="grid grid-cols-1 gap-6 mb-6">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col items-center gap-2">
               <i class="fas fa-map-marker-alt text-primary"></i>
-              <span class="font-semibold">Address:</span> <br>
+              <span class="font-semibold">Address:</span>
               <span class="text-muted-foreground">{{
                 service.details.address
               }}</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col items-center gap-2">
               <i class="fas fa-clock text-primary"></i>
               <span class="font-semibold">Hours:</span> <br>
               <span class="text-muted-foreground">{{
                 service.details.hours
               }}</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col items-center gap-2">
               <i class="fas fa-phone text-primary"></i>
               <span class="font-semibold">Contact:</span> <br>
               <span class="text-muted-foreground">{{
                 service.details.contact
               }}</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col items-center gap-2">
               <i class="fas fa-user-check text-primary"></i>
               <span class="font-semibold">Eligibility:</span> <br>
               <span class="text-muted-foreground">{{
