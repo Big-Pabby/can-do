@@ -2,6 +2,12 @@
   <div
     class="min-h-screen py-8 bg-gradient-to-br from-background to-secondary/30"
   >
+   <span v-if="rerunError" class="ml-4 text-red-600 text-sm"
+              >Error: {{ error?.message || "Failed to re-run" }}</span
+            >
+            <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
+              >Re-run successful!</span
+            >
     <div class="max-w-6xl mx-auto px-4">
       <div
         v-if="isLoading"
@@ -33,21 +39,22 @@
           >
             {{ service.details.verification_status }}
           </span> -->
-          <div class="flex justify-end">
+          <div class="flex justify-between">
+             <button
+              @click="showEdit = true"
+              class="inline-flex items-center px-3 py-2 rounded-md border bg-[#12A0D8] text-white font-semibold hover:bg-[#12A0D8]/90 transition"
+            >
+              Edit Service
+            </button>
             <button
-              class="bg-[#12A0D8] py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              class="bg-primary py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="isPending"
               @click="handleRerun"
             >
               <span v-if="rerunPending">Re-running...</span>
               <span v-else>Re-run</span>
             </button>
-            <span v-if="rerunError" class="ml-4 text-red-600 text-sm"
-              >Error: {{ error?.message || "Failed to re-run" }}</span
-            >
-            <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
-              >Re-run successful!</span
-            >
+           
           </div>
           <div
             class="flex md:flex-row flex-col-reverse md:items-center items-start justify-between gap-4 mb-2"
@@ -63,12 +70,7 @@
               </div>
             </div>
 
-            <button
-              @click="showEdit = true"
-              class="inline-flex items-center px-3 py-2 rounded-md border bg-[#12A0D8] text-white text-xs font-semibold hover:bg-[#12A0D8]/90 transition"
-            >
-              Edit Service
-            </button>
+           
           </div>
           <!-- Edit Modal -->
           <div
@@ -206,30 +208,30 @@
 
           <!-- Info Grid -->
           <div class="grid grid-cols-1 gap-6 mb-6">
-            <div class="flex flex-col items-center gap-2">
-              <i class="fas fa-map-marker-alt text-primary"></i>
+            <div class="flex flex-col items-start gap-2">
+             
               <span class="font-semibold">Address:</span>
               <span class="text-muted-foreground">{{
                 service.details.address
               }}</span>
             </div>
-            <div class="flex flex-col items-center gap-2">
-              <i class="fas fa-clock text-primary"></i>
-              <span class="font-semibold">Hours:</span> <br />
+            <div class="flex flex-col items-start gap-2">
+             
+              <span class="font-semibold">Hours:</span> 
               <span class="text-muted-foreground">{{
                 service.details.hours
               }}</span>
             </div>
-            <div class="flex flex-col items-center gap-2">
-              <i class="fas fa-phone text-primary"></i>
-              <span class="font-semibold">Contact:</span> <br />
+            <div class="flex flex-col items-start gap-2">
+              
+              <span class="font-semibold">Contact:</span>
               <span class="text-muted-foreground">{{
                 service.details.contact
               }}</span>
             </div>
-            <div class="flex flex-col items-center gap-2">
-              <i class="fas fa-user-check text-primary"></i>
-              <span class="font-semibold">Eligibility:</span> <br />
+            <div class="flex flex-col items-start gap-2">
+             
+              <span class="font-semibold">Eligibility:</span> 
               <span class="text-muted-foreground">{{
                 service.details.eligibility
               }}</span>

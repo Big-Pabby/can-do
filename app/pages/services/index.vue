@@ -37,7 +37,27 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 space-y-4 py-8 sm:px-6 lg:px-8">
-      <div class="flex justify-end">
+      <span v-if="isError" class="ml-4 text-red-600 text-sm"
+        >Error: {{ error?.message || "Failed to re-run" }}</span
+      >
+      <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
+        >Re-run successful!</span
+      >
+      <div class="flex justify-between">
+        <div class="flex gap-2 items-center">
+          <input
+            type="checkbox"
+            @change="(e)=> {
+              if (e.target && e.target.checked) {
+                selectedIds = filteredServices.map((s) => s.id);
+              } else {
+                selectedIds = [];
+              }
+            }"
+            class="form-checkbox accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
+          />
+          Select all Services
+        </div>
         <button
           class="bg-[#12A0D8] py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="selectedIds.length === 0 || isPending"
@@ -46,12 +66,6 @@
           <span v-if="isPending">Re-running...</span>
           <span v-else>Re-run</span>
         </button>
-        <span v-if="isError" class="ml-4 text-red-600 text-sm"
-          >Error: {{ error?.message || "Failed to re-run" }}</span
-        >
-        <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
-          >Re-run successful!</span
-        >
       </div>
 
       <!-- Services Table -->
