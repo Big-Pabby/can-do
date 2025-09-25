@@ -126,7 +126,7 @@
                       />
                       <NuxtLink
                         :to="`/services/${service.id}`"
-                        class="text-primary font-semibold hover:underline block truncate max-w-[14rem] sm:max-w-full"
+                        class="text-primary font-semibold flex-1 hover:underline block truncate max-w-[14rem] sm:max-w-full"
                         >{{ service.details?.name }}</NuxtLink
                       >
                     </div>
