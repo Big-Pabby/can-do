@@ -285,7 +285,7 @@ const {
 } = useFetchServiceUpdates();
 
 function handleRerun() {
-  if (selectedIds.value.length === 0 || isPending) return;
+ console.log(selectedIds.value)
   rerunMutation(selectedIds.value);
 }
 
