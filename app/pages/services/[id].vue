@@ -15,6 +15,7 @@
       >
         Error loading service.
       </div>
+
       <div v-else-if="service" class="grid gap-6 md:grid-cols-2 grid-cols-1">
         <!-- Left: main service card (spans 2 cols on md+) -->
         <div class="border bg-white rounded-2xl p-8  space-y-4 relative">
@@ -32,6 +33,22 @@
           >
             {{ service.details.verification_status }}
           </span>
+           <div class="flex justify-end">
+        <button
+          class="bg-[#12A0D8] py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="isPending"
+          @click="handleRerun"
+        >
+          <span v-if="rerunPending">Re-running...</span>
+          <span v-else>Re-run</span>
+        </button>
+        <span v-if="rerunError" class="ml-4 text-red-600 text-sm"
+          >Error: {{ error?.message || "Failed to re-run" }}</span
+        >
+        <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
+          >Re-run successful!</span
+        >
+      </div>
           <div
             class="flex md:flex-row flex-col-reverse md:items-center items-start justify-between gap-4 mb-2"
           >
@@ -325,6 +342,7 @@ import { useRoute } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
 import { useServiceEdit } from "../hooks";
 import https from "@/utils/https";
+import { useFetchServiceUpdates } from "../hooks";
 
 const route = useRoute();
 const id = route.params.id as string;
@@ -354,8 +372,19 @@ const { data, isLoading, isError, refetch } = useQuery({
   },
   enabled: !!id,
 });
+const {
+  mutate: rerunMutation,
+  isPending: rerunPending,
+  isSuccess,
+  isError: rerunError,
+  error,
+} = useFetchServiceUpdates();
 
 const service = data;
+function handleRerun() {
+  const selectedIds = [id]
+  rerunMutation(selectedIds);
+}
 
 // When modal opens, prefill form
 watch(showEdit, (val) => {
