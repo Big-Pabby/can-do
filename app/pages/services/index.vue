@@ -166,7 +166,7 @@
                 <div class="flex items-center gap-2">
                   <span class="text-yellow-400">★</span>
                   <span class="font-semibold">{{
-                    service.details?.avg_rating
+                    service.details?.rating
                   }}</span>
                   <span class="text-muted-foreground"
                     >({{ service.details?.review_count }})</span

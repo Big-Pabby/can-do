@@ -23,7 +23,7 @@ export interface Service {
     evidence_links: string[];
     verification_status: string;
     review_count: number;
-    avg_rating: number;
+    rating: number;
     confidence: number;
     location?: ServiceLocation;
   };
