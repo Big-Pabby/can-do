@@ -11,7 +11,7 @@ import {
 </script>
 
 <template>
-  <Dialog :open="true">
+  <Dialog>
     <DialogContent>
       <DialogHeader>
         <DialogTitle>Edit profile</DialogTitle>
