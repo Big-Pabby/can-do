@@ -4,10 +4,21 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   plugins: ["~/plugins/vue-query-plugin", "~/plugins/google-maps.client"],
-  modules: ["@vite-pwa/nuxt"],
+  modules: ["@vite-pwa/nuxt", "shadcn-nuxt",],
   css: ["~/assets/main.css"],
   vite: {
     plugins: [tailwindcss()],
+  },
+  shadcn: {
+    /**
+     * Prefix for all the imported component
+     */
+    prefix: '',
+    /**
+     * Directory that the component lives in.
+     * @default "./components/ui"
+     */
+    componentDir: './components/ui'
   },
   // pwa: {
   //   registerType: "autoUpdate",
