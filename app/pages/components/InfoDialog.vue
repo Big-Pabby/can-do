@@ -7,11 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../../components/ui/dialog";
+} from '../../../components/ui/dialog'
 </script>
 
 <template>
-  <Dialog>
+  <Dialog >
+    <DialogTrigger>
+      Edit Profile
+    </DialogTrigger>
     <DialogContent>
       <DialogHeader>
         <DialogTitle>Edit profile</DialogTitle>
@@ -20,7 +23,9 @@ import {
         </DialogDescription>
       </DialogHeader>
 
-      <DialogFooter> Save changes </DialogFooter>
+      <DialogFooter>
+        Save changes
+      </DialogFooter>
     </DialogContent>
   </Dialog>
 </template>

@@ -1,9 +1,8 @@
 <template>
-  <div class="p-12 relative">
-     <InfoDialog/>
+  <div class="">
     <div class="bg-white rounded-[16px] px-4 space-y-4 py-8 sm:px-6 lg:px-8">
-      <div class="mb-8 flex justify-between items-center">
-        <div>
+      <div class="mb-8 flex justify-between items-center gap-6">
+        <div class="flex-1">
           <h1 class="text-3xl font-bold text-[#12A0D8]">Available Services</h1>
           <p class="mt-2 text-sm">
             Browse and filter through our comprehensive list of services
@@ -42,49 +41,42 @@
           </option>
         </select>
       </div>
-      <span v-if="isError" class="ml-4 text-red-600 text-sm"
-        >Error: {{ error?.message || "Failed to re-run" }}</span
-      >
-      <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
-        >Re-run successful!</span
-      >
-      <div class="flex justify-between">
-        <div class="flex gap-2 items-center">
-          <input
-            type="checkbox"
-            @change="
-              (e) => {
-                if (e.target && e.target.checked) {
-                  selectedIds = filteredServices.map((s) => s.id);
-                } else {
-                  selectedIds = [];
-                }
-              }
-            "
-            class="form-checkbox accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
-          />
-          Select all Services
-        </div>
-      </div>
-     
-      <div class="bg-white w-full">
-        <Table class="w-full">
+   
+
+      <div class="bg-white overflow-x-auto">
+        <Table class="">
           <TableHeader>
             <TableRow>
-              <TableHead> Select </TableHead>
-              <TableHead> Service Name</TableHead>
+              <TableHead>
+                <div class="flex gap-2 items-center">
+                  <input
+                    type="checkbox"
+                    @change="
+                      (e) => {
+                        if (e.target && e.target.checked) {
+                          selectedIds = filteredServices.map((s) => s.id);
+                        } else {
+                          selectedIds = [];
+                        }
+                      }
+                    "
+                    class="form-checkbox accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
+                  />
+                </div>
+              </TableHead>
+              <TableHead><p class="text-left">Service Name</p> </TableHead>
               <TableHead>Organization </TableHead>
               <TableHead>Categories </TableHead>
               <TableHead>Location </TableHead>
               <TableHead>Rating </TableHead>
               <TableHead> Status </TableHead>
-              <TableHead class="text-right"> Action </TableHead>
+              <TableHead> Action </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody class="text-sm">
             <TableRow v-for="(service, index) in filteredServices" :key="index">
               <TableCell>
-                <div class="flex w-full justify-center items-center">
+                <div class="">
                   <input
                     type="checkbox"
                     :value="service.id"
@@ -140,7 +132,7 @@
               </TableCell>
               <TableCell>
                 <div class="flex items-center gap-2">
-                  <span class="text-yellow-400">★</span>
+                  <span class="text-yellow-400 text-base">★</span>
                   <span class="font-semibold">{{
                     service.details?.rating
                   }}</span>
@@ -166,8 +158,13 @@
               </TableCell>
               <TableCell>
                 <div class="flex gap-2 items-center text-[#4B5563]">
-                  <Icon icon="iconamoon:eye" width="20" height="20" />
-                  <Icon icon="iconamoon:edit" width="20" height="20" />
+                  <nuxt-link
+                    :to="`/services/${service.id}`"
+                    aria-label="View Service Details"
+                    ><Icon icon="iconamoon:eye" width="20" height="20"
+                  /></nuxt-link>
+
+                  <!-- <Icon icon="iconamoon:edit" width="20" height="20" /> -->
                   <Icon icon="mdi:trash-outline" width="20" height="20" />
                 </div>
               </TableCell>
@@ -243,16 +240,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../../components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../../../components/ui/dialog";
-import InfoDialog from "../components/InfoDialog.vue";
+import { toast } from "vue-sonner";
 
 const {
   paginatedServices,
@@ -282,53 +270,26 @@ const {
 
 function handleRerun() {
   console.log(selectedIds.value);
-  rerunMutation(selectedIds.value);
+  rerunMutation(selectedIds.value, {
+    onSuccess: () => {
+      toast.success("Re-run Triggered!", {
+        style: {
+          background: "#F0FDF4",
+          border: "1px solid #BBF7D0",
+          color: "#16A34A",
+        },
+        class: "my-toast",
+        descriptionClass: "my-toast-description",
+      });
+      refetch();
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || "Failed to re-run.";
+      toast.error(msg);
+    },
+  });
   refetch();
 }
-const invoices = [
-  {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Unpaid",
-    totalAmount: "$300.00",
-    paymentMethod: "Credit Card",
-  },
-];
 
 const paginationPages = computed(() => {
   const pages: (number | string)[] = [];

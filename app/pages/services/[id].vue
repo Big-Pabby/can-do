@@ -1,14 +1,164 @@
 <template>
-  <div
-    class="min-h-screen py-8 bg-gradient-to-br from-background to-secondary/30"
-  >
-   <span v-if="rerunError" class="ml-4 text-red-600 text-sm"
-              >Error: {{ error?.message || "Failed to re-run" }}</span
+  <div class="space-y-4">
+   <nuxt-link to="/services" class="flex gap-3 items-center font-medium text-[#374151]"><Icon icon="ion:arrow-back-outline" width="20" height="20"   /> Go back</nuxt-link>
+    <div
+      v-if="showEdit"
+      class="fixed inset-0 z-50 flex h-screen items-center justify-center bg-black/40"
+    >
+      <div
+        class="bg-white rounded-xl h-[95vh] overflow-y-auto shadow-lg p-6 w-full max-w-[600px] relative"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold">Edit Service Information</h2>
+          <button
+            @click="showEdit = false"
+            class="w-[32px] h-[32px] rounded-full border border-[#EFF1C8] bg-[#FAFAED] text-[#B0B72E] flex items-center justify-center text-lg"
+          >
+            &times;
+          </button>
+        </div>
+
+        <form @submit.prevent="submitEdit" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Service Name</label>
+            <input
+              v-model="editForm.name"
+              type="text"
+              class="w-full border rounded-[10px] px-3 py-3.5"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Organization</label>
+            <input
+              v-model="editForm.org_name"
+              type="text"
+              class="w-full border rounded-[10px] px-3 py-3.5"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Categories</label>
+            <input
+              v-model="editForm.categories"
+              type="text"
+              class="w-full border rounded-[10px] px-3 py-3.5"
+            />
+            <div class="text-xs text-muted-foreground mt-1">
+              Comma separated
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Address</label>
+            <input
+              v-model="editForm.address"
+              type="text"
+              class="w-full border rounded-[10px] px-3 py-3.5"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Contact</label>
+            <input
+              v-model="editForm.contact"
+              type="text"
+              class="w-full border rounded-[10px] px-3 py-3.5"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Hours</label>
+            <input
+              v-model="editForm.hours"
+              type="text"
+              class="w-full border rounded-[10px] px-3 py-3.5"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Description</label>
+            <textarea
+              v-model="editForm.description"
+              class="w-full border h-[200px] rounded-[10px] px-3 py-3.5"
+            ></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Eligibility</label>
+            <textarea
+              v-model="editForm.eligibility"
+              class="w-full border h-[200px] rounded-[10px] px-3 py-3.5"
+            ></textarea>
+          </div>
+          <div class="flex items-center gap-2 mt-4">
+            <button
+              type="submit"
+              :disabled="isPending"
+              class="bg-[#12A0D8] text-white w-full p-4 rounded-full font-semibold hover:bg-[#12A0D8]/90 flex items-center gap-2 justify-center disabled:opacity-50"
             >
-            <span v-if="isSuccess" class="ml-4 text-green-600 text-sm"
-              >Re-run successful!</span
-            >
-    <div class="max-w-6xl mx-auto px-4">
+             <Icon
+              v-if="isPending"
+              icon="tabler:loader"
+              width="20"
+              height="20"
+              class="animate animate-spin"
+              style="color: #fff"
+            />
+            <span v-if="isPending">Saving...</span>
+            <span v-else>Save</span>
+              
+            </button>
+            
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="border border-[#F3F4F6] rounded-[16px] bg-white p-6 space-y-6">
+      <div class="flex justify-between md:flex-row flex-col gap-4 md:items-center">
+        <div class="space-y-3">
+          <h1 class="text-3xl font-bold text-[#12A0D8]">About Service</h1>
+          <p class="text-[#6B7280]">
+            Here is the information about this service
+          </p>
+        </div>
+        <div class="flex gap-4">
+          <button
+            @click="showEdit = true"
+            class="flex gap-2 bg-[#B0B72E] rounded-full px-5 py-2.5 text-white"
+          >
+            <Icon
+              icon="tabler:edit"
+              width="20"
+              height="20"
+              style="color: #fff"
+            />
+            Edit
+          </button>
+          <button
+            :disabled="rerunPending"
+            @click="handleRerun"
+            class="flex gap-2 bg-[#12A0D8] rounded-full px-5 py-2.5 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Icon
+              v-if="rerunPending"
+              icon="tabler:loader"
+              width="20"
+              height="20"
+              class="animate animate-spin"
+              style="color: #fff"
+            />
+            <span v-if="rerunPending">Re-running...</span>
+            <span v-else>Re-run</span>
+          </button>
+        </div>
+      </div>
+      <div class="border-b border-[#E5E7EB] flex gap-6">
+        <div
+          class="font-medium border-b-[3px] text-[#12A0D8] border-[#12A0D8] p-2 cursor-pointer"
+        >
+          Service Information
+        </div>
+        <div
+          class="font-medium hover:border-b-[3px] hover:text-[#12A0D8] hover:border-[#12A0D8] text-[#6B7280] p-2 cursor-pointer"
+        >
+          Users Feedback
+        </div>
+      </div>
       <div
         v-if="isLoading"
         class="text-center py-8 animate-pulse text-lg text-muted-foreground"
@@ -22,9 +172,14 @@
         Error loading service.
       </div>
 
-      <div v-else-if="service" class="grid gap-6 md:grid-cols-2 grid-cols-1">
+      <div
+        v-else-if="service"
+        class="flex gap-6 justify-between md:flex-row flex-col"
+      >
         <!-- Left: main service card (spans 2 cols on md+) -->
-        <div class="border bg-white rounded-2xl p-8 space-y-4 relative">
+        <div
+          class="md:w-7/12 w-full border bg-[#FEFEFE] rounded-2xl p-6 space-y-4 relative"
+        >
           <!-- Card Header -->
           <!-- <span
             :class="{
@@ -39,23 +194,7 @@
           >
             {{ service.details.verification_status }}
           </span> -->
-          <div class="flex justify-between">
-             <button
-              @click="showEdit = true"
-              class="inline-flex items-center px-3 py-2 rounded-md border bg-[#12A0D8] text-white font-semibold hover:bg-[#12A0D8]/90 transition"
-            >
-              Edit Service
-            </button>
-            <button
-              class="bg-primary py-3 px-6 rounded-[8px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="isPending"
-              @click="handleRerun"
-            >
-              <span v-if="rerunPending">Re-running...</span>
-              <span v-else>Re-run</span>
-            </button>
-           
-          </div>
+
           <div
             class="flex md:flex-row flex-col-reverse md:items-center items-start justify-between gap-4 mb-2"
           >
@@ -69,121 +208,8 @@
                 </p>
               </div>
             </div>
-
-           
           </div>
-          <!-- Edit Modal -->
-          <div
-            v-if="showEdit"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          >
-            <div
-              class="bg-white rounded-xl h-[95vh] overflow-y-auto shadow-lg p-6 w-full max-w-lg relative"
-            >
-              <button
-                @click="showEdit = false"
-                class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
-              >
-                &times;
-              </button>
-              <h2 class="text-lg font-bold mb-4">Edit Service Info</h2>
-              <form @submit.prevent="submitEdit" class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-1">Name</label>
-                  <input
-                    v-model="editForm.name"
-                    type="text"
-                    class="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1"
-                    >Organization</label
-                  >
-                  <input
-                    v-model="editForm.org_name"
-                    type="text"
-                    class="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1"
-                    >Description</label
-                  >
-                  <textarea
-                    v-model="editForm.description"
-                    class="w-full border rounded px-3 py-2"
-                    rows="3"
-                  ></textarea>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1"
-                    >Categories</label
-                  >
-                  <input
-                    v-model="editForm.categories"
-                    type="text"
-                    class="w-full border rounded px-3 py-2"
-                  />
-                  <div class="text-xs text-muted-foreground mt-1">
-                    Comma separated
-                  </div>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Address</label>
-                  <input
-                    v-model="editForm.address"
-                    type="text"
-                    class="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Contact</label>
-                  <input
-                    v-model="editForm.contact"
-                    type="text"
-                    class="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Hours</label>
-                  <input
-                    v-model="editForm.hours"
-                    type="text"
-                    class="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1"
-                    >Eligibility</label
-                  >
-                  <input
-                    v-model="editForm.eligibility"
-                    type="text"
-                    class="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div class="flex items-center gap-2 mt-4">
-                  <button
-                    type="submit"
-                    :disabled="isPending"
-                    class="bg-[#12A0D8] text-white px-4 py-2 rounded font-semibold hover:bg-[#12A0D8]/90 disabled:opacity-50"
-                  >
-                    Save
-                  </button>
-                  <span v-if="isPending" class="text-sm text-muted-foreground"
-                    >Saving...</span
-                  >
-                  <span v-if="editError" class="text-sm text-red-500">{{
-                    editError
-                  }}</span>
-                  <span v-if="editSuccess" class="text-sm text-green-600"
-                    >Saved!</span
-                  >
-                </div>
-              </form>
-            </div>
-          </div>
+          <hr />
 
           <!-- Description -->
           <div class="mb-6">
@@ -192,6 +218,7 @@
               {{ service.details.description }}
             </p>
           </div>
+          <hr />
 
           <!-- Categories -->
           <div class="mb-6">
@@ -206,32 +233,37 @@
             </div>
           </div>
 
+          <hr />
           <!-- Info Grid -->
           <div class="grid grid-cols-1 gap-6 mb-6">
             <div class="flex flex-col items-start gap-2">
-             
               <span class="font-semibold">Address:</span>
               <span class="text-muted-foreground">{{
                 service.details.address
               }}</span>
             </div>
+            <hr />
             <div class="flex flex-col items-start gap-2">
-             
-              <span class="font-semibold">Hours:</span> 
+              <span class="font-semibold">Hours:</span>
               <span class="text-muted-foreground">{{
                 service.details.hours
               }}</span>
             </div>
+            <hr />
             <div class="flex flex-col items-start gap-2">
-              
               <span class="font-semibold">Contact:</span>
-              <span class="text-muted-foreground">{{
-                service.details.contact
-              }}</span>
+              <div class="flex flex-wrap gap-4 text-muted-foreground">
+                <p v-if="service.details.phone">
+                  Phone Number: {{ service.details.phone }}
+                </p>
+                <p v-if="service.details.email">
+                  Phone Number: {{ service.details.email }}
+                </p>
+              </div>
             </div>
+            <hr />
             <div class="flex flex-col items-start gap-2">
-             
-              <span class="font-semibold">Eligibility:</span> 
+              <span class="font-semibold">Eligibility:</span>
               <span class="text-muted-foreground">{{
                 service.details.eligibility
               }}</span>
@@ -251,8 +283,11 @@
         </div>
 
         <!-- Right: timeline card -->
-        <aside class="rounded-2xl p-6 border h-fit">
-          <h3 class="text-lg font-semibold mb-4">Change timeline</h3>
+        <aside
+          class="md:w-5/12  bg-[#FEFEFE] rounded-2xl p-6 border space-y-4 h-fit"
+        >
+          <h3 class="text-lg font-semibold">Change Timeline</h3>
+          <hr />
 
           <div
             v-if="isChangesLoading"
@@ -264,7 +299,7 @@
             Error loading changes.
           </div>
 
-          <div v-else class="space-y-4 max-h-[60vh] pr-2">
+          <div v-else class="space-y-4 max-h-screen overflow-y-auto">
             <div
               v-if="sortedChanges.length === 0"
               class="text-sm text-muted-foreground"
@@ -272,51 +307,30 @@
               No changes recorded.
             </div>
 
-            <ol class="relative border-l border-gray-200">
+            <ol class="">
               <li
                 v-for="change in sortedChanges"
                 :key="change.id"
-                class="mb-6 ml-4"
+                class="border-b pb-4 border-[#E5E7EB] last:border-0 last:pb-0"
               >
-                <div
-                  class="absolute -left-3 w-6 h-6 bg-white border border-gray-300 rounded-full flex items-center justify-center text-xs text-muted-foreground"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3 text-primary"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11V5a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0V9h2a1 1 0 100-2h-2z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <time class="mb-1 text-xs text-muted-foreground">{{
-                  new Date(change.date_updated).toLocaleString()
-                }}</time>
-                <h4 class="text-sm font-medium">
-                  Change ID: <span class="font-normal">{{ change.id }}</span>
-                </h4>
                 <div class="mt-2 space-y-2">
                   <div
                     v-for="(fieldChanges, key) in change.details"
                     :key="String(key)"
-                    class="bg-gray-50 p-3 rounded"
+                    class="space-y-1"
                   >
-                    <div class="text-xs text-muted-foreground">
+                    <div class="font-semibold">
                       {{ formatKey(String(key)) }}
                     </div>
-                    <div class="flex items-center gap-3 mt-1">
-                      <div class="text-sm text-rose-600 line-through truncate">
+                    <time class="text-xs text-muted-foreground">{{
+                      new Date(change.date_updated).toLocaleString()
+                    }}</time>
+                    <div class="flex items-start flex-col gap-1">
+                      <div class="text-sm text-[#EF4444] line-through truncate">
                         {{ fieldChanges.old ?? "—" }}
                       </div>
-                      <div class="text-sm text-muted-foreground">→</div>
-                      <div
-                        class="text-sm text-emerald-600 font-medium truncate"
-                      >
+
+                      <div class="text-sm text-[#16A34A] font-medium truncate">
                         {{ fieldChanges.new ?? "—" }}
                       </div>
                     </div>
@@ -341,6 +355,8 @@ import { useQuery } from "@tanstack/vue-query";
 import { useServiceEdit } from "../hooks";
 import https from "@/utils/https";
 import { useFetchServiceUpdates } from "../hooks";
+import { Icon } from "@iconify/vue";
+import { toast } from "vue-sonner";
 
 const route = useRoute();
 const id = route.params.id as string;
@@ -370,18 +386,30 @@ const { data, isLoading, isError, refetch } = useQuery({
   },
   enabled: !!id,
 });
-const {
-  mutate: rerunMutation,
-  isPending: rerunPending,
-  isSuccess,
-  isError: rerunError,
-  error,
-} = useFetchServiceUpdates();
+const { mutate: rerunMutation, isPending: rerunPending } =
+  useFetchServiceUpdates();
 
 const service = data;
 function handleRerun() {
   const selectedIds = [id];
-  rerunMutation(selectedIds);
+  rerunMutation(selectedIds, {
+    onSuccess: () => {
+      toast.success("Re-run Triggered!", {
+        style: {
+          background: "#F0FDF4",
+          border: "1px solid #BBF7D0",
+          color: "#16A34A",
+        },
+        class: "my-toast",
+        descriptionClass: "my-toast-description",
+      });
+      refetch();
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || "Failed to re-run.";
+      toast.error(msg);
+    },
+  });
 }
 
 // When modal opens, prefill form
@@ -424,7 +452,27 @@ function submitEdit() {
   for (const k in editForm.value) {
     base[k] = editForm.value[k];
   }
-  onUpdate({ details: base });
+  onUpdate(
+    { details: base },
+    {
+      onSuccess: () => {
+        toast.success("Service Updated!", {
+          style: {
+            background: "#F0FDF4",
+            border: "1px solid #BBF7D0",
+            color: "#16A34A",
+          },
+          class: "my-toast",
+          descriptionClass: "my-toast-description",
+        });
+        refetch();
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.message || "Failed to re-run.";
+        toast.error(msg);
+      },
+    }
+  );
 }
 
 // Fetch change history for this service

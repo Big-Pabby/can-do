@@ -19,6 +19,7 @@ export interface Service {
     eligibility: string;
     contact: string;
     address: string;
+    phone: string;
     hours: string;
     access: string;
     evidence_links: string[];
