@@ -3,7 +3,7 @@
     <div class="bg-white rounded-[16px] px-4 space-y-4 py-8 sm:px-6 lg:px-8">
       <div class="mb-8 flex justify-between items-center gap-6">
         <div class="flex-1">
-          <h1 class="text-3xl font-bold text-[#12A0D8]">Available Services</h1>
+          <h1 class="text-3xl font-bold text-[#12A0D8]">Available Services ({{ filteredServices.length }})</h1>
           <p class="mt-2 text-sm">
             Browse and filter through our comprehensive list of services
           </p>
@@ -41,7 +41,6 @@
           </option>
         </select>
       </div>
-   
 
       <div class="bg-white overflow-x-auto">
         <Table class="">
@@ -60,7 +59,7 @@
                         }
                       }
                     "
-                    class="form-checkbox accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
+                    class="text-white accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
                   />
                 </div>
               </TableHead>
@@ -81,7 +80,7 @@
                     type="checkbox"
                     :value="service.id"
                     v-model="selectedIds"
-                    class="form-checkbox accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
+                    class="accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
                     :aria-label="`Select service ${service.details?.name}`"
                   />
                 </div>
@@ -165,7 +164,7 @@
                   /></nuxt-link>
 
                   <!-- <Icon icon="iconamoon:edit" width="20" height="20" /> -->
-                  <Icon icon="mdi:trash-outline" width="20" height="20" />
+                  <InfoDialog :serviceId="service.id" />
                 </div>
               </TableCell>
             </TableRow>
@@ -241,6 +240,7 @@ import {
   TableRow,
 } from "../../../components/ui/table";
 import { toast } from "vue-sonner";
+import InfoDialog from "../components/InfoDialog.vue";
 
 const {
   paginatedServices,
@@ -259,6 +259,7 @@ const {
 } = useServices();
 
 const selectedIds = ref<string[]>([]);
+const deleteDialogOpen = ref<boolean>(false);
 
 const {
   mutate: rerunMutation,
@@ -317,5 +318,11 @@ const paginationPages = computed(() => {
 </script>
 
 <style scoped>
-/* Add any additional custom styles here */
+input[type="checkbox"] {
+  accent-color: #12a0d8;
+  color: #fff;
+}
+input[type="checkbox"]:checked {
+  color: white; /* ✅ white tick */
+}
 </style>

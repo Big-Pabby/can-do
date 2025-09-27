@@ -1,6 +1,11 @@
 <template>
   <div class="space-y-4">
-   <nuxt-link to="/services" class="flex gap-3 items-center font-medium text-[#374151]"><Icon icon="ion:arrow-back-outline" width="20" height="20"   /> Go back</nuxt-link>
+    <nuxt-link
+      to="/services"
+      class="flex gap-3 items-center font-medium text-[#374151]"
+      ><Icon icon="ion:arrow-back-outline" width="20" height="20" /> Go
+      back</nuxt-link
+    >
     <div
       v-if="showEdit"
       class="fixed inset-0 z-50 flex h-screen items-center justify-center bg-black/40"
@@ -91,32 +96,36 @@
               :disabled="isPending"
               class="bg-[#12A0D8] text-white w-full p-4 rounded-full font-semibold hover:bg-[#12A0D8]/90 flex items-center gap-2 justify-center disabled:opacity-50"
             >
-             <Icon
-              v-if="isPending"
-              icon="tabler:loader"
-              width="20"
-              height="20"
-              class="animate animate-spin"
-              style="color: #fff"
-            />
-            <span v-if="isPending">Saving...</span>
-            <span v-else>Save</span>
-              
+              <Icon
+                v-if="isPending"
+                icon="tabler:loader"
+                width="20"
+                height="20"
+                class="animate animate-spin"
+                style="color: #fff"
+              />
+              <span v-if="isPending">Saving...</span>
+              <span v-else>Save</span>
             </button>
-            
           </div>
         </form>
       </div>
     </div>
     <div class="border border-[#F3F4F6] rounded-[16px] bg-white p-6 space-y-6">
-      <div class="flex justify-between md:flex-row flex-col gap-4 md:items-center">
+      <div
+        class="flex justify-between md:flex-row flex-col gap-4 md:items-center"
+      >
         <div class="space-y-3">
           <h1 class="text-3xl font-bold text-[#12A0D8]">About Service</h1>
           <p class="text-[#6B7280]">
             Here is the information about this service
           </p>
         </div>
-        <div class="flex gap-4">
+        <div class="flex gap-4 items-center">
+          <div>
+            <InfoDialog :serviceId="service?.id" />
+          </div>
+
           <button
             @click="showEdit = true"
             class="flex gap-2 bg-[#B0B72E] rounded-full px-5 py-2.5 text-white"
@@ -284,7 +293,7 @@
 
         <!-- Right: timeline card -->
         <aside
-          class="md:w-5/12  bg-[#FEFEFE] rounded-2xl p-6 border space-y-4 h-fit"
+          class="md:w-5/12 bg-[#FEFEFE] rounded-2xl p-6 border space-y-4 h-fit"
         >
           <h3 class="text-lg font-semibold">Change Timeline</h3>
           <hr />
@@ -357,6 +366,7 @@ import https from "@/utils/https";
 import { useFetchServiceUpdates } from "../hooks";
 import { Icon } from "@iconify/vue";
 import { toast } from "vue-sonner";
+import InfoDialog from "../components/InfoDialog.vue";
 
 const route = useRoute();
 const id = route.params.id as string;

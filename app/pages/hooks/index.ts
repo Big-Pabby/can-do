@@ -116,3 +116,18 @@ export function useTranscript() {
     // },
   });
 }
+export function UseDeleteService() {
+    const queryClient = useQueryClient();
+ 
+  return useMutation({
+    mutationFn: async (service_id: string) => {
+      const response = await https.delete(
+        `v1/services/${service_id}`
+      );
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+    },
+  });
+}
