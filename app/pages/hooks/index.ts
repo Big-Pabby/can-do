@@ -1,17 +1,42 @@
-export function useFetchServiceUpdates(
-  
-) {
-  return useMutation({
-    mutationFn: async (serviceIds: string[]) => {
-      return await https.post(`/v1/services/fetch_updates/`, serviceIds);
-    },
-   
-  });
-}
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { https } from "#imports";
+import { unref } from "vue"
+import type { MaybeRef } from "vue";
 
+export function useFetchServiceUpdates() {
+  interface Response {
+    job_id: string;
+  }
+  return useMutation({
+    mutationFn: async (serviceIds: string[]) => {
+      return await https.post<Response>(`/v1/services/fetch_updates/`, serviceIds);
+    },
+  });
+}
+export const UseProgress = (jobIdRef: Ref<string>) => {
+  interface Response {
+    progress: number;
+    changes_found: number;
+  }
+  
+  const queryFn = async () => {
+    console.log("Fetching progress for job ID:", jobIdRef.value);
+    const response = await https.get<Response>(
+      `/v1/services/fetch_updates/status?job_id=${jobIdRef.value}`
+    );
+    return response.data;
+  };
+  
+  return useQuery<Response>({
+    queryKey: ["progress", jobIdRef], // Pass the ref, vue-query will track it
+    queryFn,
+    refetchInterval: (query) => {
+      // Stop refetching when progress reaches 100%
+      return query.state.data?.progress === 100 ? false : 1000;
+    },
+    enabled: computed(() => !!jobIdRef.value), // Use computed for reactivity
+  });
+};
 export function useConsent() {
   interface Response {
     id: string;
@@ -117,13 +142,11 @@ export function useTranscript() {
   });
 }
 export function UseDeleteService() {
-    const queryClient = useQueryClient();
- 
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (service_id: string) => {
-      const response = await https.delete(
-        `v1/services/${service_id}`
-      );
+      const response = await https.delete(`v1/services/${service_id}`);
       return response;
     },
     onSuccess: () => {

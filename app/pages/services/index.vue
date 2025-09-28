@@ -3,7 +3,9 @@
     <div class="bg-white rounded-[16px] px-4 space-y-4 py-8 sm:px-6 lg:px-8">
       <div class="mb-8 flex justify-between items-center gap-6">
         <div class="flex-1">
-          <h1 class="text-3xl font-bold text-[#12A0D8]">Available Services ({{ filteredServices.length }})</h1>
+          <h1 class="text-3xl font-bold text-[#12A0D8]">
+            Available Services ({{ filteredServices.length }})
+          </h1>
           <p class="mt-2 text-sm">
             Browse and filter through our comprehensive list of services
           </p>
@@ -53,7 +55,7 @@
                     @change="
                       (e) => {
                         if (e.target && e.target.checked) {
-                          selectedIds = filteredServices.map((s) => s.id);
+                          selectedIds = paginatedServices.map((s) => s.id);
                         } else {
                           selectedIds = [];
                         }
@@ -64,16 +66,18 @@
                 </div>
               </TableHead>
               <TableHead><p class="text-left">Service Name</p> </TableHead>
-              <TableHead>Organization </TableHead>
               <TableHead>Categories </TableHead>
+              <TableHead>Sub-Categories </TableHead>
               <TableHead>Location </TableHead>
               <TableHead>Rating </TableHead>
-              <TableHead> Status </TableHead>
               <TableHead> Action </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody class="text-sm">
-            <TableRow v-for="(service, index) in filteredServices" :key="index">
+            <TableRow
+              v-for="(service, index) in paginatedServices"
+              :key="index"
+            >
               <TableCell>
                 <div class="">
                   <input
@@ -102,7 +106,25 @@
                   >
                 </div>
               </TableCell>
-              <TableCell>{{ service.details?.org_name }}</TableCell>
+              <TableCell>
+                <div class="flex flex-wrap gap-2">
+                  <template
+                    v-for="cat in typeof service.details?.categories ===
+                    'string'
+                      ? service.details.categories
+                          .split(',')
+                          .map((c) => c.trim())
+                          .filter(Boolean)
+                      : []"
+                    :key="cat"
+                  >
+                    <span
+                      class="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground truncate"
+                      >{{ cat }}</span
+                    >
+                  </template>
+                </div>
+              </TableCell>
               <TableCell>
                 <div class="flex flex-wrap gap-2">
                   <template
@@ -140,7 +162,7 @@
                   >
                 </div>
               </TableCell>
-              <TableCell>
+              <!-- <TableCell>
                 <span
                   :class="{
                     'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold': true,
@@ -154,7 +176,7 @@
                 >
                   {{ service.details?.verification_status ?? "Unverified" }}
                 </span>
-              </TableCell>
+              </TableCell> -->
               <TableCell>
                 <div class="flex gap-2 items-center text-[#4B5563]">
                   <nuxt-link
@@ -175,7 +197,7 @@
       <!-- Services Table -->
 
       <!-- Pagination -->
-      <!-- <div class="mt-8 flex w-full justify-center">
+      <div class="mt-8 flex w-full justify-center">
         <nav
           class="flex items-center space-x-1"
           role="navigation"
@@ -220,7 +242,7 @@
             Next
           </button>
         </nav>
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
@@ -241,6 +263,8 @@ import {
 } from "../../../components/ui/table";
 import { toast } from "vue-sonner";
 import InfoDialog from "../components/InfoDialog.vue";
+import ProgressToast from "../components/ProgressToast.vue";
+import { UseProgress } from "../hooks";
 
 const {
   paginatedServices,
@@ -260,6 +284,45 @@ const {
 
 const selectedIds = ref<string[]>([]);
 const deleteDialogOpen = ref<boolean>(false);
+const jobId = ref<string>("");
+
+const { data: progressData, refetch: progressRefetch } = UseProgress(jobId);
+
+let toastId: string | number | undefined;
+
+watch(
+  () => progressData.value?.progress,
+  (newProgress) => {
+    if (newProgress == null) return;
+
+    if (newProgress < 100) {
+      if (!toastId) {
+        toastId = toast.custom(
+          () => h(ProgressToast, { progress: newProgress }),
+          {
+            duration: Infinity,
+          }
+        );
+      } else {
+        toast.custom(() => h(ProgressToast, { progress: newProgress }), {
+          id: toastId,
+          duration: Infinity,
+        });
+      }
+    } else {
+      if (toastId) toast.dismiss(toastId);
+      toast.success("Re-run complete!", {
+        style: {
+          background: "#F0FDF4",
+          border: "1px solid #BBF7D0",
+          color: "#16A34A",
+        },
+      });
+      selectedIds.value = [];
+      refetch();
+    }
+  }
+);
 
 const {
   mutate: rerunMutation,
@@ -270,9 +333,9 @@ const {
 } = useFetchServiceUpdates();
 
 function handleRerun() {
-  console.log(selectedIds.value);
   rerunMutation(selectedIds.value, {
-    onSuccess: () => {
+    onSuccess: ({ data }) => {
+      jobId.value = data.job_id;
       toast.success("Re-run Triggered!", {
         style: {
           background: "#F0FDF4",
@@ -282,14 +345,12 @@ function handleRerun() {
         class: "my-toast",
         descriptionClass: "my-toast-description",
       });
-      refetch();
     },
     onError: (err: any) => {
       const msg = err?.response?.data?.message || "Failed to re-run.";
       toast.error(msg);
     },
   });
-  refetch();
 }
 
 const paginationPages = computed(() => {

@@ -32,16 +32,8 @@
               class="w-full border rounded-[10px] px-3 py-3.5"
             />
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Organization</label>
-            <input
-              v-model="editForm.org_name"
-              type="text"
-              class="w-full border rounded-[10px] px-3 py-3.5"
-            />
-          </div>
 
-          <div>
+          <!-- <div>
             <label class="block text-sm font-medium mb-1">Categories</label>
             <input
               v-model="editForm.categories"
@@ -51,7 +43,7 @@
             <div class="text-xs text-muted-foreground mt-1">
               Comma separated
             </div>
-          </div>
+          </div> -->
           <div>
             <label class="block text-sm font-medium mb-1">Address</label>
             <input
@@ -63,7 +55,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Contact</label>
             <input
-              v-model="editForm.contact"
+              v-model="editForm.phone"
               type="text"
               class="w-full border rounded-[10px] px-3 py-3.5"
             />
@@ -243,6 +235,21 @@
           </div>
 
           <hr />
+          <div class="mb-6">
+            <h2 class="font-semibold text-lg mb-2 text-primary">
+              Sub-Categories
+            </h2>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="cat in subcategoriesArr"
+                :key="cat"
+                class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold bg-secondary text-secondary-foreground shadow"
+                >{{ cat }}</span
+              >
+            </div>
+          </div>
+
+          <hr />
           <!-- Info Grid -->
           <div class="grid grid-cols-1 gap-6 mb-6">
             <div class="flex flex-col items-start gap-2">
@@ -367,19 +374,59 @@ import { useFetchServiceUpdates } from "../hooks";
 import { Icon } from "@iconify/vue";
 import { toast } from "vue-sonner";
 import InfoDialog from "../components/InfoDialog.vue";
+import ProgressToast from "../components/ProgressToast.vue";
+import { UseProgress } from "../hooks";
 
 const route = useRoute();
 const id = route.params.id as string;
+
+const jobId = ref<string>("");
+
+const { data: progressData, refetch: progressRefetch } = UseProgress(jobId);
+
+let toastId: string | number | undefined;
+
+watch(
+  () => progressData.value?.progress,
+  (newProgress) => {
+    if (newProgress == null) return;
+
+    if (newProgress < 100) {
+      if (!toastId) {
+        toastId = toast.custom(
+          () => h(ProgressToast, { progress: newProgress }),
+          {
+            duration: Infinity,
+          }
+        );
+      } else {
+        toast.custom(() => h(ProgressToast, { progress: newProgress }), {
+          id: toastId,
+          duration: Infinity,
+        });
+      }
+    } else {
+      if (toastId) toast.dismiss(toastId);
+      toast.success("Re-run complete!", {
+        style: {
+          background: "#F0FDF4",
+          border: "1px solid #BBF7D0",
+          color: "#16A34A",
+        },
+      });
+      refetch();
+      refetchChanges();
+    }
+  }
+);
 
 // Edit modal state
 const showEdit = ref(false);
 const editForm = ref<{ [key: string]: string }>({
   name: "",
-  org_name: "",
   description: "",
-  categories: "",
   address: "",
-  contact: "",
+  phone: "",
   hours: "",
   eligibility: "",
 });
@@ -403,7 +450,8 @@ const service = data;
 function handleRerun() {
   const selectedIds = [id];
   rerunMutation(selectedIds, {
-    onSuccess: () => {
+    onSuccess: ({ data }) => {
+      jobId.value = data.job_id;
       toast.success("Re-run Triggered!", {
         style: {
           background: "#F0FDF4",
@@ -413,7 +461,6 @@ function handleRerun() {
         class: "my-toast",
         descriptionClass: "my-toast-description",
       });
-      refetch();
     },
     onError: (err: any) => {
       const msg = err?.response?.data?.message || "Failed to re-run.";
@@ -428,11 +475,10 @@ watch(showEdit, (val) => {
     const d = service.value.details;
     editForm.value = {
       name: d.name ?? "",
-      org_name: d.org_name ?? "",
       description: d.description ?? "",
       categories: d.categories ?? "",
       address: d.address ?? "",
-      contact: d.contact ?? "",
+      phone: d.phone ?? "",
       hours: d.hours ?? "",
       eligibility: d.eligibility ?? "",
     };
@@ -475,6 +521,7 @@ function submitEdit() {
           class: "my-toast",
           descriptionClass: "my-toast-description",
         });
+
         refetch();
       },
       onError: (err: any) => {
@@ -503,6 +550,16 @@ const {
 const categoriesArr = computed(() => {
   if (!service?.value) return [];
   const cats = service.value.details.categories;
+  return typeof cats === "string"
+    ? cats
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean)
+    : [];
+});
+const subcategoriesArr = computed(() => {
+  if (!service?.value) return [];
+  const cats = service.value.details.subcategories;
   return typeof cats === "string"
     ? cats
         .split(",")
