@@ -335,11 +335,11 @@
                       new Date(change.date_updated).toLocaleString()
                     }}</time>
                     <div class="flex items-start flex-col gap-1">
-                      <div class="text-sm text-[#EF4444] line-through truncate">
+                      <div class="text-sm text-[#EF4444] line-through">
                         {{ fieldChanges.old ?? "—" }}
                       </div>
 
-                      <div class="text-sm text-[#16A34A] font-medium truncate">
+                      <div class="text-sm text-[#16A34A] font-medium">
                         {{ fieldChanges.new ?? "—" }}
                       </div>
                     </div>
