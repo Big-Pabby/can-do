@@ -106,9 +106,9 @@
               <TableCell>
                 <div class="flex flex-wrap gap-2">
                   <template
-                    v-for="cat in typeof service.details?.categories ===
+                    v-for="cat in typeof service.details?.subcategories ===
                     'string'
-                      ? service.details.categories
+                      ? service.details.subcategories
                           .split(',')
                           .map((c) => c.trim())
                           .filter(Boolean)

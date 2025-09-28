@@ -15,6 +15,7 @@ export interface Service {
     name: string;
     org_name: string;
     categories: string;
+    subcategories: string;
     description: string;
     eligibility: string;
     contact: string;
@@ -100,7 +101,7 @@ export const useServices = () => {
 
   // Helper function to normalize and extract categories from service
   const extractServiceCategories = (service: Service): string[] => {
-    const categoriesStr = service.details.categories;
+    const categoriesStr = service.details.subcategories;
     if (!categoriesStr || typeof categoriesStr !== "string") return [];
     
     return categoriesStr
