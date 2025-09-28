@@ -33,6 +33,52 @@ export interface Service {
   date_updated: string;
 }
 
+// Core service categories mapping
+export const CORE_SERVICE_CATEGORIES = {
+  "Food & Nutrition": [
+    "food banks", "free hot meals", "community kitchens", "voucher schemes",
+   
+  ],
+  "Shelter & Housing": [
+    "emergency shelters", "temporary accommodation", "housing advice", 
+    "homelessness prevention", "tenancy support", "day centres",
+  ],
+  "Clothing & Essentials": [
+    "clothing banks", "free hygiene", "bathing facilities", "showers", 
+    "laundry services", "warm spaces"
+  ],
+  "Addiction & Recovery": [
+    "drug services", "alcohol services", "detox", "rehab programmes", 
+    "peer recovery", "aa", "na", "smart recovery", "harm reduction", 
+    "needle exchange",
+  ],
+  "Mental Health & Wellbeing": [
+    "crisis helplines", "samaritans", "counselling", "therapy", 
+    "community mental health", "peer wellbeing",
+  ],
+  "Health & Medical": [
+    "gp", "nhs", "walk-in centres", "dental clinics", "eye clinics", 
+    "sexual health", "vaccination", "preventative care",
+  ],
+  "Justice & Legal Support": [
+    "probation services", "legal advice", "immigration", "asylum support", 
+    "domestic violence", "safeguarding"
+  ],
+  "Financial & Benefits Support": [
+    "debt advice", "benefits guidance", "universal credit", "pip", 
+    "housing benefit", "credit unions", "emergency grants", 
+  ],
+  "Employment, Training & Education": [
+    "job search", "employability", "skills training", "apprenticeships", 
+    "adult education", "literacy", "volunteering"
+  ],
+  "Community & General Support": [
+    "faith-based services", "churches", "mosques", "temples", "youth clubs", 
+    "mentoring", "refugee support", "migrant integration", "community", 
+    "support", "general"
+  ]
+} as const;
+
 export const useServices = () => {
   const currentPage = ref(1);
   const itemsPerPage = ref(6);
@@ -45,65 +91,98 @@ export const useServices = () => {
     queryKey: ["services"],
     queryFn: async () => {
       const res = await https.get<Service[]>("v1/services?category=all");
-
       return res.data;
     },
     staleTime: 1000 * 60 * 5,
   });
 
   const services = computed(() => data.value ?? []);
-  console.log(services.value);
 
-  // Get unique categories from services
-  const categories = computed(() => {
-    const cats = new Set<string>();
-    services.value.forEach((service) => {
-      console.log("Raw categories:", service.details.categories);
-      const categoriesArr =
-        typeof service.details.categories === "string"
-          ? service.details.categories
-              .split(",")
-              .map((c) => c.trim())
-              .filter(Boolean)
-          : [];
-      categoriesArr.forEach((category) => cats.add(category));
+  // Helper function to normalize and extract categories from service
+  const extractServiceCategories = (service: Service): string[] => {
+    const categoriesStr = service.details.categories;
+    if (!categoriesStr || typeof categoriesStr !== "string") return [];
+    
+    return categoriesStr
+      .split(",")
+      .map(c => c.trim().toLowerCase())
+      .filter(Boolean);
+  };
+
+  // Helper function to map service categories to core categories
+  const mapToCoreCategories = (serviceCategories: string[]): string[] => {
+    const coreCategories = new Set<string>();
+    
+    for (const [coreCategory, keywords] of Object.entries(CORE_SERVICE_CATEGORIES)) {
+      const hasMatch = serviceCategories.some(serviceCategory => 
+        keywords.some(keyword => 
+          serviceCategory.includes(keyword.toLowerCase()) ||
+          keyword.toLowerCase().includes(serviceCategory)
+        )
+      );
+      
+      if (hasMatch) {
+        coreCategories.add(coreCategory);
+      }
+    }
+    
+    return Array.from(coreCategories);
+  };
+
+  // Get services that fall under core categories only
+  const coreServices = computed(() => {
+    return services.value.filter(service => {
+      const serviceCategories = extractServiceCategories(service);
+      const coreCategories = mapToCoreCategories(serviceCategories);
+      return coreCategories.length > 0;
     });
-    return Array.from(cats);
+  });
+
+  // Get unique core categories from filtered services
+  const categories = computed(() => {
+    const categoriesSet = new Set<string>();
+    
+    coreServices.value.forEach(service => {
+      const serviceCategories = extractServiceCategories(service);
+      const coreCategories = mapToCoreCategories(serviceCategories);
+      coreCategories.forEach(category => categoriesSet.add(category));
+    });
+    
+    return [ ...Array.from(categoriesSet).sort()];
   });
 
   // Get unique verification statuses
   const verificationStatuses = computed(() => {
     const set = new Set<string>();
-    services.value.forEach((service) => {
+    coreServices.value.forEach((service) => {
       const v = service.details?.verification_status;
       if (v) set.add(v);
     });
-    return ["all", ...Array.from(set)];
+    return [ ...Array.from(set)];
   });
 
   // Filter services based on search query and category
   const filteredServices = computed(() => {
-    return services.value.filter((service) => {
-      const matchesSearch =
-        searchQuery.value === "" ||
-        service.details.name
-          .toLowerCase()
-          .includes(searchQuery.value.toLowerCase()) ||
-        service.details.description
-          .toLowerCase()
-          .includes(searchQuery.value.toLowerCase());
+    return coreServices.value.filter((service) => {
+      // Search matching
+      const matchesSearch = searchQuery.value === "" || [
+        service.details.name,
+        service.details.description,
+        service.details.org_name,
+        service.details.categories
+      ].some(field => 
+        field?.toLowerCase().includes(searchQuery.value.toLowerCase())
+      );
 
-      const categoriesArr =
-        typeof service.details.categories === "string"
-          ? service.details.categories
-              .split(",")
-              .map((c) => c.trim())
-              .filter(Boolean)
-          : [];
-      const matchesCategory =
-        selectedCategory.value === "all" ||
-        categoriesArr.includes(selectedCategory.value);
+      // Category matching
+      let matchesCategory = true;
+      if (selectedCategory.value !== "all") {
+        const serviceCategories = extractServiceCategories(service);
+        const coreCategories = mapToCoreCategories(serviceCategories);
+        matchesCategory = coreCategories.includes(selectedCategory.value);
+      }
 
+      // Verification matching
       const matchesVerification =
         selectedVerification.value === "all" ||
         service.details?.verification_status === selectedVerification.value;
@@ -143,22 +222,57 @@ export const useServices = () => {
     }
   };
 
+  // Reset pagination when filters change
+  const resetFilters = () => {
+    currentPage.value = 1;
+    searchQuery.value = "";
+    selectedCategory.value = "all";
+    selectedVerification.value = "all";
+  };
+
+  // Get services count by category
+  const getCategoryCount = (category: string) => {
+    if (category === "all") return coreServices.value.length;
+    
+    return coreServices.value.filter(service => {
+      const serviceCategories = extractServiceCategories(service);
+      const coreCategories = mapToCoreCategories(serviceCategories);
+      return coreCategories.includes(category);
+    }).length;
+  };
+
   return {
-    services,
+    // Core services (filtered to only include those matching core categories)
+    services: coreServices,
     paginatedServices,
+    filteredServices,
+    
+    // Pagination
     currentPage,
     totalPages,
-    categories,
-    verificationStatuses,
-    searchQuery,
-    filteredServices,
-    selectedCategory,
-    selectedVerification,
     nextPage,
     prevPage,
     goToPage,
+    
+    // Filters
+    categories,
+    verificationStatuses,
+    searchQuery,
+    selectedCategory,
+    selectedVerification,
+    resetFilters,
+    
+    // Utilities
+    getCategoryCount,
+    mapToCoreCategories,
+    extractServiceCategories,
+    
+    // API state
     isLoading,
     isError,
     refetch,
+    
+    // Constants
+    CORE_SERVICE_CATEGORIES,
   };
 };
