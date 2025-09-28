@@ -8,7 +8,7 @@ import type {
 
 // Create axios instance
 const https: AxiosInstance = axios.create({
-  baseURL: "https://89cfbd6ebc9b.ngrok-free.app/", // dev API
+  baseURL: "http://app.candopeople.uk/", // dev API
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
