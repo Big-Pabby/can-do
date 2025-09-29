@@ -33,17 +33,32 @@
             />
           </div>
 
-          <!-- <div>
+          <div>
             <label class="block text-sm font-medium mb-1">Categories</label>
-            <input
+            <select
               v-model="editForm.categories"
+              class="w-full border rounded-[10px] px-3 py-3.5"
+            >
+              <option
+                v-for="(value, index) in CORE_SERVICE_CATEGORIES"
+                :key="index"
+                :value="index"
+              >
+                {{ index }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Subcategories</label>
+            <input
+              v-model="editForm.subcategories"
               type="text"
               class="w-full border rounded-[10px] px-3 py-3.5"
             />
             <div class="text-xs text-muted-foreground mt-1">
               Comma separated
             </div>
-          </div> -->
+          </div>
           <div>
             <label class="block text-sm font-medium mb-1">Address</label>
             <input
@@ -376,6 +391,7 @@ import { toast } from "vue-sonner";
 import InfoDialog from "../components/InfoDialog.vue";
 import ProgressToast from "../components/ProgressToast.vue";
 import { UseProgress } from "../hooks";
+import { CORE_SERVICE_CATEGORIES } from "#imports";
 
 const route = useRoute();
 const id = route.params.id as string;
@@ -427,6 +443,8 @@ const editForm = ref<{ [key: string]: string }>({
   description: "",
   address: "",
   phone: "",
+  categories: "",
+  subcategories: "",
   hours: "",
   eligibility: "",
 });
@@ -477,6 +495,7 @@ watch(showEdit, (val) => {
       name: d.name ?? "",
       description: d.description ?? "",
       categories: d.categories ?? "",
+      subcategories: d.subcategories ?? "",
       address: d.address ?? "",
       phone: d.phone ?? "",
       hours: d.hours ?? "",
