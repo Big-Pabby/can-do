@@ -91,7 +91,7 @@ export const useServices = () => {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["services"],
     queryFn: async () => {
-      const res = await https.get<Service[]>("v1/services?category=all/");
+      const res = await https.get<Service[]>("v1/services/");
       return res.data;
     },
     staleTime: 1000 * 60 * 5,
