@@ -135,14 +135,20 @@ export const useServices = () => {
   const searchQuery = ref("");
   const selectedCategory = ref("all");
   const selectedVerification = ref("all");
+  interface Response {
+    total_pages: number;
+    count: number;
+    results: Service[]
+  }
 
   // Fetch services from API
   const { data, isLoading, isError, refetch } = useQuery({
     // Include pagination in the key so it refetches when page/size change
     queryKey: ["services", currentPage],
+    
     queryFn: async () => {
-      const res = await https.get<Service[]>("v1/services/");
-      return res.data;
+      const res = await https.get<Response>("v1/services/");
+      return res.data.results;
     },
     staleTime: 1000 * 60 * 5,
   });
