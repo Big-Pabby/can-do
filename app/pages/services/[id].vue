@@ -51,7 +51,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Subcategories</label>
             <input
-              v-model="editForm.subcategories"
+              v-model="editForm.sub_category"
               type="text"
               class="w-full border rounded-[10px] px-3 py-3.5"
             />
@@ -444,7 +444,7 @@ const editForm = ref<{ [key: string]: string }>({
   address: "",
   phone: "",
   categories: "",
-  subcategories: "",
+  sub_category: "",
   hours: "",
   eligibility: "",
 });
@@ -495,7 +495,7 @@ watch(showEdit, (val) => {
       name: d.name ?? "",
       description: d.description ?? "",
       categories: d.categories ?? "",
-      subcategories: d.subcategories ?? "",
+      sub_category: d.sub_category ?? "",
       address: d.address ?? "",
       phone: d.phone ?? "",
       hours: d.hours ?? "",
