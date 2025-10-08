@@ -392,6 +392,9 @@ import InfoDialog from "../components/InfoDialog.vue";
 import ProgressToast from "../components/ProgressToast.vue";
 import { UseProgress } from "../hooks";
 import { CORE_SERVICE_CATEGORIES } from "#imports";
+definePageMeta({
+  layout: "admin",
+});
 
 const route = useRoute();
 const id = route.params.id as string;

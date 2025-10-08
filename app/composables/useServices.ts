@@ -27,12 +27,15 @@ export interface Service {
     verification_status: string;
     total_ratings: number;
     rating: number;
+    lat:string;
+    lng:string;
     confidence: number;
     location?: ServiceLocation;
   };
   date_created: string;
   date_updated: string;
 }
+
 
 // Core service categories mapping
 export const CORE_SERVICE_CATEGORIES = {

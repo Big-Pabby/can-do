@@ -266,6 +266,10 @@ import InfoDialog from "../components/InfoDialog.vue";
 import ProgressToast from "../components/ProgressToast.vue";
 import { UseProgress } from "../hooks";
 
+definePageMeta({
+  layout: "admin",
+});
+
 const {
   paginatedServices,
   currentPage,

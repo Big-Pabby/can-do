@@ -1,0 +1,264 @@
+<template>
+  <div class="space-y-4">
+    <div
+      class="md:block hidden border border-[#F3F4F6] bg-white rounded-[12px] p-5"
+    >
+      <h1 class="text-2xl font-bold text-[#12A0D8]">Explore Services</h1>
+      <p class="text-[#6B7280] text-sm">
+        Manage services: view, edit, and add new services
+      </p>
+    </div>
+    <div
+      class="md:border border-[#F3F4F6] flex md:flex-row flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5"
+    >
+      <div
+        class="bg-white border border-gray-300 md:rounded-[10px] rounded-full p-3 focus:outline-none flex gap-4 w-full justify-between items-center focus:ring-2 flex-1 focus:ring-blue-500"
+      >
+        <Icon
+          icon="ri:search-line"
+          width="20"
+          height="20"
+          style="color: #374151"
+        />
+        <input
+          id="search"
+          type="text"
+          placeholder="Search by services name"
+          class="w-full border-0 outline-0 p-0 m-0"
+        />
+      </div>
+      <div class="flex items-center gap-2">
+        <div
+          class="py-3 px-5 rounded-full flex items-center gap-2 border border-[#E5E7EB] bg-[#F9FAFB]"
+        >
+          <Icon
+            icon="mage:filter"
+            width="20"
+            height="20"
+            style="color: #374151"
+          />
+
+          <span class="text-sm text-[#374151]">Filter</span>
+        </div>
+        <div
+          class="rounded-full flex-1 w-full flex items-center gap-2 border border-[#E5E7EB] bg-[#F9FAFB] p-1"
+        >
+          <div
+            @click="toggleType = 'map'"
+            :class="`${
+              toggleType === 'map'
+                ? 'text-[#B0B72E] bg-white'
+                : 'text-[#6B7280]'
+            } flex gap-2 items-center  rounded-full flex-1 text-sm font-medium py-2 px-3.5 cursor-pointer`"
+          >
+            <Icon
+              icon="material-symbols:map-outline-rounded"
+              width="20"
+              height="20"
+            />
+            <p>Map</p>
+          </div>
+          <div
+            @click="toggleType = 'list'"
+            :class="`${
+              toggleType === 'list'
+                ? 'text-[#B0B72E] bg-white'
+                : 'text-[#6B7280]'
+            } flex gap-2 items-center  rounded-full flex-1 text-sm font-medium py-2 px-3.5 cursor-pointer`"
+          >
+            <Icon icon="tabler:list" width="20" height="20" />
+            <p>List</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="">
+      <div v-if="toggleType === 'map'" class="flex items-start h-screen gap-6">
+        <div
+          v-if="data?.results.length"
+          class="flex-1 bg-white h-full md:rounded-[16px]"
+        >
+          <Map
+            :services="data?.results"
+            :initial-lat="selectedCoordinates?.lat"
+            :initial-lng="selectedCoordinates?.lng"
+            :origin="selectedCoordinates"
+            :destination="selectedServiceLocation"
+            @locationSelected="handleLocationSelected"
+          />
+        </div>
+        <div class="md:w-4/12 md:block hidden space-y-4 h-full overflow-y-auto">
+          <h4 class="font-medium">Nearby Services</h4>
+          <div v-for="service in data?.results.slice(0, 10)" :key="service.id">
+            <ServiceCard :service="service" @directions="handleDirections" />
+          </div>
+        </div>
+      </div>
+      <div v-else-if="toggleType === 'list'" class="space-y-4 md:px-0 px-5">
+        <div
+          v-if="data?.results.length"
+          class="grid md:grid-cols-3 grid-cols-1 gap-6"
+        >
+          <div v-for="service in data?.results" :key="service.id">
+            <ServiceCard :service="service" @directions="handleDirections" />
+          </div>
+        </div>
+        <div v-else class="text-center text-[#6B7280]">No services found.</div>
+        <div class="mt-8 flex w-full justify-center">
+          <nav
+            class="flex items-center space-x-1"
+            role="navigation"
+            aria-label="pagination"
+          >
+            <button
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
+              :disabled="currentPage === 1"
+              @click="prevPage"
+            >
+              Previous
+            </button>
+
+            <div class="flex items-center space-x-1">
+              <template v-for="page in paginationPages" :key="page">
+                <span
+                  v-if="page === '...'"
+                  class="inline-flex items-center justify-center h-9 w-9 text-muted-foreground"
+                  >...</span
+                >
+                <button
+                  v-else
+                  @click="goToPage(page as number)"
+                  :class="{
+                    'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-9 w-9': true,
+                    'bg-[#12A0D8] text-primary-foreground hover:bg-[#12A0D8]/90':
+                      currentPage === page,
+                    'border border-input bg-background hover:bg-accent hover:text-accent-foreground':
+                      currentPage !== page,
+                  }"
+                >
+                  {{ page }}
+                </button>
+              </template>
+            </div>
+
+            <button
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
+              :disabled="currentPage === totalPages"
+              @click="nextPage"
+            >
+              Next
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import { UseMapServices } from "../map/hooks";
+import { Icon } from "@iconify/vue";
+definePageMeta({
+  layout: "user",
+});
+
+const selectedCoordinates = ref<{ lat: number; lng: number } | null>(null);
+const coords = computed(() => selectedCoordinates.value);
+// State for selected service location for directions
+const selectedServiceLocation = ref<{ lat: number; lng: number } | null>(null);
+
+// Pagination state
+const currentPage = ref(1);
+const pageSize = 100;
+const totalPages = computed(() => {
+  if (!data?.value?.count) return 1;
+  return Math.ceil(data.value.count / pageSize);
+});
+
+const reactivePage = computed(() => currentPage.value);
+const reactivePageSize = computed(() => pageSize);
+const { data, error, isLoading, refetch } = UseMapServices(
+  reactivePage,
+  reactivePageSize,
+  coords
+);
+
+const toggleType = ref("map");
+
+// Pagination page numbers logic
+const paginationPages = computed(() => {
+  const pages: (number | string)[] = [];
+  if (totalPages.value <= 7) {
+    for (let i = 1; i <= totalPages.value; i++) pages.push(i);
+  } else {
+    if (currentPage.value <= 4) {
+      pages.push(1, 2, 3, 4, 5, "...", totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 3) {
+      pages.push(
+        1,
+        "...",
+        totalPages.value - 4,
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push(
+        1,
+        "...",
+        currentPage.value - 1,
+        currentPage.value,
+        currentPage.value + 1,
+        "...",
+        totalPages.value
+      );
+    }
+  }
+  return pages;
+});
+
+function goToPage(page: number) {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+  refetch();
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+    refetch();
+  }
+}
+
+function prevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    refetch();
+  }
+}
+
+// Handle location selection from map
+function handleLocationSelected(coords: { lat: number; lng: number, address: string }) {
+  selectedCoordinates.value = { lat: coords.lat, lng: coords.lng };
+   localStorage.setItem("location", JSON.stringify(coords));
+  // Refetch services with new coordinates
+  currentPage.value = 1;
+  refetch();
+}
+
+// Handle directions button click from ServiceCard
+function handleDirections(service: any) {
+  console.log(service);
+  if (!selectedCoordinates.value) {
+    alert("User location not available");
+    return;
+  }
+  const destLat = Number(service.details.lat);
+  const destLng = Number(service.details.lng);
+  if (!destLat || !destLng) {
+    alert("Service location not available");
+    return;
+  }
+  selectedServiceLocation.value = { lat: destLat, lng: destLng };
+}
+</script>

@@ -1,5 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
+import { Icon } from "@iconify/vue";
+import { UseMapServices } from "./hooks";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "../../../components/ui/dialog";
 
 declare global {
   interface Window {
@@ -7,268 +19,94 @@ declare global {
   }
 }
 
+interface GooglePlace {
+  geometry?: {
+    location: {
+      lat: () => number;
+      lng: () => number;
+    }
+  };
+  formatted_address?: string;
+  name?: string;
+  place_id?: string;
+}
+
+interface MapClickEvent {
+  latLng: {
+    lat: () => number;
+    lng: () => number;
+  }
+}
+
 // Default centre to UK
 const center = ref({ lat: 54.526, lng: -3.0 });
+const userLocation = ref<{ lat: number; lng: number } | null>(null);
 const zoom = ref(6);
+const locationDialogOpen = ref(false);
+const userAddress = ref<string>("");
+const selectedPlaceLocation = ref<{ lat: number; lng: number } | null>(null);
+const mapSelectedLocation = ref<{ lat: number; lng: number } | null>(null);
+const mapSelectedAddress = ref<string>("");
 const address = ref("");
 const searchTerm = ref("");
+const autocompleteInput = ref<HTMLInputElement | null>(null);
+let autocomplete: any = null;
+
+// Function to initialize Google Places Autocomplete
+function initializeAutocomplete() {
+  if (!autocompleteInput.value || !window.google?.maps?.places) {
+    console.warn("Google Maps Places not available or input not found");
+    return;
+  }
+
+  if (!autocomplete) {
+    try {
+      autocomplete = new window.google.maps.places.Autocomplete(
+        autocompleteInput.value,
+        {
+          types: ["address"],
+          fields: ["formatted_address", "geometry", "name"],
+          componentRestrictions: { country: "GB" }, // Restrict to UK addresses
+        }
+      );
+      console.log(autocomplete.getPlace());
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        console.log("Place selected:", place);
+
+        if (!place?.geometry?.location) {
+          console.warn("No location data for selected place");
+          return;
+        }
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+
+        selectedPlaceLocation.value = { lat, lng };
+        userAddress.value = place.formatted_address || "";
+
+        console.log("Location updated:", {
+          lat,
+          lng,
+          address: userAddress.value,
+        });
+      });
+    } catch (error) {
+      console.error("Error initializing Places Autocomplete:", error);
+    }
+  }
+}
 
 let mapRef: any = null;
 const suppressMapClick = ref(false);
 
-// Helper: get pixel position for lat/lng on the map
-function getPixelPosition(
-  lat: number,
-  lng: number
-): { x: number; y: number } | null {
-  if (!mapRef || !mapRef.$mapObject) return null;
-  const map = mapRef.$mapObject;
-  if (!map || !map.getProjection) return null;
-  const projection = map.getProjection();
-  if (!projection) return null;
-  const point = projection.fromLatLngToPoint(
-    new window.google.maps.LatLng(lat, lng)
-  );
-  // Get map bounds and size
-  const scale = Math.pow(2, map.getZoom());
-  const bounds = map.getBounds();
-  if (!bounds) return null;
-  const nw = projection.fromLatLngToPoint(bounds.getNorthEast());
-  const se = projection.fromLatLngToPoint(bounds.getSouthWest());
-  const x = ((point.x - se.x) * map.getDiv().offsetWidth) / (nw.x - se.x);
-  const y = ((point.y - nw.y) * map.getDiv().offsetHeight) / (se.y - nw.y);
-  return { x, y };
-}
-
-// Interface for service location
-interface ServiceLocation {
-  lat: number;
-  lng: number;
-}
-
-// Interface for service data
-interface Service {
-  service_id: string;
-  name: string;
-  org_name: string;
-  categories: string[];
-  description: string;
-  eligibility: string;
-  contact: string;
-  address: string;
-  hours: string;
-  access: string;
-  evidence_links: string[];
-  verification_status: string;
-  review_count: number;
-  avg_rating: number;
-  confidence: number;
-  location?: ServiceLocation;
-}
-
-// Dummy dataset with proper typing
-const services = ref<Service[]>([
-  {
-    service_id: "svc_001",
-    name: "Guy's Hospital",
-    org_name: "NHS Foundation Trust",
-    categories: ["Health"],
-    description: "Major NHS hospital providing healthcare and specialist services.",
-    eligibility: "All",
-    contact: "+44 20 7188 7188",
-    address: "Great Maze Pond, London SE1 9RT, UK",
-    hours: "24/7",
-    access: "Wheelchair accessible",
-    evidence_links: ["https://www.guysandstthomas.nhs.uk"],
-    verification_status: "verified",
-    review_count: 340,
-    avg_rating: 4.3,
-    confidence: 0.95,
-  },
-  {
-    service_id: "svc_002",
-    name: "Mind in London",
-    org_name: "Mind Charity",
-    categories: ["Counselling"],
-    description: "Mental health support, counselling, and peer groups.",
-    eligibility: "Adults 18+",
-    contact: "+44 20 7259 8100",
-    address: "15-19 Broadway, Stratford, London E15 4BQ, UK",
-    hours: "Mon–Fri 9am–6pm",
-    access: "By appointment",
-    evidence_links: ["https://www.mind.org.uk"],
-    verification_status: "verified",
-    review_count: 120,
-    avg_rating: 4.6,
-    confidence: 0.9,
-  },
-  {
-    service_id: "svc_003",
-    name: "City Harvest London",
-    org_name: "City Harvest",
-    categories: ["Food"],
-    description: "Redistributes surplus food to charities and community projects.",
-    eligibility: "Charity partners",
-    contact: "+44 20 7041 8491",
-    address: "Unit 8, Acton Park Estate, London W3 7QE, UK",
-    hours: "Mon–Fri 8am–6pm",
-    access: "Delivery available",
-    evidence_links: ["https://www.cityharvest.org.uk"],
-    verification_status: "verified",
-    review_count: 65,
-    avg_rating: 4.8,
-    confidence: 0.92,
-  },
-  {
-    service_id: "svc_004",
-    name: "Shelter London Hub",
-    org_name: "Shelter",
-    categories: ["Shelter"],
-    description: "Housing advice and homelessness support services.",
-    eligibility: "Open to all",
-    contact: "+44 345 850 4114",
-    address: "88 Old Street, London EC1V 9HU, UK",
-    hours: "Mon–Fri 9am–5pm",
-    access: "Drop-in",
-    evidence_links: ["https://england.shelter.org.uk"],
-    verification_status: "verified",
-    review_count: 250,
-    avg_rating: 4.7,
-    confidence: 0.94,
-  },
-  {
-    service_id: "svc_005",
-    name: "London Libraries",
-    org_name: "London Borough Councils",
-    categories: ["Education"],
-    description: "Public libraries offering study spaces, books, and learning support.",
-    eligibility: "All residents",
-    contact: "+44 20 7983 4000",
-    address: "Various locations across London",
-    hours: "Mon–Sat 9am–7pm",
-    access: "Open access",
-    evidence_links: ["https://www.london.gov.uk"],
-    verification_status: "verified",
-    review_count: 500,
-    avg_rating: 4.4,
-    confidence: 0.9,
-  },
-  {
-    service_id: "svc_006",
-    name: "Jobcentre Plus",
-    org_name: "Department for Work and Pensions",
-    categories: ["Employment"],
-    description: "Employment support, benefits, and job-seeking services.",
-    eligibility: "Job seekers",
-    contact: "+44 800 169 0190",
-    address: "High Holborn, London WC1V 7PE, UK",
-    hours: "Mon–Fri 9am–5pm",
-    access: "Appointment preferred",
-    evidence_links: ["https://www.gov.uk/contact-jobcentre-plus"],
-    verification_status: "verified",
-    review_count: 210,
-    avg_rating: 3.8,
-    confidence: 0.85,
-  },
-  {
-    service_id: "svc_007",
-    name: "Better Gym London",
-    org_name: "GLL Better",
-    categories: ["Sports"],
-    description: "Affordable gyms, swimming pools, and fitness classes.",
-    eligibility: "Membership required",
-    contact: "+44 20 8317 5000",
-    address: "Thomas More Square, London E1W 1YW, UK",
-    hours: "Mon–Sun 6am–10pm",
-    access: "Membership",
-    evidence_links: ["https://www.better.org.uk"],
-    verification_status: "verified",
-    review_count: 310,
-    avg_rating: 4.2,
-    confidence: 0.9,
-  },
-  {
-    service_id: "svc_008",
-    name: "Recycle for London",
-    org_name: "Mayor of London",
-    categories: ["Environment"],
-    description: "Recycling services and sustainability initiatives across London.",
-    eligibility: "All residents",
-    contact: "+44 20 7983 4000",
-    address: "City Hall, The Queen's Walk, London SE1 2AA, UK",
-    hours: "Mon–Fri 9am–5pm",
-    access: "Public access",
-    evidence_links: ["https://www.recycleforlondon.com"],
-    verification_status: "verified",
-    review_count: 95,
-    avg_rating: 4.5,
-    confidence: 0.88,
-  },
-  {
-    service_id: "svc_009",
-    name: "Transport for London",
-    org_name: "TfL",
-    categories: ["Transport"],
-    description: "Public transport services including buses, trains, and tube.",
-    eligibility: "All passengers",
-    contact: "+44 343 222 1234",
-    address: "55 Broadway, London SW1H 0BD, UK",
-    hours: "24/7",
-    access: "Universal",
-    evidence_links: ["https://tfl.gov.uk"],
-    verification_status: "verified",
-    review_count: 1000,
-    avg_rating: 4.1,
-    confidence: 0.95,
-  },
-  {
-    service_id: "svc_010",
-    name: "London Food Bank",
-    org_name: "Trussell Trust",
-    categories: ["Food"],
-    description: "Emergency food parcels and community food support.",
-    eligibility: "Referral required",
-    contact: "+44 20 3857 3000",
-    address: "St. Luke’s Church, Holloway, London N7 9JE, UK",
-    hours: "Tue–Sat 10am–4pm",
-    access: "Referral only",
-    evidence_links: ["https://www.trusselltrust.org"],
-    verification_status: "verified",
-    review_count: 180,
-    avg_rating: 4.9,
-    confidence: 0.93,
-  },
-]);
-
-
+const { data: services } = UseMapServices();
 
 const selectedService = ref<Record<string, any> | null>(null);
 
-// computed filtered services based on searchTerm
-const filteredServices = computed(() => {
-  const q = (searchTerm.value || "").toLowerCase().trim();
-  if (!q) return services.value;
-  return services.value.filter((s) => {
-    const hay = (
-      (s.name || "") +
-      " " +
-      (s.org_name || "") +
-      " " +
-      (s.address || "") +
-      " " +
-      (Array.isArray(s.categories) ? s.categories.join(" ") : "")
-    ).toLowerCase();
-    return hay.includes(q);
-  });
-});
-
-// Services that have a geocoded location (used for rendering markers)
-const filteredServicesWithLocation = computed(() =>
-  filteredServices.value.filter((s) => s.location)
-);
-
 // Fit map to show all locations in an array
-function fitBoundsForLocations(locs: ServiceLocation[]) {
+function fitBoundsForLocations(locs: Array<{ lat: number; lng: number }>) {
   if (!locs || locs.length === 0 || !window.google?.maps) {
     console.log("No locations to fit bounds to or Google Maps not ready");
     return;
@@ -299,16 +137,46 @@ function fitBoundsForLocations(locs: ServiceLocation[]) {
   }
 }
 
-// Return a data-URL SVG icon string based on service category/type
-function getIconForService(svc: string): string {
-  const color = "#10B981"; // Green color for all markers
-
+// Build marker icon by color
+function getMarkerIcon(color: string): string {
   const svg = `
   <svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'>
-    <path fill='${color}' d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    <path fill='${color}' d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
   </svg>`;
-
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+// Map category text to a color
+function getCategoryColor(categories: string | undefined): string {
+  if (!categories || typeof categories !== "string") return "#3B82F6"; // blue default
+  const first =
+    categories.split(",").map((c) => c.trim().toLowerCase())[0] || "";
+  if (first.includes("food") || first.includes("kitchen")) return "#10B981"; // green
+  if (first.includes("shelter") || first.includes("housing")) return "#8B5CF6"; // violet
+  if (first.includes("clothing") || first.includes("hygiene")) return "#F59E0B"; // amber
+  if (first.includes("addiction") || first.includes("recovery"))
+    return "#EC4899"; // pink
+  if (first.includes("mental") || first.includes("wellbeing")) return "#06B6D4"; // cyan
+  if (
+    first.includes("health") ||
+    first.includes("medical") ||
+    first.includes("clinic")
+  )
+    return "#22C55E"; // emerald
+  if (first.includes("legal") || first.includes("justice")) return "#0EA5E9"; // sky
+  if (
+    first.includes("benefit") ||
+    first.includes("finance") ||
+    first.includes("debt")
+  )
+    return "#A855F7"; // purple
+  if (
+    first.includes("employment") ||
+    first.includes("education") ||
+    first.includes("training")
+  )
+    return "#6366F1"; // indigo
+  return "#3B82F6"; // blue fallback
 }
 
 // Geocode an address string using google maps geocoder
@@ -347,6 +215,72 @@ async function geocodeAddress(addr: string) {
     console.error(`Error geocoding address "${addr}":`, error);
     return null;
   }
+}
+
+// Reverse geocode lat/lng to a human-readable address
+async function reverseGeocode(
+  lat: number,
+  lng: number
+): Promise<string | null> {
+  if (!window.google?.maps?.Geocoder || !googleMapsReady.value) return null;
+  try {
+    const geocoder = new window.google.maps.Geocoder();
+    const result = await new Promise((resolve, reject) => {
+      geocoder.geocode(
+        { location: { lat, lng } },
+        (results: any, status: any) => {
+          if (status === "OK" && results?.[0]) resolve(results[0]);
+          else reject(new Error(`Reverse geocoding failed: ${status}`));
+        }
+      );
+    });
+    const r = result as { formatted_address?: string };
+    return r.formatted_address ?? null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Persist/restore user location and address
+const STORAGE_KEYS = {
+  location: "user-location",
+  address: "user-address",
+} as const;
+
+function saveUserLocationToStorage(
+  loc: { lat: number; lng: number } | null,
+  address?: string | null
+) {
+  if (typeof window === "undefined") return;
+  try {
+    if (loc) {
+      localStorage.setItem(STORAGE_KEYS.location, JSON.stringify(loc));
+    }
+    if (address != null) {
+      localStorage.setItem(STORAGE_KEYS.address, address);
+    }
+  } catch {}
+}
+
+function loadUserLocationFromStorage() {
+  if (typeof window === "undefined") return;
+  try {
+    const locStr = localStorage.getItem(STORAGE_KEYS.location);
+    const addrStr = localStorage.getItem(STORAGE_KEYS.address);
+    if (locStr) {
+      const parsed = JSON.parse(locStr);
+      if (
+        parsed &&
+        typeof parsed.lat === "number" &&
+        typeof parsed.lng === "number"
+      ) {
+        userLocation.value = parsed;
+        center.value = parsed;
+        zoom.value = 13;
+      }
+    }
+    if (addrStr) userAddress.value = addrStr;
+  } catch {}
 }
 
 // Public method: set map center by address (call when user selects a company)
@@ -420,6 +354,34 @@ onMounted(async () => {
   console.log("Component mounted, checking Google Maps...");
   // Wait a moment for everything to initialize
   await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Load any stored user location/address
+  loadUserLocationFromStorage();
+  // Try to get user geolocation (red marker)
+  if (typeof navigator !== "undefined" && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        userLocation.value = loc;
+        center.value = loc;
+        zoom.value = 13;
+        // Attempt reverse geocode for header display
+        reverseGeocode(loc.lat, loc.lng).then((addr) => {
+          if (addr) userAddress.value = addr;
+          // Persist latest known location and address
+          saveUserLocationToStorage(
+            userLocation.value,
+            userAddress.value || null
+          );
+        });
+        // Also persist immediately even if address not yet resolved
+        saveUserLocationToStorage(userLocation.value, null);
+      },
+      () => {
+        // ignore geolocation errors
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
   if (isGoogleMapsReady() && !googleMapsReady.value) {
     console.log("Google Maps ready on mount, starting geocoding...");
     googleMapsReady.value = true;
@@ -431,89 +393,203 @@ onMounted(async () => {
 
 // Geocode all services and store location on each service record
 async function geocodeAllServices() {
-  console.log("Starting geocoding process...");
-  console.log("Google Maps ready:", window.google?.maps !== undefined);
-  console.log("Services to geocode:", services.value.length);
-
-  for (const svc of services.value) {
-    if (!svc.location && svc.address) {
-      console.log("Geocoding address:", svc.address);
-      try {
-        const loc = await geocodeAddress(svc.address);
-        if (loc) {
-          console.log("Successfully geocoded:", loc);
-          svc.location = loc;
-        } else {
-          console.log("Failed to geocode address:", svc.address);
+  if (services.value) {
+    for (const svc of services.value.results) {
+      if (!svc.details.location && svc.details.address) {
+        try {
+          const loc = await geocodeAddress(svc.details.address);
+          if (loc) {
+            svc.details.location = loc;
+          } else {
+            console.log("Failed to geocode address:", svc.details.address);
+          }
+        } catch (e) {
+          console.error("Error geocoding service:", svc.details.name, e);
         }
-      } catch (e) {
-        console.error("Error geocoding service:", svc.name, e);
+      } else {
+        console.log(
+          "Service already has location or no address:",
+          svc.details.name
+        );
       }
-    } else {
-      console.log("Service already has location or no address:", svc.name);
     }
-  }
 
-  // After geocoding, fit to all markers
-  const locs = services.value
-    .filter((s): s is Service & { location: ServiceLocation } =>
-      Boolean(s.location)
-    )
-    .map((s) => s.location);
+    // After geocoding, fit to all markers
+    const locs = services.value.results
+      .map((s) => s.details.location)
+      .filter((loc): loc is { lat: number; lng: number } => Boolean(loc));
 
-  console.log("Total locations after geocoding:", locs.length);
-  if (locs.length) {
-    console.log("Fitting bounds to locations:", locs);
-    fitBoundsForLocations(locs);
+    console.log("Total locations after geocoding:", locs.length);
+    if (locs.length) {
+      console.log("Fitting bounds to locations:", locs);
+      fitBoundsForLocations(locs);
+    }
   }
 }
 
-// When filteredServices change, update markers and fit bounds
+// When services load/refresh and Google Maps is ready, geocode and render markers
 watch(
-  () => filteredServices.value.map((s) => s.service_id).join(","),
-  () => {
-    const locs = filteredServices.value
-      .filter((s): s is Service & { location: ServiceLocation } =>
-        Boolean(s.location)
-      )
-      .map((s) => s.location);
-
-    console.log("Filtered services changed, locations:", locs.length);
-    if (locs.length) fitBoundsForLocations(locs);
-  }
+  () => services.value?.results,
+  async (newResults) => {
+    if (
+      googleMapsReady.value &&
+      Array.isArray(newResults) &&
+      newResults.length
+    ) {
+      await geocodeAllServices();
+    }
+  },
+  { immediate: false }
 );
+
+// Handle place selection
+async function handlePlaceChanged(place) {
+  console.log("Place changed handler called with:", place);
+  
+  if (!place?.geometry?.location) {
+    console.warn("No geometry in place object");
+    return;
+  }
+
+  const lat = place.geometry.location.lat();
+  const lng = place.geometry.location.lng();
+  
+  console.log("Location found:", { lat, lng });
+
+  selectedPlaceLocation.value = { lat, lng };
+  userAddress.value = place.formatted_address || "";
+  
+  if (mapRef?.$mapObject) {
+    mapRef.$mapObject.setCenter({ lat, lng });
+    mapRef.$mapObject.setZoom(15);
+  }
+}
+
+// Initialize the place autocomplete
+async function initPlaceAutocomplete() {
+  if (!autocompleteInput.value || !window.google?.maps?.places) {
+    console.warn("Required dependencies not available");
+    return;
+  }
+
+  try {
+    const element = new window.google.maps.places.PlaceAutocompleteElement({
+      inputElement: autocompleteInput.value,
+      types: ["address"],
+      fields: ["formatted_address", "geometry", "name", "place_id"]
+    });
+
+    element.addEventListener("place_changed", async () => {
+      const place = await element.getPlace();
+      handlePlaceChanged(place);
+    });
+
+    return element;
+  } catch (error) {
+    console.error("Error initializing PlaceAutocompleteElement:", error);
+    return null;
+  }
+}
+
+function openLocationDialog() {
+  locationDialogOpen.value = true;
+  if (window.google && autocompleteInput.value) {
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      autocompleteInput.value,
+      {
+        types: ["(cities)"], // or 'geocode' for all addresses
+        // componentRestrictions: { country: 'ng' }, // restrict to Nigeria if needed
+      }
+    );
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      console.log("Selected place:", place);
+      // Optionally, emit or use the place object for more details
+    });
+  }
+}
+
+async function useSelectedAddress() {
+  console.log(searchTerm.value);
+  // Use map clicked location first, fallback to typed address
+  if (!selectedPlaceLocation.value && !mapSelectedLocation.value) {
+    console.log("No location selected");
+    return;
+  }
+
+  // Priority: use map location if available, otherwise use typed address
+  const loc = mapSelectedLocation.value || selectedPlaceLocation.value;
+  let addr = mapSelectedAddress.value || userAddress.value;
+
+  if (!loc) return;
+
+  userLocation.value = loc;
+  center.value = loc;
+  zoom.value = 14;
+
+  // If we don't have an address yet, try to get one
+  if (!addr) {
+    addr = await reverseGeocode(loc.lat, loc.lng);
+  }
+  if (addr) userAddress.value = addr;
+
+  // Save both location and address
+  saveUserLocationToStorage(userLocation.value, userAddress.value || null);
+
+  // Close dialog and reset selection state
+  locationDialogOpen.value = false;
+  mapSelectedLocation.value = null;
+  mapSelectedAddress.value = "";
+  selectedPlaceLocation.value = null;
+}
+
+async function useCurrentLocation() {
+  if (userLocation.value) {
+    center.value = userLocation.value;
+    zoom.value = 14;
+    const addr = await reverseGeocode(
+      userLocation.value.lat,
+      userLocation.value.lng
+    );
+    if (addr) userAddress.value = addr;
+  }
+  saveUserLocationToStorage(
+    userLocation.value || null,
+    userAddress.value || null
+  );
+  locationDialogOpen.value = false;
+}
 </script>
 
 <template>
   <div class="w-full relative h-screen flex flex-col">
     <!-- Header -->
-    <header class="w-full px-4 py-6">
-      <h1 class="text-2xl font-bold mb-4">Find Support</h1>
-      <div class="relative">
-        <div
-          class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
-        >
-          <svg
-            class="w-5 h-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
+    <header class="w-full px-4 py-6 bg-[#12A0D8] text-white space-y-4">
+      <button class="flex gap-1 items-center" @click="openLocationDialog">
+        <Icon icon="bx:map" width="20" height="20" style="color: #fff" />
+        <p class="underline line-clamp-1">
+          {{
+            userAddress ||
+            (userLocation
+              ? `${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`
+              : "Set your location")
+          }}
+        </p>
+      </button>
+      <div class="flex items-center justify-between">
+        <div class="space-y-2 flex-1">
+          <h1 class="text-2xl font-bold">Find Services</h1>
+          <p>Find verified support in your area</p>
         </div>
-        <input
-          v-model="searchTerm"
-          placeholder="Search services..."
-          class="w-full bg-white text-black outline-0 rounded-lg pl-10 pr-4 py-3 text-base"
-        />
+        <div class="flex gap-4">
+          <div
+            class="w-[38px] h-[38px] bg-[#FAFAED] rounded-full flex items-center justify-center"
+          ></div>
+          <div
+            class="w-[38px] h-[38px] bg-[#FAFAED] rounded-full flex items-center justify-center"
+          ></div>
+        </div>
       </div>
-      <p class="mt-2 text-sm">{{ filteredServices.length }} services found</p>
     </header>
 
     <!-- Selected details -->
@@ -715,22 +791,46 @@ watch(
         style="width: 100%; height: 100%"
         v-bind:ref="(r: any) => (mapRef = r)"
         @click="onMapClick"
+        @click.native="
+          async (e) => {
+            if (locationDialogOpen) {
+              const lat = e.latLng.lat();
+              const lng = e.latLng.lng();
+              mapSelectedLocation = { lat, lng };
+              mapSelectedAddress = (await reverseGeocode(lat, lng)) || '';
+            }
+          }
+        "
       >
-        <!-- Render a marker per filtered service -->
-        <div v-for="svc in filteredServices" :key="svc.service_id">
+        <!-- User current location marker (red) -->
+        <GMapMarker
+          v-if="userLocation"
+          :position="userLocation"
+          :icon="getMarkerIcon('#EF4444')"
+          @click="openLocationDialog"
+        />
+
+        <!-- Render a marker per service with category-based color -->
+        <div v-for="svc in services?.results" :key="svc.details.service_id">
           <GMapMarker
-            v-if="svc.location"
-            :position="svc.location"
-            :icon="getIconForService(svc.categories[0] as string)"
+            v-if="svc.details.location"
+            :position="svc.details.location"
+            :icon="getMarkerIcon(getCategoryColor(svc.details.categories))"
             @click="selectService(svc)"
           />
         </div>
 
-        <!-- Info window for selected service -->
-        <!-- Custom popup for selected service -->
+        <!-- Small center indicator (optional when no user location) -->
+        <GMapMarker v-if="!userLocation" :position="center" />
 
-        <!-- Small center indicator (optional) -->
-        <GMapMarker :position="center" />
+        <!-- Selected location marker in dialog -->
+        <GMapMarker
+          v-if="
+            locationDialogOpen && (mapSelectedLocation || selectedPlaceLocation)
+          "
+          :position="mapSelectedLocation || selectedPlaceLocation"
+          :icon="getMarkerIcon('#12A0D8')"
+        />
       </GMapMap>
     </main>
 
@@ -802,4 +902,66 @@ watch(
       </button>
     </nav>
   </div>
+
+  <!-- Location selection dialog -->
+  <Dialog v-model:open="locationDialogOpen">
+    <DialogContent class="sm:max-w-[600px] p-6 rounded-[16px]">
+      <DialogHeader>
+        <DialogTitle>Set your address</DialogTitle>
+        <DialogDescription>
+          Type an address or use your current location.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div class="space-y-3">
+        <!-- Google Places Autocomplete -->
+        <div class="relative">
+          <input
+            type="text"
+            class="mt-0 w-full px-3 py-2 rounded border border-gray-300 transition"
+            placeholder="Search for a city or area"
+            id="searchTextField"
+            ref="autocompleteInput"
+            v-model="searchTerm"
+            @focus="initializeAutocomplete"
+          />
+          <!-- <input
+            ref="autocompleteInput"
+            type="text"
+            placeholder="Search for an address..."
+            class="border border-[#757578] p-4 rounded-[8px] w-full"
+            @focus="initializeAutocomplete"
+            v-model="searchTerm"
+          /> -->
+        </div>
+        <div class="text-sm text-gray-600">
+          Current: {{ userAddress || "—" }}
+        </div>
+        <div
+          v-if="mapSelectedLocation || selectedPlaceLocation"
+          class="text-sm text-green-600"
+        >
+          Selected: {{ mapSelectedAddress || userAddress }}
+        </div>
+      </div>
+
+      <DialogFooter class="mt-4 flex gap-2">
+        <button
+          class="bg-[#12A0D8] text-white rounded-md px-3 py-2"
+          @click="useSelectedAddress"
+        >
+          Use selected location
+        </button>
+        <button
+          class="border border-gray-300 rounded-md px-3 py-2"
+          @click="useCurrentLocation"
+        >
+          Use current location
+        </button>
+        <DialogClose as-child>
+          <button class="px-3 py-2">Cancel</button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
