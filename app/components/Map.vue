@@ -110,7 +110,7 @@ onMounted(() => {
       const info = new google.maps.InfoWindow({
         content: `
           <div
-            style="max-width: 350px"
+            style="max-width: 400px"
             class=" space-y-3 "
           >
             <h4 class="font-medium text-[#111827]">${service.details.name}</h4>
