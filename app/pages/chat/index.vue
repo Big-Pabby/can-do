@@ -24,7 +24,7 @@
         class="w-full flex mb-4"
         :class="msg.sender === 'user' ? 'justify-end' : 'justify-start'"
       >
-        <div class="flex items-start gap-4 max-w-[70%]">
+        <div class="flex items-start gap-4 md:max-w-[70%] w-full">
           <img
             v-if="msg.sender === 'mark'"
             src="/images/mark.svg"
