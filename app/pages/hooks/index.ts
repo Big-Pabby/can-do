@@ -154,3 +154,17 @@ export function UseDeleteService() {
     },
   });
 }
+
+export function UseCategories() {
+    const queryFn = async () => {
+    const response = await https.get(
+      `/v1/services/categories/`
+    );
+    return response.data;
+  };
+
+  return useQuery({
+    queryKey: ["categories"],
+    queryFn,
+  });
+}

@@ -1,15 +1,29 @@
 <template>
   <div class="flex md:flex-row flex-col">
-    <div class="px-4 py-8 md:w-6/12 bg-[#12A0D8] space-y-4 text-white">
-      <img src="/images/logo.svg" alt="" />
-      <div class="space-y-1">
-        <h3 class="font-bold text-xl">Let's set up your profile</h3>
-        <p>Share only what you're comfortable with</p>
+    <div
+      class="py-8 md:w-6/12 bg-[#EAF8FE] flex items-center justify-center flex-col space-y-4 text-white md:px-36 px-5"
+    >
+      <div class="text-center space-y-1">
+        <h2 class="text-[#12A0D8] font-bold md:text-4xl">
+          Meet your community
+        </h2>
+        <p class="text-[#121212]">
+          Hear from people who've navigated these services before you
+        </p>
       </div>
     </div>
-    <div class="p-4 space-y-4 flex-1 h-screen overflow-y-auto">
+    <div class="px-5 md:px-24 py-12 space-y-4 flex-1 h-screen overflow-y-auto">
+      <div class="space-y-4 mb-6 text-center flex items-center flex-col">
+        <img src="/images/logo-2.svg" alt="" />
+        <div class="space-y-1">
+          <p class="text-xl text-[#111827] font-medium">
+            Let's set up your profile
+          </p>
+          <p class="text-sm text-[#374151]">Share only what you're comfortable with</p>
+        </div>
+      </div>
       <div class="space-y-1">
-        <label for="name" class="font-medium"
+        <label for="name" class="text-sm text-[#374151]"
           >What should i call you? (username)</label
         >
         <input
@@ -23,7 +37,7 @@
         </p>
       </div>
       <div class="space-y-1">
-        <label for="phone_number" class="font-medium">Phone Number</label>
+        <label for="phone_number" class="text-sm text-[#374151]">Phone Number</label>
         <input
           id="phone_number"
           type="text"
@@ -35,7 +49,7 @@
         </p>
       </div>
       <div class="space-y-1">
-        <label for="email" class="font-medium">Email Address</label>
+        <label for="email" class="text-sm text-[#374151]">Email Address</label>
         <input
           id="email"
           type="text"
@@ -47,7 +61,7 @@
         </p>
       </div>
       <div class="space-y-1">
-        <label for="password" class="font-medium">Password</label>
+        <label for="password" class="text-sm text-[#374151]">Password</label>
         <input
           id="password"
           type="password"
@@ -59,7 +73,7 @@
         </p>
       </div>
       <div class="space-y-1">
-        <label for="service_interest" class="font-medium"
+        <label for="service_interest" class="text-sm text-[#374151]"
           >Service Interests</label
         >
         <p class="text-xs text-[#4B5563]">
@@ -109,7 +123,7 @@
       </div>
 
       <button
-        class="w-full bg-[#12A0D8] text-white font-semibold py-4 px-5 rounded-full hover:bg-blue-600 transition duration-200 flex items-center justify-center gap-2"
+        class="w-full bg-[#12A0D8] text-white font-semibold py-4 px-5 rounded-full  transition duration-200 flex items-center justify-center gap-2"
       >
         Submit
         <Icon

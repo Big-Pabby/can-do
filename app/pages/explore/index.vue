@@ -1,5 +1,6 @@
 <template>
-  <div class="space-y-4">
+  <div class="md:space-y-4">
+    <div class="md:hidden block"><mobile-nav/></div>
     <AdvanceFilter
       v-model="showModal"
       :initial-category="''"
@@ -83,9 +84,7 @@
         </div>
       </div>
     </div>
-    <div class="text-center text-[#6B7280]" v-if="isLoading">
-      Loading...
-    </div>
+    <div class="text-center text-[#6B7280]" v-if="isLoading">Loading...</div>
     <div v-else>
       <div v-if="toggleType === 'map'" class="flex items-start h-screen gap-6">
         <div class="flex-1 bg-white h-full md:rounded-[16px]">
@@ -167,6 +166,7 @@
 </template>
 <script setup lang="ts">
 import { UseMapServices } from "../map/hooks";
+import { useLocationStore } from "~/store/location";
 import { Icon } from "@iconify/vue";
 definePageMeta({
   layout: "user",
@@ -305,7 +305,8 @@ function handleLocationSelected(coords: {
   address: string;
 }) {
   selectedCoordinates.value = { lat: coords.lat, lng: coords.lng };
-  localStorage.setItem("location", JSON.stringify(coords));
+  useLocationStore().setLocation(coords.lat, coords.lng, coords.address);
+
   // Refetch services with new coordinates
   currentPage.value = 1;
   refetch();

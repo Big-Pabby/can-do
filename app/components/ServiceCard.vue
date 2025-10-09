@@ -40,7 +40,7 @@
         {{ service.details?.hours === 'null' ? "N/A" : service.details.hours }}
       </p>
     </div>
-    <div class="flex gap-3 justify-between">
+    <div v-if="actions" class="flex gap-3 justify-between">
       <button class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white">
         Call Now
       </button>
@@ -64,6 +64,7 @@ import { Icon } from "@iconify/vue";
 import type { Service } from "#imports";
 const props = defineProps<{
   service: Service;
+  actions?: boolean;
 }>();
 function getStarFill(rating: number | undefined, position: number): string {
   if (!rating) return "text-gray-300";

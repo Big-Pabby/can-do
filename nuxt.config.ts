@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   plugins: ["~/plugins/vue-query-plugin", "~/plugins/google-maps.client"],
-  modules: ["@vite-pwa/nuxt", "shadcn-nuxt",],
+  modules: ["@vite-pwa/nuxt", "shadcn-nuxt", "@pinia/nuxt"],
   css: ["~/assets/main.css"],
   vite: {
     plugins: [tailwindcss()],

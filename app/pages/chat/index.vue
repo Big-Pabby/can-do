@@ -98,6 +98,7 @@
 </template>
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { useLocationStore } from "~/store/location";
 definePageMeta({
   layout: "user",
 });
@@ -121,20 +122,9 @@ function sendMessage() {
   thinking.value = true;
 
   // Get user location from localStorage
-  let location = { place: "", lat: 0, lng: 0 };
-  if (typeof window !== "undefined") {
-    const loc = localStorage.getItem("location");
-    if (loc) {
-      try {
-        const obj = JSON.parse(loc);
-        location = {
-          place: obj.address || "",
-          lat: obj.lat || 0,
-          lng: obj.lng || 0,
-        };
-      } catch {}
-    }
-  }
+  let location = { place: useLocationStore().address, lat: useLocationStore().lat, lng: useLocationStore().lng };
+  
+  
 
   mutate(
     { ...location, message: input.value },

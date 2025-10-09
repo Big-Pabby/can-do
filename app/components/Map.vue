@@ -126,24 +126,90 @@ onMounted(() => {
             </div>
             <div class="flex gap-3 justify-between">
               <button
+                id="call-btn-${service.id}"
                 class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white"
               >
                 Call Now
               </button>
               <button
+                id="directions-btn-${service.id}"
                 class="border border-[#FE4D67] rounded-full py-2 px-3.5 text-sm text-[#FE4D67]"
               >
                 Directions
               </button>
-              <button
-                class="border border-[#B0B72E] rounded-full py-2 px-3.5 text-sm text-[#B0B72E]"
+             <a
+                id="details-btn-${service.id}"
+                href="/explore/${service.id}"
+                class="border border-[#B0B72E] rounded-full py-2 px-3.5 text-sm text-[#B0B72E] no-underline inline-block text-center"
               >
                 Details
-              </button>
+              </a>
             </div>
           </div>
          
           `,
+      });
+
+      marker.addListener("click", () => {
+        info.open(map, marker);
+
+        // Wait for InfoWindow to render, then attach event listeners
+        google.maps.event.addListenerOnce(info, "domready", () => {
+          // Directions button
+          const directionsBtn = document.getElementById(
+            `directions-btn-${service.id}`
+          );
+          if (directionsBtn) {
+            directionsBtn.addEventListener("click", () => {
+              if (props.origin?.lat && props.origin.lng) {
+                // Set origin as user's current location, destination as service location
+                if (directionsService && directionsRenderer) {
+                  directionsService.route(
+                    {
+                      origin: { lat: props.origin?.lat, lng: props.origin.lng },
+                      destination: { lat, lng },
+                      travelMode: "DRIVING",
+                    },
+                    (result: any, status: string) => {
+                      if (status === "OK") {
+                        directionsRenderer.setDirections(result);
+                        const leg = result.routes[0]?.legs[0];
+                        routeDistance.value = leg?.distance?.text || "";
+                        routeDuration.value = leg?.duration?.text || "";
+                        info.close(); // Close info window after showing directions
+                      } else {
+                        console.warn("Directions request failed:", status);
+                        alert("Could not get directions. Please try again.");
+                      }
+                    }
+                  );
+                }
+              } else {
+                alert("Please select your location on the map first.");
+              }
+            });
+          }
+
+          // Call button
+          const callBtn = document.getElementById(`call-btn-${service.id}`);
+          if (callBtn && service.details.phone) {
+            callBtn.addEventListener("click", () => {
+              window.location.href = `tel:${service.details.phone}`;
+            });
+          }
+
+          // Details button
+          const detailsBtn = document.getElementById(
+            `details-btn-${service.id}`
+          );
+          if (detailsBtn) {
+            detailsBtn.addEventListener("click", (e) => {
+              e.preventDefault();
+              // Use Nuxt's programmatic navigation
+              navigateTo(`/explore/${service.id}`);
+            });
+          }
+        });
       });
 
       marker.addListener("click", () => info.open(map, marker));

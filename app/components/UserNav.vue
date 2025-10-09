@@ -40,21 +40,9 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { computed } from "vue";
+import { useLocationStore } from "~/store/location";
 
-const userLocation = computed(() => {
-  if (typeof window !== "undefined") {
-    const loc = localStorage.getItem("location");
-    if (loc) {
-      try {
-        const obj = JSON.parse(loc);
-        return obj.address || `${obj.lat}, ${obj.lng}`;
-      } catch {
-        return "Location not found";
-      }
-    }
-  }
-  return "Location not found";
-});
+const userLocation = computed(() => useLocationStore().address || "Set Location");
 const showLocationModal = ref(false);
 const currentAddress = ref("");
 
@@ -67,7 +55,7 @@ const handleLocationSave = (data: {
   currentAddress.value = data.address;
 
   // Save to local storage or API
-  localStorage.setItem("userLocation", JSON.stringify(data));
+  useLocationStore().setLocation(data.lat || 0, data.lng || 0, data.address);
 
   // Optional: Fetch nearby services
   // await fetchNearbyServices(data.latitude, data.longitude)
