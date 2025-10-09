@@ -2,9 +2,15 @@
   <div
     class="md:flex hidden fixed top-0 left-0 w-full h-[86px] bg-[#12A0D8] z-40 justify-between items-center px-12 text-white"
   >
+    <SetLocationModal
+      v-model="showLocationModal"
+      :initial-address="currentAddress"
+      @save="handleLocationSave"
+      @close="handleLocationClose"
+    />
     <img src="/images/logo.svg" alt="" />
     <div class="flex items-center gap-16">
-      <div class="flex items-center gap-4">
+      <div @click="showLocationModal = true" class="flex cursor-pointer items-center gap-4">
         <div
           class="bg-[#EAF8FE] w-[40px] h-[40px] rounded-full flex items-center justify-center font-medium text-[#12A0D8]"
         >
@@ -49,4 +55,25 @@ const userLocation = computed(() => {
   }
   return "Location not found";
 });
+const showLocationModal = ref(false);
+const currentAddress = ref("");
+
+const handleLocationSave = (data: {
+  address: string;
+  lat?: number;
+  lng?: number;
+}) => {
+  console.log("Location saved:", data);
+  currentAddress.value = data.address;
+
+  // Save to local storage or API
+  localStorage.setItem("userLocation", JSON.stringify(data));
+
+  // Optional: Fetch nearby services
+  // await fetchNearbyServices(data.latitude, data.longitude)
+};
+
+const handleLocationClose = () => {
+  console.log("Modal closed");
+};
 </script>

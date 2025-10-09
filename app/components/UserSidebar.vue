@@ -34,7 +34,7 @@
           <p class="md:inline hidden">Ask Mark</p></nuxt-link
         >
         <nuxt-link
-          to="/add-service"
+          to="#"
           class="flex  md:flex-row flex-col items-center gap-2 text-[#374151] font-medium md:p-4 w-full text-sm rounded-[8px]"
           ><Icon
             icon="lucide:file-plus"
@@ -46,13 +46,13 @@
         >
         
         <nuxt-link
-          to="/challenges"
+          to="#"
           class="md:flex hidden  md:flex-row flex-col items-center gap-2 text-[#374151] font-medium md:p-4 w-full text-sm rounded-[8px]"
           ><Icon icon="ph:star-bold" width="20" height="20"  style="color: #374151" />
           Challenges</nuxt-link
         >
         <nuxt-link
-          to="/challenges"
+          to="#"
           class="flex  md:flex-row flex-col items-center gap-2 text-[#374151] font-medium md:p-4 w-full text-sm rounded-[8px]"
           >
           <Icon icon="mi:user" width="20" height="20"  style="color: #374151" />

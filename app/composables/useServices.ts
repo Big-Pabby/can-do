@@ -13,6 +13,8 @@ export interface Service {
   details: {
     service_id: string;
     name: string;
+    email: string;
+    website: string;
     org_name: string;
     categories: string;
     sub_category: string;

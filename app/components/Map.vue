@@ -12,11 +12,11 @@
     </div>
   </div>
 
-  <div class="mt-4 text-sm">
+  <!-- <div class="mt-4 text-sm">
     <p><strong>Latitude:</strong> {{ lat }}</p>
     <p><strong>Longitude:</strong> {{ lng }}</p>
     <p><strong>Address:</strong> {{ address }}</p>
-  </div>
+  </div> -->
 </template>
 
 <script setup lang="ts">
@@ -61,7 +61,7 @@ onMounted(() => {
   // Initialize map (fallback center)
   map = new google.maps.Map(mapRef.value!, {
     zoom: 6,
-    center: { lat: 9.082, lng: 8.6753 }, // Nigeria center
+    center: { lat: 51.47740782966635, lng: -0.12713183300586461 }, // Nigeria center
   });
 
   // 🎨 Category marker colors
@@ -215,7 +215,14 @@ onMounted(() => {
   });
 
   // Setup directions renderer and service
-  directionsRenderer = new window.google.maps.DirectionsRenderer();
+  directionsRenderer = new window.google.maps.DirectionsRenderer({
+    polylineOptions: {
+      strokeColor: "#1976D2", // Thicker blue
+      strokeWeight: 7, // Thicker line
+      strokeOpacity: 1,
+    },
+    suppressMarkers: false,
+  });
   directionsService = new window.google.maps.DirectionsService();
   directionsRenderer.setMap(map);
 
@@ -230,7 +237,7 @@ onMounted(() => {
       (result: any, status: string) => {
         if (status === "OK") {
           directionsRenderer.setDirections(result);
-          // Extract distance and duration from first leg
+          // Polyline style is set via polylineOptions above
           const leg = result.routes[0]?.legs[0];
           routeDistance.value = leg?.distance?.text || "";
           routeDuration.value = leg?.duration?.text || "";
@@ -261,7 +268,7 @@ watch(
           (result: any, status: string) => {
             if (status === "OK") {
               directionsRenderer.setDirections(result);
-              // Extract distance and duration from first leg
+              // Polyline style is set via polylineOptions above
               const leg = result.routes[0]?.legs[0];
               routeDistance.value = leg?.distance?.text || "";
               routeDuration.value = leg?.duration?.text || "";
@@ -283,14 +290,28 @@ watch(
 );
 
 const emit = defineEmits<{
-  (e: "locationSelected", coords: { lat: number; lng: number, address: string }): void;
+  (
+    e: "locationSelected",
+    coords: { lat: number; lng: number; address: string }
+  ): void;
 }>();
-watch([lat, lng, address], ([newLat, newLng, newAddress], [oldLat, oldLng, oldAddress]) => {
-  if (newLat && newLng && newAddress && (newLat !== oldLat || newLng !== oldLng || newAddress !== oldAddress)) {
-    
-    emit("locationSelected", { lat: newLat, lng: newLng, address: newAddress});
+watch(
+  [lat, lng, address],
+  ([newLat, newLng, newAddress], [oldLat, oldLng, oldAddress]) => {
+    if (
+      newLat &&
+      newLng &&
+      newAddress &&
+      (newLat !== oldLat || newLng !== oldLng || newAddress !== oldAddress)
+    ) {
+      emit("locationSelected", {
+        lat: newLat,
+        lng: newLng,
+        address: newAddress,
+      });
+    }
   }
-});
+);
 </script>
 
 <style scoped>

@@ -1,5 +1,14 @@
 <template>
   <div class="space-y-4">
+    <AdvanceFilter
+      v-model="showModal"
+      :initial-category="''"
+      :initial-sub-category="''"
+      :initial-distance="''"
+      :initial-excluded-areas="[]"
+      @apply="handleApply"
+      @close="handleClose"
+    />
     <div
       class="md:block hidden border border-[#F3F4F6] bg-white rounded-[12px] p-5"
     >
@@ -22,6 +31,7 @@
         />
         <input
           id="search"
+          v-model="searchQuery"
           type="text"
           placeholder="Search by services name"
           class="w-full border-0 outline-0 p-0 m-0"
@@ -29,6 +39,7 @@
       </div>
       <div class="flex items-center gap-2">
         <div
+          @click="showModal = true"
           class="py-3 px-5 rounded-full flex items-center gap-2 border border-[#E5E7EB] bg-[#F9FAFB]"
         >
           <Icon
@@ -72,14 +83,14 @@
         </div>
       </div>
     </div>
-    <div class="">
+    <div class="text-center text-[#6B7280]" v-if="isLoading">
+      Loading...
+    </div>
+    <div v-else>
       <div v-if="toggleType === 'map'" class="flex items-start h-screen gap-6">
-        <div
-          v-if="data?.results.length"
-          class="flex-1 bg-white h-full md:rounded-[16px]"
-        >
+        <div class="flex-1 bg-white h-full md:rounded-[16px]">
           <Map
-            :services="data?.results"
+            :services="data?.results || []"
             :initial-lat="selectedCoordinates?.lat"
             :initial-lng="selectedCoordinates?.lng"
             :origin="selectedCoordinates"
@@ -166,9 +177,15 @@ const coords = computed(() => selectedCoordinates.value);
 // State for selected service location for directions
 const selectedServiceLocation = ref<{ lat: number; lng: number } | null>(null);
 
+// Filter/search refs
+const searchQuery = ref("");
+const selectedCategory = ref<string>("");
+const selectedDistance = ref<string>("");
+const excludedAreas = ref<string[] | null>(null);
+
 // Pagination state
 const currentPage = ref(1);
-const pageSize = 100;
+const pageSize = 102;
 const totalPages = computed(() => {
   if (!data?.value?.count) return 1;
   return Math.ceil(data.value.count / pageSize);
@@ -179,10 +196,54 @@ const reactivePageSize = computed(() => pageSize);
 const { data, error, isLoading, refetch } = UseMapServices(
   reactivePage,
   reactivePageSize,
-  coords
+  coords,
+  {
+    search: searchQuery,
+    category: selectedCategory,
+    distance: selectedDistance,
+    excludedAreas: excludedAreas,
+  }
 );
 
 const toggleType = ref("map");
+const showModal = ref(false);
+
+const handleApply = (data: {
+  category: string;
+  subCategory: string;
+  distance: string;
+  excludedAreas: string[];
+}) => {
+  // Expecting data to contain { category, subCategory, distance, excludedAreas }
+  // Map incoming values into our refs used by the query hook
+  selectedCategory.value = data.category;
+  // If the user provided a sub-category, prefer it for more specific filtering
+
+  selectedDistance.value = data.distance;
+  excludedAreas.value = data.excludedAreas;
+
+  // reset pagination
+  currentPage.value = 1;
+  // trigger refetch
+  refetch();
+};
+
+const handleClose = () => {
+  console.log("Modal closed");
+};
+
+// Debounced search watcher
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+watch(
+  () => searchQuery.value,
+  () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      currentPage.value = 1;
+      refetch();
+    }, 500);
+  }
+);
 
 // Pagination page numbers logic
 const paginationPages = computed(() => {
@@ -238,9 +299,13 @@ function prevPage() {
 }
 
 // Handle location selection from map
-function handleLocationSelected(coords: { lat: number; lng: number, address: string }) {
+function handleLocationSelected(coords: {
+  lat: number;
+  lng: number;
+  address: string;
+}) {
   selectedCoordinates.value = { lat: coords.lat, lng: coords.lng };
-   localStorage.setItem("location", JSON.stringify(coords));
+  localStorage.setItem("location", JSON.stringify(coords));
   // Refetch services with new coordinates
   currentPage.value = 1;
   refetch();

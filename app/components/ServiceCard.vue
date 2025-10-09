@@ -21,7 +21,7 @@
       </div>
       <div class="flex items-center gap-1 text-sm">
         <span class="text-gray-700 font-medium">
-          {{ service.details.rating }}
+          {{ service.details?.rating === 'null' ? "N/A" : service.details.rating }}
         </span>
       </div>
       <div
@@ -34,10 +34,10 @@
     </div>
     <div class="space-y-1">
       <p class="text-sm text-[#6B7280] line-clamp-1">
-        {{ service.details.address }}
+        {{ service.details.address === 'null' ? "N/A" : service.details.address }}
       </p>
       <p class="text-sm text-[#6B7280] line-clamp-1">
-        {{ service.details.hours }}
+        {{ service.details?.hours === 'null' ? "N/A" : service.details.hours }}
       </p>
     </div>
     <div class="flex gap-3 justify-between">
@@ -50,15 +50,17 @@
       >
         Directions
       </button>
-      <button
+      <nuxt-link
+        :to="`/explore/${service.id}`"
         class="border border-[#B0B72E] rounded-full py-2 px-3.5 text-sm text-[#B0B72E]"
       >
         Details
-      </button>
+      </nuxt-link>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { Icon } from "@iconify/vue";
 import type { Service } from "#imports";
 const props = defineProps<{
   service: Service;

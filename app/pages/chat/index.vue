@@ -3,7 +3,9 @@
     class="w-full h-screen overflow-y-auto flex flex-col bg-white rounded-t-[24px] px-6 pt-6 pb-[86px] space-y-4 relative"
     style="position: relative"
   >
-    <div class="flex w-full md:flex-row flex-col-reverse md:items-center items-start border-b pb-4 justify-between gap-6">
+    <div
+      class="flex w-full md:flex-row flex-col-reverse md:items-center items-start border-b pb-4 justify-between gap-6"
+    >
       <div class="flex items-center gap-3">
         <img src="/images/mark.svg" alt="Ask Mark" class="w-10 h-10" />
         <div class="space-y-1">
@@ -111,7 +113,7 @@ const messages = ref([
 const input = ref("");
 const thinking = ref(false);
 
-const { mutateAsync, isPending } = UseChatBot();
+const { mutate, isPending } = UseChatBot();
 
 function sendMessage() {
   if (!input.value.trim()) return;
@@ -134,19 +136,21 @@ function sendMessage() {
     }
   }
 
-  mutateAsync({ ...location, message: input.value })
-    .then((res: any) => {
-      messages.value.push({ sender: "mark", text: res.data.answer });
-    })
-    .catch(() => {
-      messages.value.push({
-        sender: "mark",
-        text: "Sorry, I couldn't process your request.",
-      });
-    })
-    .finally(() => {
-      thinking.value = false;
-    });
+  mutate(
+    { ...location, message: input.value },
+    {
+      onSuccess: async ({ data }) => {
+        messages.value.push({ sender: "mark", text: data.answer });
+      },
+
+      onError: (error) => {
+        messages.value.push({
+          sender: "mark",
+          text: "Sorry, I couldn't process your request.",
+        });
+      },
+    }
+  );
   input.value = "";
 }
 
