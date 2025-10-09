@@ -259,6 +259,7 @@ function handleDirections(service: any) {
     alert("Service location not available");
     return;
   }
+  toggleType.value = "map";
   selectedServiceLocation.value = { lat: destLat, lng: destLng };
 }
 </script>

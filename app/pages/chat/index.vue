@@ -3,7 +3,7 @@
     class="w-full h-screen overflow-y-auto flex flex-col bg-white rounded-t-[24px] px-6 pt-6 pb-[86px] space-y-4 relative"
     style="position: relative"
   >
-    <div class="flex w-full items-center border-b pb-4 justify-between gap-6">
+    <div class="flex w-full md:flex-row flex-col-reverse md:items-center items-start border-b pb-4 justify-between gap-6">
       <div class="flex items-center gap-3">
         <img src="/images/mark.svg" alt="Ask Mark" class="w-10 h-10" />
         <div class="space-y-1">
@@ -24,7 +24,7 @@
         class="w-full flex mb-4"
         :class="msg.sender === 'user' ? 'justify-end' : 'justify-start'"
       >
-        <div class="flex items-start gap-4 md:max-w-[70%] w-full">
+        <div class="flex items-start gap-4 md:max-w-[70%]">
           <img
             v-if="msg.sender === 'mark'"
             src="/images/mark.svg"
@@ -58,7 +58,6 @@
             <span
               class="inline-block w-2 h-2 bg-[#E5E7EB] rounded-full animate-bounce delay-300"
             ></span>
-            
           </div>
         </div>
       </div>

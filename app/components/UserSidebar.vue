@@ -3,7 +3,7 @@
     class="block  fixed md:top-0  bottom-0 left-0 md:w-[220px] w-full bg-white md:h-[100vh] z-30 md:p-6 p-4"
   >
     <div class="md:flex md:h-full md:pt-[86px] justify-between flex-col">
-      <div class="flex md:flex-col flex-row">
+      <div class="flex md:flex-col items-start flex-row">
         <nuxt-link
           to="/home"
           class="flex md:flex-row flex-col items-center gap-2 text-[#374151] font-medium md:p-4 w-full text-sm rounded-[8px]"
