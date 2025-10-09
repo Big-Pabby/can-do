@@ -52,6 +52,7 @@ const mapRef = ref<HTMLDivElement | null>(null);
 const lat = ref(0);
 const lng = ref(0);
 const address = ref("");
+const district = ref("");
 const routeDistance = ref<string>("");
 const routeDuration = ref<string>("");
 
@@ -242,6 +243,8 @@ onMounted(() => {
       (results, status) => {
         if (status === "OK" && results && results[0]) {
           address.value = results[0].formatted_address;
+          console.log(results[0]);
+          district.value = results[0].address_components[2]?.short_name || "";
         } else {
           address.value = "Address not found";
         }
@@ -358,22 +361,30 @@ watch(
 const emit = defineEmits<{
   (
     e: "locationSelected",
-    coords: { lat: number; lng: number; address: string }
+    coords: { lat: number; lng: number; address: string; district: string }
   ): void;
 }>();
 watch(
-  [lat, lng, address],
-  ([newLat, newLng, newAddress], [oldLat, oldLng, oldAddress]) => {
+  [lat, lng, address, district],
+  (
+    [newLat, newLng, newAddress, newDistrict],
+    [oldLat, oldLng, oldAddress, oldDistrict]
+  ) => {
     if (
       newLat &&
       newLng &&
       newAddress &&
-      (newLat !== oldLat || newLng !== oldLng || newAddress !== oldAddress)
+      newDistrict &&
+      (newLat !== oldLat ||
+        newLng !== oldLng ||
+        newAddress !== oldAddress ||
+        newDistrict !== oldDistrict)
     ) {
       emit("locationSelected", {
         lat: newLat,
         lng: newLng,
         address: newAddress,
+        district: newDistrict,
       });
     }
   }

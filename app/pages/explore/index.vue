@@ -1,6 +1,6 @@
 <template>
   <div class="md:space-y-4">
-    <div class="md:hidden block"><mobile-nav/></div>
+    <div class="md:hidden block"><mobile-nav /></div>
     <AdvanceFilter
       v-model="showModal"
       :initial-category="''"
@@ -303,9 +303,15 @@ function handleLocationSelected(coords: {
   lat: number;
   lng: number;
   address: string;
+  district: string;
 }) {
   selectedCoordinates.value = { lat: coords.lat, lng: coords.lng };
-  useLocationStore().setLocation(coords.lat, coords.lng, coords.address);
+  useLocationStore().setLocation(
+    coords.lat,
+    coords.lng,
+    coords.address,
+    coords.district
+  );
 
   // Refetch services with new coordinates
   currentPage.value = 1;

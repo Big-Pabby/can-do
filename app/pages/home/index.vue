@@ -72,7 +72,7 @@
             No services found in your area.
           </div>
           <div v-else v-for="service in data?.results" :key="service.id">
-            <ServiceCard :service="service" :actions="false" />
+            <ServiceCard :service="service" :actions="true" />
           </div>
         </div>
       </div>

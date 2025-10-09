@@ -18,7 +18,7 @@ interface Coordinates {
 export function UseChatBot() {
   interface Response {
     answer: string;
-    id_list: string[];
+    services: Service[];
   }
   return useMutation({
     mutationFn: async (query: Coordinates) => {

@@ -12,10 +12,10 @@
 <script setup lang="ts">
 import { Toaster } from "vue-sonner";
 import "vue-sonner/style.css";
-import { useLocationStore } from '@/store/location';
+import { useLocationStore } from "@/store/location";
 
 const locationStore = useLocationStore();
-locationStore.setLocation(9.082, 8.6753, 'Abuja, Nigeria');
+locationStore.setLocation(9.082, 8.6753, "Abuja, Nigeria");
 console.log(locationStore.lat, locationStore.address);
 useHead({
   link: [
@@ -37,16 +37,19 @@ function storeUserLocation() {
           const geocoder = new window.google.maps.Geocoder();
           geocoder.geocode({ location: { lat, lng } }, (results, status) => {
             let address = "";
+            let district = "";
             if (status === "OK" && results && results[0]) {
+              console.log(results);
               address = results[0].formatted_address;
+              district = results[0].address_components[0]?.short_name || "";
             }
-            
-            useLocationStore().setLocation(lat, lng, address);
+
+            useLocationStore().setLocation(lat, lng, address, district);
           });
         } else {
           // Fallback: store lat/lng only
           const location = { lat, lng };
-          useLocationStore().setLocation(lat, lng, '');
+          useLocationStore().setLocation(lat, lng, "");
         }
       },
       (err) => {

@@ -3,6 +3,20 @@
     <h4 class="font-medium text-[#111827]">
       {{ service.details.name }}
     </h4>
+    <div class="flex gap-3 flex-wrap">
+      <p
+        class="px-3 inline-block py-1 border border-[#6BCFF6] bg-[#EAF8FE] text-[#12A0D8] text-xs rounded-full font-medium"
+      >
+        {{ service.details.categories }}
+      </p>
+      <span
+        v-if="service.details.sub_category"
+        class="px-3 border border-[#B3DAFF] py-1 bg-[#F0F8FF] text-[#005AAD] text-xs rounded-full"
+      >
+        {{ service.details.sub_category }}
+      </span>
+    </div>
+
     <!-- Star Rating -->
     <div class="flex items-center gap-2">
       <div class="flex">
@@ -21,7 +35,9 @@
       </div>
       <div class="flex items-center gap-1 text-sm">
         <span class="text-gray-700 font-medium">
-          {{ service.details?.rating === 'null' ? "N/A" : service.details.rating }}
+          {{
+            service.details?.rating === "null" ? "N/A" : service.details.rating
+          }}
         </span>
       </div>
       <div
@@ -33,14 +49,23 @@
       </div>
     </div>
     <div class="space-y-1">
-      <p class="text-sm text-[#6B7280] line-clamp-1">
-        {{ service.details.address === 'null' ? "N/A" : service.details.address }}
+      <p class="text-sm text-[#6B7280] flex gap-1 items-center">
+        <Icon icon="akar-icons:location" width="16" height="16" />
+
+        <span class="flex-1 line-clamp-1">
+          {{
+            service.details.address === "null" ? "N/A" : service.details.address
+          }}</span
+        >
       </p>
-      <p class="text-sm text-[#6B7280] line-clamp-1">
-        {{ service.details?.hours === 'null' ? "N/A" : service.details.hours }}
+      <p class="text-sm text-[#6B7280] flex gap-1 items-center">
+        <Icon icon="mdi:clock-outline" width="16" height="16" />
+        <span class="flex-1 line-clamp-1">{{
+          service.details?.hours === "null" ? "N/A" : service.details.hours
+        }}</span>
       </p>
     </div>
-    <div v-if="actions" class="flex gap-3 justify-between">
+    <div v-if="!actions" class="flex gap-3 justify-between">
       <button class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white">
         Call Now
       </button>

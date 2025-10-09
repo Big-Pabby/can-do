@@ -63,6 +63,14 @@
           </div>
         </div>
       </div>
+      <div v-if="services.length > 0">
+        <h3 class="text-lg font-medium mb-4">Recommended Services</h3>
+        <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4">
+          <div v-for="service in services" :key="service.id">
+            <ServiceCard :service="service" />
+          </div>
+        </div>
+      </div>
     </div>
     <div
       class="fixed md:bg-transparent bg-white left-0 md:bottom-[0px] bottom-[86px] md:pl-[252px] md:pr-[32px] w-full z-20 flex items-center justify-center"
@@ -104,6 +112,7 @@ definePageMeta({
 });
 import { ref } from "vue";
 import { UseChatBot } from "./hooks/index";
+import type { Service } from "#imports";
 
 const messages = ref([
   {
@@ -113,6 +122,7 @@ const messages = ref([
 ]);
 const input = ref("");
 const thinking = ref(false);
+const services = ref<Service[]>([]);
 
 const { mutate, isPending } = UseChatBot();
 
@@ -122,15 +132,21 @@ function sendMessage() {
   thinking.value = true;
 
   // Get user location from localStorage
-  let location = { place: useLocationStore().address, lat: useLocationStore().lat, lng: useLocationStore().lng };
-  
-  
+  let location = {
+    place:
+      useLocationStore().district ||
+      useLocationStore().address ||
+      "Suffolk, UK",
+    lat: useLocationStore().lat,
+    lng: useLocationStore().lng,
+  };
 
   mutate(
     { ...location, message: input.value },
     {
       onSuccess: async ({ data }) => {
         messages.value.push({ sender: "mark", text: data.answer });
+        services.value = data.services;
       },
 
       onError: (error) => {
