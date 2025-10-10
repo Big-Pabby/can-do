@@ -62,7 +62,7 @@ onMounted(() => {
   // Initialize map (fallback center)
   map = new google.maps.Map(mapRef.value!, {
     zoom: 6,
-    center: { lat: 51.47740782966635, lng: -0.12713183300586461 }, // Nigeria center
+    // Nigeria center
   });
 
   // 🎨 Category marker colors
@@ -267,13 +267,13 @@ onMounted(() => {
       (err) => {
         console.warn("Geolocation error:", err);
         // fallback to Nigeria center
-        setMarker(9.082, 8.6753);
+        setMarker(51.5074, -0.1278);
       },
       { enableHighAccuracy: true }
     );
   } else {
     // fallback if browser doesn't support geolocation
-    setMarker(9.082, 8.6753);
+    setMarker(51.5074, -0.1278);
   }
 
   // 🖱️ Update marker when user clicks map
