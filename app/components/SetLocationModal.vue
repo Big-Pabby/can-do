@@ -113,6 +113,7 @@ const isOpen = ref(props.modelValue);
 const address = ref(props.initialAddress);
 const isLoadingLocation = ref(false);
 const isSaving = ref(false);
+const isCurrentSaving = ref(false);
 
 // Watchers
 watch(
