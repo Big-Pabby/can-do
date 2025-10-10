@@ -255,14 +255,14 @@ onMounted(() => {
   // 🧭 Default to user's current location (if available)
   if (props.initialLat && props.initialLng) {
     setMarker(props.initialLat, props.initialLng);
-    map.setZoom(12);
+    map.setZoom(17);
   } else if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const userLat = pos.coords.latitude;
         const userLng = pos.coords.longitude;
         setMarker(userLat, userLng);
-        map.setZoom(12);
+        map.setZoom(17);
       },
       (err) => {
         console.warn("Geolocation error:", err);
