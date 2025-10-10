@@ -61,7 +61,7 @@ onMounted(() => {
 
   // Initialize map (fallback center)
   map = new google.maps.Map(mapRef.value!, {
-    zoom: 6,
+    zoom: 17,
     // Nigeria center
   });
 
