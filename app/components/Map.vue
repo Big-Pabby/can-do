@@ -12,11 +12,11 @@
     </div>
   </div>
 
-  <!-- <div class="mt-4 text-sm">
+  <div class="mt-4 text-sm">
     <p><strong>Latitude:</strong> {{ lat }}</p>
     <p><strong>Longitude:</strong> {{ lng }}</p>
     <p><strong>Address:</strong> {{ address }}</p>
-  </div> -->
+  </div>
 </template>
 
 <script setup lang="ts">
