@@ -150,7 +150,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const distances = ['5', '10', '15', '20', '25', '30']
+const distances = ['0.5', '1', '1.5', '2', '2.5', '3']
 const categories = Object.keys(CORE_SERVICE_CATEGORIES)
 
 const selectedCategory = ref(props.initialCategory)

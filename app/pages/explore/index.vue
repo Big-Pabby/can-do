@@ -172,7 +172,12 @@ definePageMeta({
   layout: "user",
 });
 
-const selectedCoordinates = ref<{ lat: number; lng: number } | null>(null);
+const selectedCoordinates = computed(() => {
+  return {
+    lat: useLocationStore().lat,
+    lng: useLocationStore().lng,
+  };
+});
 const coords = computed(() => selectedCoordinates.value);
 // State for selected service location for directions
 const selectedServiceLocation = computed(() => {
@@ -307,7 +312,7 @@ function handleLocationSelected(coords: {
   address: string;
   district: string;
 }) {
-  selectedCoordinates.value = { lat: coords.lat, lng: coords.lng };
+  // selectedCoordinates.value = { lat: coords.lat, lng: coords.lng };
   useLocationStore().setLocation(
     coords.lat,
     coords.lng,
@@ -334,6 +339,6 @@ function handleDirections(service: any) {
     return;
   }
   toggleType.value = "map";
-  useLocationStore().setSelectedServiceLocation(destLat, destLng);
+  useLocationStore().setSelectedServiceLocation({ lat: destLat, lng: destLng });
 }
 </script>

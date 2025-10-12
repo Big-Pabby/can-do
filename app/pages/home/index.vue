@@ -72,11 +72,7 @@
             No services found in your area.
           </div>
           <div v-else v-for="service in data?.results" :key="service.id">
-            <ServiceCard
-              :service="service"
-              
-              @directions="handleDirections"
-            />
+            <ServiceCard :service="service" @directions="handleDirections" />
           </div>
         </div>
       </div>
@@ -136,7 +132,7 @@ function handleDirections(service: any) {
     return;
   }
 
-  useLocationStore().setSelectedServiceLocation(destLat, destLng);
+  useLocationStore().setSelectedServiceLocation({ lat: destLat, lng: destLng });
   navigateTo("/explore");
 }
 </script>

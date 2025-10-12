@@ -28,8 +28,8 @@ export const useLocationStore = defineStore("location", {
       this.lng = 0;
       this.address = "";
     },
-    setSelectedServiceLocation(lat: number, lng: number) {
-      this.selectedServiceLocation = { lat, lng };
+    setSelectedServiceLocation(data: {lat: number, lng: number} | null) {
+      this.selectedServiceLocation = data;
     },
   },
   persist: true,

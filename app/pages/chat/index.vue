@@ -161,14 +161,43 @@
         <div ref="messagesContainer" class="messages-container">
           <!-- Welcome Message -->
           <div v-if="messages.length === 0" class="welcome-message">
-            <img src="/images/mark.svg" alt="Mark" class="w-16 h-16 mb-4" />
+            <div class="message-wrapper" :class="'message-bot'">
+              <div class="message-content">
+                <img src="/images/mark.svg" alt="Mark" class="avatar" />
+                <div :class="['message-bubble', 'bubble-mark']">
+                  <p class="message-text">
+                    Welcome! I'm Mark, I'm here to help you find the right
+                    support around Suffolk. What's going on for you today?
+                  </p>
+                  <!-- <span class="message-time">{{
+                  formatTime(msg.timestamp)
+                }}</span> -->
+                </div>
+              </div>
+
+              <!-- Services for this message -->
+            </div>
+            <div class="flex flex-wrap gap-4">
+              <div
+                v-for="value in othermessages"
+                :key="value"
+                class="border border-[#B0B72E] text-sm bg-[#FAFAED] text-[#B0B72E] p-2 rounded-full cursor-pointer"
+                @click="
+                  input = value;
+                  sendMessage();
+                "
+              >
+                {{ value }}
+              </div>
+            </div>
+            <!-- <img src="/images/mark.svg" alt="Mark" class="w-16 h-16 mb-4" />
             <h3 class="text-lg font-semibold text-gray-800 mb-2">
               Welcome! I'm Mark
             </h3>
             <p class="text-sm text-gray-600 text-center max-w-md">
               I'm here to help you find the right support around Suffolk. What's
               going on for you today?
-            </p>
+            </p> -->
           </div>
 
           <!-- Messages -->
@@ -233,23 +262,24 @@
 
         <!-- Input Area -->
         <div class="input-container">
-          <div class="input-wrapper">
+          <div class="input-wrapper relative">
             <input
               v-model="input"
               type="text"
               placeholder="Type your question or use the mic..."
-              class="chat-input"
+              class="chat-input !pr-12"
               @keyup.enter="sendMessage"
               :disabled="isPending"
             />
+            <button
+              class="absolute right-[6px] top-[6px] action-btn send-btn"
+              @click="sendMessage"
+              :disabled="!input.trim() || isPending"
+            >
+              <Icon icon="ic:round-send" class="w-5 h-5" />
+            </button>
             <!-- <div class="button-group">
-              <button
-                class="action-btn send-btn"
-                @click="sendMessage"
-                :disabled="!input.trim() || isPending"
-              >
-                <Icon icon="ic:round-send" class="w-5 h-5" />
-              </button>
+              
               <button
                 class="action-btn mic-btn"
                 @click="handleMic"
@@ -363,6 +393,14 @@ const messagesContainer = ref<HTMLElement | null>(null);
 const chatHistory = ref<ChatSession[]>([]);
 const currentSessionId = ref<string>("");
 const showChatOnMobile = ref(false); // Controls mobile view state
+const othermessages = ref([
+  "I need somewhere to get food",
+  "Look for work",
+  "Need food help",
+  "Feeling rough mentally",
+  "Got money problems",
+  "I need somewhere to stay",
+]);
 
 // Chat composable
 const { mutate } = UseChatBot();
@@ -402,7 +440,7 @@ function handleDirections(service: any) {
     alert("Service location not available");
     return;
   }
-  useLocationStore().setSelectedServiceLocation(destLat, destLng);
+  useLocationStore().setSelectedServiceLocation({lat:destLat, lng: destLng});
   navigateTo("/explore");
 }
 
@@ -917,9 +955,9 @@ const formatTime = (timestamp: number) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 3rem 1rem;
-  margin-top: 2rem;
+  text-align: left;
+  /* padding: 3rem 1rem;
+  margin-top: 2rem; */
 }
 
 .message-wrapper {

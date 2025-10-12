@@ -25,7 +25,7 @@
             <div class="input-section space-y-3">
               <div class="flex justify-between items-center">
                 <label for="address-input" class="input-label">
-                  Input address
+                  Input address or postcode
                 </label>
                 <button
                   @click="useCurrentLocation"
@@ -51,7 +51,7 @@
                   ref="addressInputRef"
                   v-model="address"
                   type="text"
-                  placeholder="Enter full address"
+                  placeholder="Enter address or postcode (e.g., SW1A 1AA)"
                   class="address-input"
                   @keypress.enter="handleSave"
                 />
@@ -69,16 +69,39 @@
               </div>
 
               <!-- Selected Location Info -->
-              <div
+              <!-- <div
                 v-if="selectedLocation.lat && selectedLocation.lng"
-                class="location-info"
+                class="location-info-card"
               >
-                <Icon icon="mdi:check-circle" class="w-4 h-4 text-green-500" />
-                <span class="text-sm text-gray-600">
-                  Location coordinates: {{ selectedLocation.lat.toFixed(6) }},
-                  {{ selectedLocation.lng.toFixed(6) }}
-                </span>
-              </div>
+                <div class="location-info-header">
+                  <Icon icon="mdi:check-circle" class="w-5 h-5 text-green-500" />
+                  <span class="text-sm font-semibold text-gray-700">Location Selected</span>
+                </div>
+                
+                <div class="location-details">
+                  <div v-if="selectedLocation.postcode" class="detail-row">
+                    <span class="detail-label">Postcode:</span>
+                    <span class="detail-value">{{ selectedLocation.postcode }}</span>
+                  </div>
+                  
+                  <div v-if="selectedLocation.district" class="detail-row">
+                    <span class="detail-label">District:</span>
+                    <span class="detail-value">{{ selectedLocation.district }}</span>
+                  </div>
+                  
+                  <div v-if="selectedLocation.city" class="detail-row">
+                    <span class="detail-label">City:</span>
+                    <span class="detail-value">{{ selectedLocation.city }}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Coordinates:</span>
+                    <span class="detail-value">
+                      {{ selectedLocation.lat.toFixed(6) }}, {{ selectedLocation.lng.toFixed(6) }}
+                    </span>
+                  </div>
+                </div>
+              </div> -->
             </div>
           </div>
 
@@ -118,6 +141,10 @@ interface LocationData {
   lat: number;
   lng: number;
   district: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postcode?: string;
 }
 
 interface Emits {
@@ -146,6 +173,10 @@ const selectedLocation = ref({
   lat: 0,
   lng: 0,
   district: "",
+  city: "",
+  state: "",
+  country: "",
+  postcode: "",
 });
 
 // Computed
@@ -180,6 +211,43 @@ watch(isOpen, (newVal) => {
   }
 });
 
+// Extract address components from Google Place
+const extractAddressComponents = (place: google.maps.places.PlaceResult) => {
+  const components = place.address_components || [];
+
+  const getComponent = (types: string[]) => {
+    const component = components.find((c) =>
+      types.some((type) => c.types.includes(type))
+    );
+    return component?.long_name || "";
+  };
+
+  const getShortComponent = (types: string[]) => {
+    const component = components.find((c) =>
+      types.some((type) => c.types.includes(type))
+    );
+    return component?.short_name || "";
+  };
+
+  return {
+    // Postcode is the most important for UK addresses
+    postcode: getComponent(["postal_code"]),
+    // District can be sublocality or administrative_area_level_2
+    district:
+      getComponent(["sublocality_level_1", "sublocality"]) ||
+      getComponent(["administrative_area_level_2"]) ||
+      getComponent(["locality"]),
+    // City/Town
+    city: getComponent(["locality", "postal_town"]) || 
+          getComponent(["administrative_area_level_2"]),
+    // State/County
+    state: getComponent(["administrative_area_level_1"]),
+    // Country
+    country: getComponent(["country"]),
+    countryCode: getShortComponent(["country"]),
+  };
+};
+
 // Initialize Google Places Autocomplete
 const initAutocomplete = () => {
   if (!addressInputRef.value) return;
@@ -191,17 +259,19 @@ const initAutocomplete = () => {
   }
 
   try {
-    // Create autocomplete instance
+    // Create autocomplete instance without type restriction
+    // This allows both addresses and postcodes to be searched
     autocomplete.value = new google.maps.places.Autocomplete(
       addressInputRef.value,
       {
-        types: ["address"],
+        // Remove types to allow all location types including postcodes
         fields: [
           "formatted_address",
           "geometry",
           "address_components",
           "place_id",
         ],
+        // componentRestrictions: { country: "gb" }, // Restrict to UK - remove or change as needed
       }
     );
 
@@ -223,15 +293,16 @@ const handlePlaceSelect = () => {
     return;
   }
 
+  // Extract all address components
+  const addressComponents = extractAddressComponents(place);
+
   // Update address and coordinates
   address.value = place.formatted_address || "";
   selectedLocation.value = {
     address: place.formatted_address || "",
     lat: place.geometry.location.lat(),
     lng: place.geometry.location.lng(),
-    district: place.address_components
-      ? place.address_components[2]?.short_name || ""
-      : "",
+    ...addressComponents,
   };
 
   console.log("Selected location:", selectedLocation.value);
@@ -254,6 +325,10 @@ const resetLocation = () => {
     lat: 0,
     lng: 0,
     district: "",
+    city: "",
+    state: "",
+    country: "",
+    postcode: "",
   };
 };
 
@@ -271,6 +346,10 @@ const handleSave = async () => {
       lat: selectedLocation.value.lat,
       lng: selectedLocation.value.lng,
       district: selectedLocation.value.district,
+      city: selectedLocation.value.city,
+      state: selectedLocation.value.state,
+      country: selectedLocation.value.country,
+      postcode: selectedLocation.value.postcode,
     });
 
     closeModal();
@@ -301,13 +380,14 @@ const useCurrentLocation = () => {
 
           geocoder.geocode({ location: { lat, lng } }, (results, status) => {
             if (status === "OK" && results && results[0]) {
+              const addressComponents = extractAddressComponents(results[0]);
+              
               address.value = results[0].formatted_address;
               selectedLocation.value = {
                 address: results[0].formatted_address,
                 lat: lat,
                 lng: lng,
-                district:
-                  results[0].address_components[2]?.short_name || "",
+                ...addressComponents,
               };
             } else {
               console.error("Geocoding failed:", status);
@@ -321,6 +401,10 @@ const useCurrentLocation = () => {
             lat: lat,
             lng: lng,
             district: "",
+            city: "",
+            state: "",
+            country: "",
+            postcode: "",
           };
           address.value = selectedLocation.value.address;
           isLoadingLocation.value = false;
@@ -496,15 +580,47 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-.location-info {
+.location-info-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
+.location-info-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 0.5rem;
-  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.location-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+}
+
+.detail-label {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.8125rem;
+  color: #111827;
+  font-weight: 600;
+  text-align: right;
 }
 
 .action-buttons {
@@ -613,6 +729,7 @@ onMounted(() => {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   border: 1px solid #e0e0e0;
   font-family: inherit;
+  z-index: 9999 !important;
 }
 
 :deep(.pac-item) {
