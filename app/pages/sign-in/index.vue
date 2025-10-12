@@ -16,7 +16,7 @@
       </div>
     </div>
     <div
-      class="px-5 md:px-36 py-8 flex-1 md:flex md:items-center md:justify-center"
+      class="px-5 md:px-36 py-8 flex-1 flex items-center justify-center"
     >
       <form @submit.prevent="handleFormSubmit" class="w-full space-y-8">
         <div class="space-y-2 text-center flex items-center flex-col">

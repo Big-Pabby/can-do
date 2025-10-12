@@ -15,9 +15,7 @@
         <TestimonialCarousel :testimonials="testimonials" />
       </div>
     </div>
-    <div
-      class="px-5 md:px-36 py-8 flex-1 flex items-center justify-center"
-    >
+    <div class="px-5 md:px-36 py-8 flex-1 flex items-center justify-center">
       <div class="w-full space-y-8">
         <div class="space-y-2 text-center flex items-center flex-col">
           <img src="/images/logo-2.svg" alt="" />
@@ -48,7 +46,7 @@
                   style="color: #fff"
                 />
               </div>
-              <p class="text-sm text-[#B0B72E]">Privacy</p>
+              <p class="text-sm text-[#B0B72E] text-center">Privacy</p>
             </div>
             <div
               class="border border-[#BFEAFB] bg-white p-3 rounded-[8px] flex flex-col items-center justify-center gap-2"
@@ -56,9 +54,14 @@
               <div
                 class="w-[48px] h-[48px] bg-[#12A0D8] p-2.5 rounded-[10px] flex items-center justify-center text-white"
               >
-                <Icon icon="lucide:users" width="28" height="28"  style="color: #fff" />
+                <Icon
+                  icon="lucide:users"
+                  width="28"
+                  height="28"
+                  style="color: #fff"
+                />
               </div>
-              <p class="text-sm text-[#12A0D8]">Peer-Led</p>
+              <p class="text-sm text-[#12A0D8] text-center">Peer-Led</p>
             </div>
             <div
               class="border border-[#BFEAFB] bg-white p-3 rounded-[8px] flex flex-col items-center justify-center gap-2"
@@ -66,15 +69,20 @@
               <div
                 class="w-[48px] h-[48px] bg-[#FE4D67] p-2.5 rounded-[10px] flex items-center justify-center text-white"
               >
-               <Icon icon="proicons:chat" width="28" height="28"  style="color: #fff" />
+                <Icon
+                  icon="proicons:chat"
+                  width="28"
+                  height="28"
+                  style="color: #fff"
+                />
               </div>
-              <p class="text-sm text-[#FE4D67]">Real Stories</p>
+              <p class="text-sm text-[#FE4D67] text-center">Real Stories</p>
             </div>
           </div>
         </div>
         <div class="space-y-3">
           <nuxt-link
-          to="/sign-up"
+            to="/sign-up"
             class="w-full bg-[#12A0D8] text-white font-semibold py-4 px-5 rounded-full transition duration-200 flex items-center justify-center gap-2"
           >
             Sign Up
@@ -86,14 +94,12 @@
             />
           </nuxt-link>
           <nuxt-link
-          to="/sign-in"
+            to="/sign-in"
             class="w-full border border-[#12A0D8] text-[#12A0D8] font-semibold py-4 px-5 rounded-full transition duration-200 flex items-center justify-center gap-2"
           >
             Sign In
-            
           </nuxt-link>
           <p class="text-sm text-[#374151] text-center">
-           
             <nuxt-link to="/home" class="text-base font-medium"
               >Try Anonymously</nuxt-link
             >
