@@ -45,11 +45,12 @@
               {{ index }}
             </h4>
             <p class="text-[#4B5563] text-xs">{{ category }} Services</p>
-            <button
-              class="w-full mt-4 border-[#B0B72E] border rounded-full py-2 px-3.5 text-sm text-[#B0B72E] font-medium"
+            <nuxt-link
+              :to="`/home/${index}`"
+              class="w-full mt-4 text-center border-[#B0B72E] border rounded-full py-2 px-3.5 text-sm text-[#B0B72E] font-medium"
             >
               View Services
-            </button>
+            </nuxt-link>
           </div>
         </div>
       </div>
