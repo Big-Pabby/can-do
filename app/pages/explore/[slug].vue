@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <div class="md:hidden block"><mobile-nav/></div>
     <!-- Loading State -->
     <div v-if="isLoading" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="animate-pulse">
@@ -37,20 +36,17 @@
     </div>
 
     <!-- Content -->
-    <div
-      v-else-if="service"
-      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
-    >
+    <div v-else-if="service" class="max-w-7xl mx-auto lg:px-8 space-y-6">
       <!-- Back Button -->
       <button
         @click="$router.back()"
-        class="flex gap-2 items-center text-gray-600 hover:text-gray-900 transition"
+        class="md:flex hidden gap-2 items-center text-gray-600 hover:text-gray-900 transition"
       >
-        <Icon icon="tabler:arrow-left" width="20" height="20"  />
+        <Icon icon="tabler:arrow-left" width="20" height="20" />
         Back
       </button>
       <div
-        class="border border-[#F3F4F6] bg-white rounded-[12px] p-6 flex justify-between items-center"
+        class="border md:flex hidden border-[#F3F4F6] bg-white rounded-[12px] p-6 justify-between items-center"
       >
         <div class="space-y-1">
           <h2 class="text-2xl font-bold text-[#12A0D8]">Service Details</h2>
@@ -99,15 +95,65 @@
         </div>
       </div>
       <div
-        class="border border-[#F3F4F6] bg-white rounded-[12px] p-6 flex justify-between items-center"
+        class="md:bg-white bg-[#12A0D8] md:rounded-[12px] p-6 flex flex-col gap-4 justify-between items-start"
       >
+        <div class="md:hidden w-full flex items-center justify-between">
+          <button
+            @click="$router.back()"
+            class="md:hidden flex gap-2 p-2 border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition rounded-full items-center text-[#B0B72E]"
+          >
+            <Icon icon="tabler:arrow-left" width="20" height="20" />
+          </button>
+          <div class="flex gap-6 items-center">
+            <button
+              @click="shareService"
+              class="p-2 rounded-full flex items-center justify-center border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition"
+              aria-label="Share"
+            >
+              <svg
+                class="w-5 h-5 text-[#B0B72E]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                />
+              </svg>
+            </button>
+            <button
+              @click="toggleBookmark"
+              class="p-2 rounded-full bg-[#EAF8FE] border border-[#80D6F7] hover:bg-gray-50 transition"
+              aria-label="Bookmark"
+            >
+              <svg
+                class="w-5 h-5 text-[#12A0D8]"
+                :class="{ 'fill-current text-cyan-600': isBookmarked }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <div>
           <div class="flex items-start justify-between mb-4">
             <div class="flex-1">
-              <h1 class="text-2xl font-bold text-gray-900 mb-2">
+              <h1 class="text-2xl font-bold md:text-gray-900 text-white mb-2">
                 {{ service.details.name }}
               </h1>
-              <div class="flex items-center gap-2 text-sm">
+              <div class="flex items-center flex-wrap gap-2 text-sm">
                 <span
                   class="px-3 py-1 border border-[#6BCFF6] bg-[#EAF8FE] text-[#12A0D8] text-xs rounded-full font-medium"
                 >
@@ -150,7 +196,9 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
+          <div
+            class="flex items-center gap-4 text-sm md:text-gray-600 text-white mb-4"
+          >
             <div class="flex items-center gap-2">
               <Icon icon="akar-icons:location" width="16" height="16" />
               <span>{{
@@ -163,7 +211,7 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Main Content -->
-        <div class="space-y-6">
+        <div class="space-y-6 md:p-0 p-4">
           <!-- Contact Information -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
@@ -278,7 +326,7 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="lg:col-span-1">
+        <div class="md:block hidden lg:col-span-1">
           <!-- Map Preview -->
           <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
             <div
@@ -321,6 +369,32 @@
       </div>
     </div>
   </div>
+  <div
+    class="fixed w-full bg-[#F9FAFB] bottom-0 left-0 p-4 z-40 grid grid-cols-2 gap-4 md:hidden"
+  >
+    <button
+      @click="handleCall(service?.details.phone as string)"
+      class="bg-[#12A0D8] py-2.5 px-4.5 rounded-full w-full text-white text-sm font-medium"
+    >
+      Call Now
+    </button>
+    <button
+      @click="handleDirections(service)"
+      class="border border-[#B0B72E] bg-[#FAFAED] py-2.5 px-4.5 rounded-full w-full text-[#B0B72E] text-sm font-medium"
+    >
+      Directions
+    </button>
+    <button
+      class="border border-[#16A34A] bg-[#FFFFFF1A] py-2.5 px-4.5 rounded-full w-full text-[#16A34A] text-sm font-medium"
+    >
+      Give Feedback
+    </button>
+    <button
+      class="border border-[#DC2626] bg-[#FFFFFF1A] py-2.5 px-4.5 rounded-full w-full text-[#DC2626] text-sm font-medium"
+    >
+      Report Issue
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -328,6 +402,7 @@ import { useQuery } from "@tanstack/vue-query";
 import https from "@/utils/https";
 import type { Service } from "#imports";
 import { Icon } from "@iconify/vue";
+import { useLocationStore } from "~/store/location";
 
 const route = useRoute();
 const router = useRouter();
@@ -364,6 +439,24 @@ function getStarFill(rating: number | undefined, position: number): string {
 
   const roundedRating = Math.round(rating);
   return position <= roundedRating ? "text-yellow-400" : "text-gray-300";
+}
+function handleCall(phoneNumber: string) {
+  if (!phoneNumber) return;
+
+  // Format number safely
+  const formatted = phoneNumber.replace(/\s+/g, "");
+  window.location.href = `tel:${formatted}`;
+}
+function handleDirections(service: any) {
+  const destLat = Number(service.details.lat);
+  const destLng = Number(service.details.lng);
+  if (!destLat || !destLng) {
+    alert("Service location not available");
+    return;
+  }
+
+  useLocationStore().setSelectedServiceLocation(destLat, destLng);
+  navigateTo("/explore");
 }
 
 // Reactive state

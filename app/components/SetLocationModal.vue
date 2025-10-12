@@ -48,12 +48,36 @@
               <div class="relative">
                 <input
                   id="address-input"
+                  ref="addressInputRef"
                   v-model="address"
                   type="text"
                   placeholder="Enter full address"
                   class="address-input"
                   @keypress.enter="handleSave"
                 />
+
+                <!-- Loading indicator for input -->
+                <div
+                  v-if="isLoadingLocation"
+                  class="absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <Icon
+                    icon="mdi:loading"
+                    class="w-5 h-5 text-cyan-600 animate-spin"
+                  />
+                </div>
+              </div>
+
+              <!-- Selected Location Info -->
+              <div
+                v-if="selectedLocation.lat && selectedLocation.lng"
+                class="location-info"
+              >
+                <Icon icon="mdi:check-circle" class="w-4 h-4 text-green-500" />
+                <span class="text-sm text-gray-600">
+                  Location coordinates: {{ selectedLocation.lat.toFixed(6) }},
+                  {{ selectedLocation.lng.toFixed(6) }}
+                </span>
               </div>
             </div>
           </div>
@@ -63,7 +87,7 @@
             <button @click="handleClose" class="btn-secondary">Close</button>
             <button
               @click="handleSave"
-              :disabled="!address.trim() || isSaving"
+              :disabled="!canSave || isSaving"
               class="btn-primary"
             >
               <Icon
@@ -81,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed, onMounted, nextTick } from "vue";
 import { Icon } from "@iconify/vue";
 
 interface Props {
@@ -91,8 +115,9 @@ interface Props {
 
 interface LocationData {
   address: string;
-  lat?: number;
-  lng?: number;
+  lat: number;
+  lng: number;
+  district: string;
 }
 
 interface Emits {
@@ -113,7 +138,24 @@ const isOpen = ref(props.modelValue);
 const address = ref(props.initialAddress);
 const isLoadingLocation = ref(false);
 const isSaving = ref(false);
-const isCurrentSaving = ref(false);
+const addressInputRef = ref<HTMLInputElement | null>(null);
+const autocomplete = ref<google.maps.places.Autocomplete | null>(null);
+
+const selectedLocation = ref({
+  address: "",
+  lat: 0,
+  lng: 0,
+  district: "",
+});
+
+// Computed
+const canSave = computed(() => {
+  return (
+    address.value.trim() &&
+    selectedLocation.value.lat !== 0 &&
+    selectedLocation.value.lng !== 0
+  );
+});
 
 // Watchers
 watch(
@@ -122,17 +164,83 @@ watch(
     isOpen.value = newVal;
     if (newVal) {
       address.value = props.initialAddress;
+      nextTick(() => {
+        initAutocomplete();
+      });
     }
   }
 );
 
 watch(isOpen, (newVal) => {
   emit("update:modelValue", newVal);
+  if (newVal) {
+    nextTick(() => {
+      initAutocomplete();
+    });
+  }
 });
+
+// Initialize Google Places Autocomplete
+const initAutocomplete = () => {
+  if (!addressInputRef.value) return;
+
+  // Check if Google Maps is loaded
+  if (typeof google === "undefined" || !google.maps) {
+    console.error("Google Maps API not loaded");
+    return;
+  }
+
+  try {
+    // Create autocomplete instance
+    autocomplete.value = new google.maps.places.Autocomplete(
+      addressInputRef.value,
+      {
+        types: ["address"],
+        fields: [
+          "formatted_address",
+          "geometry",
+          "address_components",
+          "place_id",
+        ],
+      }
+    );
+
+    // Listen for place selection
+    autocomplete.value.addListener("place_changed", handlePlaceSelect);
+  } catch (error) {
+    console.error("Error initializing autocomplete:", error);
+  }
+};
+
+// Handle place selection from autocomplete
+const handlePlaceSelect = () => {
+  if (!autocomplete.value) return;
+
+  const place = autocomplete.value.getPlace();
+
+  if (!place.geometry || !place.geometry.location) {
+    console.error("No geometry data for selected place");
+    return;
+  }
+
+  // Update address and coordinates
+  address.value = place.formatted_address || "";
+  selectedLocation.value = {
+    address: place.formatted_address || "",
+    lat: place.geometry.location.lat(),
+    lng: place.geometry.location.lng(),
+    district: place.address_components
+      ? place.address_components[2]?.short_name || ""
+      : "",
+  };
+
+  console.log("Selected location:", selectedLocation.value);
+};
 
 // Methods
 const closeModal = () => {
   isOpen.value = false;
+  resetLocation();
   emit("close");
 };
 
@@ -140,31 +248,40 @@ const handleClose = () => {
   closeModal();
 };
 
+const resetLocation = () => {
+  selectedLocation.value = {
+    address: "",
+    lat: 0,
+    lng: 0,
+    district: "",
+  };
+};
+
 const handleSave = async () => {
-  if (!address.value.trim()) return;
+  if (!canSave.value) return;
 
   isSaving.value = true;
 
   try {
-    // Simulate API call - replace with actual geolocation API
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     emit("save", {
-      address: address.value.trim(),
-      lat: undefined,
-      lng: undefined,
+      address: selectedLocation.value.address,
+      lat: selectedLocation.value.lat,
+      lng: selectedLocation.value.lng,
+      district: selectedLocation.value.district,
     });
 
     closeModal();
   } catch (error) {
     console.error("Error saving location:", error);
-    // You can add error handling/notification here
   } finally {
     isSaving.value = false;
   }
 };
 
-const useCurrentLocation = async () => {
+const useCurrentLocation = () => {
   if (!navigator.geolocation) {
     alert("Geolocation is not supported by your browser");
     return;
@@ -172,56 +289,86 @@ const useCurrentLocation = async () => {
 
   isLoadingLocation.value = true;
 
-  try {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        // Use Google Maps Geocoder to get address
-        if (window.google && window.google.maps) {
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode(
-            { location: { lat, lng } },
-            (results, status) => {
-              if (status === "OK" && results && results[0]) {
-                address.value = results[0].formatted_address;
-              }
-            //   lat.value = latitude;
-            //   lng.value = longitude;
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      try {
+        // Reverse geocode to get address
+        if (typeof google !== "undefined" && google.maps) {
+          const geocoder = new google.maps.Geocoder();
+
+          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === "OK" && results && results[0]) {
+              address.value = results[0].formatted_address;
+              selectedLocation.value = {
+                address: results[0].formatted_address,
+                lat: lat,
+                lng: lng,
+                district:
+                  results[0].address_components[2]?.short_name || "",
+              };
+            } else {
+              console.error("Geocoding failed:", status);
             }
-          );
+            isLoadingLocation.value = false;
+          });
+        } else {
+          // Fallback: Set coordinates without address
+          selectedLocation.value = {
+            address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+            lat: lat,
+            lng: lng,
+            district: "",
+          };
+          address.value = selectedLocation.value.address;
+          isLoadingLocation.value = false;
         }
-      },
-      (err) => {
-        console.warn("Geolocation error:", err);
-      },
-      { enableHighAccuracy: true }
-    );
-  } catch (error: any) {
-    console.error("Error getting location:", error);
+      } catch (error) {
+        console.error("Error getting address:", error);
+        isLoadingLocation.value = false;
+      }
+    },
+    (error) => {
+      console.error("Geolocation error:", error);
+      isLoadingLocation.value = false;
 
-    let errorMessage = "Unable to get your location. ";
+      let errorMessage = "Unable to get your location. ";
 
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        errorMessage +=
-          "Please allow location access in your browser settings.";
-        break;
-      case error.POSITION_UNAVAILABLE:
-        errorMessage += "Location information is unavailable.";
-        break;
-      case error.TIMEOUT:
-        errorMessage += "Location request timed out.";
-        break;
-      default:
-        errorMessage += "An unknown error occurred.";
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage +=
+            "Please allow location access in your browser settings.";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage += "Location information is unavailable.";
+          break;
+        case error.TIMEOUT:
+          errorMessage += "Location request timed out.";
+          break;
+        default:
+          errorMessage += "An unknown error occurred.";
+      }
+
+      alert(errorMessage);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
     }
-
-    alert(errorMessage);
-  } finally {
-    isLoadingLocation.value = false;
-  }
+  );
 };
+
+// Lifecycle
+onMounted(() => {
+  if (isOpen.value) {
+    nextTick(() => {
+      initAutocomplete();
+    });
+  }
+});
 </script>
 
 <style scoped>
@@ -233,7 +380,7 @@ const useCurrentLocation = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 40;
   padding: 1rem;
 }
 
@@ -336,11 +483,28 @@ const useCurrentLocation = async () => {
   font-weight: 500;
   cursor: pointer;
   width: fit-content;
+  transition: all 0.2s;
+}
+
+.location-btn:hover:not(:disabled) {
+  background: #f8faf5;
+  border-color: #9da129;
 }
 
 .location-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .action-buttons {
@@ -440,5 +604,33 @@ const useCurrentLocation = async () => {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+/* Override Google Autocomplete dropdown styles */
+:deep(.pac-container) {
+  border-radius: 0.75rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  font-family: inherit;
+}
+
+:deep(.pac-item) {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border: none;
+  font-size: 0.875rem;
+}
+
+:deep(.pac-item:hover) {
+  background-color: #f0f9ff;
+}
+
+:deep(.pac-item-selected) {
+  background-color: #e0f2fe;
+}
+
+:deep(.pac-icon) {
+  margin-top: 0.5rem;
 }
 </style>

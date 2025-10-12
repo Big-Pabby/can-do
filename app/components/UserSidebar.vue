@@ -8,37 +8,33 @@
           to="/home"
           :class="[
             'flex md:flex-row flex-col items-center gap-2 font-medium md:p-4 w-full text-sm rounded-[8px]',
-             isActive('/home') ? 'md:bg-[#EAF8FE] md:border border-[#12A0D8] text-[#12A0D8]' : 'text-[#374151] ',
+            isActive('/home')
+              ? 'md:bg-[#EAF8FE] md:border border-[#12A0D8] text-[#12A0D8]'
+              : 'text-[#374151] ',
           ]"
         >
-          <Icon
-            icon="lsicon:home-outline"
-            width="20"
-            height="20"
-           
-          />
+          <Icon icon="lsicon:home-outline" width="20" height="20" />
           Home
         </nuxt-link>
         <nuxt-link
           to="/explore"
           :class="[
             'flex md:flex-row flex-col items-center gap-2  font-medium md:p-4 w-full text-sm rounded-[8px]',
-            isActive('/explore') ? 'md:bg-[#EAF8FE] md:border border-[#12A0D8] text-[#12A0D8]' : 'text-[#374151] ',
+            isActive('/explore')
+              ? 'md:bg-[#EAF8FE] md:border border-[#12A0D8] text-[#12A0D8]'
+              : 'text-[#374151] ',
           ]"
         >
-          <Icon
-            icon="ri:search-line"
-            width="20"
-            height="20"
-           
-          />
+          <Icon icon="ri:search-line" width="20" height="20" />
           Explore
         </nuxt-link>
         <nuxt-link
           to="/chat"
           :class="[
             'flex md:flex-row flex-col items-center gap-2 font-medium md:p-4 w-full text-sm rounded-[8px]',
-            isActive('/chat') ? 'md:bg-[#EAF8FE] md:border border-[#12A0D8] text-[#12A0D8]' : 'text-[#374151] ',
+            isActive('/chat')
+              ? 'md:bg-[#EAF8FE] md:border border-[#12A0D8] text-[#12A0D8]'
+              : 'text-[#374151] ',
           ]"
         >
           <img class="md:block hidden" src="/images/ask.svg" alt="" />
@@ -84,6 +80,7 @@
         </nuxt-link>
       </div>
       <button
+        @click="logoutModal.openModal()"
         class="w-full bg-[#FEF2F2] border border-[#DC2626] py-3 px-5 rounded-full text-[#DC2626] font-medium md:flex hidden items-center gap-2 justify-center"
       >
         Logout
@@ -95,13 +92,18 @@
         />
       </button>
     </div>
+    <LogoutModal
+      v-model="logoutModal.isOpen.value"
+      @confirm="logoutModal.handleLogout"
+      @cancel="logoutModal.closeModal"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { useRoute } from "vue-router";
 const route = useRoute();
-
+const logoutModal = useLogoutModal();
 function isActive(path: string) {
   return route.path === path;
 }

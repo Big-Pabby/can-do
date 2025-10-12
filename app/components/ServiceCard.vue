@@ -1,6 +1,6 @@
 <template>
   <div class="border border-[#F3F4F6] space-y-3 bg-white rounded-[12px] p-4">
-    <h4 class="font-medium text-[#111827]">
+    <h4 class="font-medium text-[#111827] line-clamp-1">
       {{ service.details.name }}
     </h4>
     <div class="flex gap-3 flex-wrap">
@@ -9,12 +9,6 @@
       >
         {{ service.details.categories }}
       </p>
-      <span
-        v-if="service.details.sub_category"
-        class="px-3 border border-[#B3DAFF] py-1 bg-[#F0F8FF] text-[#005AAD] text-xs rounded-full"
-      >
-        {{ service.details.sub_category }}
-      </span>
     </div>
 
     <!-- Star Rating -->
@@ -65,11 +59,16 @@
         }}</span>
       </p>
     </div>
-    <div v-if="!actions" class="flex gap-3 justify-between">
-      <button class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white">
+    <div class="flex gap-3 flex-wrap">
+      <button
+        v-if="!actions"
+        @click="handleCall(service.details.phone)"
+        class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white"
+      >
         Call Now
       </button>
       <button
+        v-if="!actions"
         class="border border-[#FE4D67] rounded-full py-2 px-3.5 text-sm text-[#FE4D67]"
         @click="$emit('directions', service)"
       >
@@ -96,5 +95,12 @@ function getStarFill(rating: number | undefined, position: number): string {
 
   const roundedRating = Math.round(rating);
   return position <= roundedRating ? "text-yellow-400" : "text-gray-300";
+}
+function handleCall(phoneNumber: string) {
+  if (!phoneNumber) return;
+
+  // Format number safely
+  const formatted = phoneNumber.replace(/\s+/g, "");
+  window.location.href = `tel:${formatted}`;
 }
 </script>

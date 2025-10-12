@@ -72,7 +72,11 @@
             No services found in your area.
           </div>
           <div v-else v-for="service in data?.results" :key="service.id">
-            <ServiceCard :service="service"  />
+            <ServiceCard
+              :service="service"
+              
+              @directions="handleDirections"
+            />
           </div>
         </div>
       </div>
@@ -84,6 +88,9 @@ import { Icon } from "@iconify/vue";
 import { useLocationStore } from "~/store/location";
 import { UseCategories } from "../hooks";
 import { UseMapServices } from "../map/hooks";
+import { useAuthStore } from "~/store/auth";
+import { UseProfile } from "../hooks";
+import { on } from "events";
 definePageMeta({
   layout: "user",
 });
@@ -101,6 +108,7 @@ const {
 } = UseMapServices(reactivePage, reactivePageSize, coords);
 
 const { data: categories, isLoading } = UseCategories();
+const { data: profile } = UseProfile();
 
 const categoryEmojis: Record<string, string> = {
   "Food & Nutrition": "🍎",
@@ -114,4 +122,21 @@ const categoryEmojis: Record<string, string> = {
   "Employment, Training & Education": "🎓",
   "Community & General Support": "🤝",
 };
+watch(profile, (newProfile) => {
+  if (newProfile) {
+    useAuthStore().setUser(newProfile);
+  }
+});
+
+function handleDirections(service: any) {
+  const destLat = Number(service.details.lat);
+  const destLng = Number(service.details.lng);
+  if (!destLat || !destLng) {
+    alert("Service location not available");
+    return;
+  }
+
+  useLocationStore().setSelectedServiceLocation(destLat, destLng);
+  navigateTo("/explore");
+}
 </script>

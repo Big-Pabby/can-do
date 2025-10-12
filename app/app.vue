@@ -15,12 +15,7 @@ import "vue-sonner/style.css";
 import { useLocationStore } from "@/store/location";
 
 const locationStore = useLocationStore();
-locationStore.setLocation(
-  51.49977959226897,
-  -0.12270774498186032,
-  "Set Location"
-);
-console.log(locationStore.lat, locationStore.address);
+
 useHead({
   link: [
     { rel: "manifest", href: "/site.webmanifest" },
@@ -43,12 +38,15 @@ function storeUserLocation() {
             let address = "";
             let district = "";
             if (status === "OK" && results && results[0]) {
-              console.log(results);
               address = results[0].formatted_address;
-              district = results[0].address_components[0]?.short_name || "";
+              district = results[0].address_components[2]?.short_name || "";
             }
 
-            useLocationStore().setLocation(lat, lng, address, district);
+            console.log(useLocationStore().address);
+
+            if (useLocationStore().address === "Set Location") {
+              useLocationStore().setLocation(lat, lng, address, district);
+            }
           });
         } else {
           // Fallback: store lat/lng only

@@ -4,7 +4,12 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   plugins: ["~/plugins/vue-query-plugin", "~/plugins/google-maps.client"],
-  modules: ["@vite-pwa/nuxt", "shadcn-nuxt", "@pinia/nuxt"],
+  modules: [
+    "@vite-pwa/nuxt",
+    "shadcn-nuxt",
+    "@pinia/nuxt",
+    "pinia-plugin-persistedstate/nuxt",
+  ],
   css: ["~/assets/main.css"],
   vite: {
     plugins: [tailwindcss()],
@@ -13,12 +18,12 @@ export default defineNuxtConfig({
     /**
      * Prefix for all the imported component
      */
-    prefix: '',
+    prefix: "",
     /**
      * Directory that the component lives in.
      * @default "./components/ui"
      */
-    componentDir: './components/ui'
+    componentDir: "./components/ui",
   },
   // pwa: {
   //   registerType: "autoUpdate",
@@ -29,7 +34,7 @@ export default defineNuxtConfig({
   //     theme_color: "#33339C",
   //     background_color: "#33339C",
   //     display: "standalone",
-     
+
   //     icons: [
   //       {
   //         src: "/android-chrome-192x192.png",

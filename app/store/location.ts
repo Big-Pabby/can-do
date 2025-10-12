@@ -5,14 +5,16 @@ interface Location {
   lng: number;
   address: string;
   district: string;
+  selectedServiceLocation: { lat: number; lng: number } | null;
 }
 
 export const useLocationStore = defineStore("location", {
   state: (): Location => ({
-    lat: 0,
-    lng: 0,
-    address: "",
+    lat: 51.49977959226897,
+    lng: -0.12270774498186032,
+    address: "Set Location",
     district: "",
+    selectedServiceLocation: null,
   }),
   actions: {
     setLocation(lat: number, lng: number, address: string, district?: string) {
@@ -26,5 +28,9 @@ export const useLocationStore = defineStore("location", {
       this.lng = 0;
       this.address = "";
     },
+    setSelectedServiceLocation(lat: number, lng: number) {
+      this.selectedServiceLocation = { lat, lng };
+    },
   },
+  persist: true,
 });

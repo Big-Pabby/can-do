@@ -9,7 +9,7 @@
       @close="handleLocationClose"
     />
 
-    <h1 class="text-2xl font-bold md:text-[#12A0D8] text-white">Hi, Alex 👋</h1>
+    <h1 class="text-2xl font-bold md:text-[#12A0D8] text-white">Hi, {{ user?.username }} 👋</h1>
     <p class="md:text-[#6B7280] text-sm text-white">Welcome back, Champ</p>
     <div
       @click="showLocationModal = true"
@@ -32,10 +32,12 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { useLocationStore } from "~/store/location";
+import { useAuthStore } from "~/store/auth";
 
 const userLocation = computed(
   () => useLocationStore().address || "Set Location"
 );
+const user = computed(() => useAuthStore().user);
 const showLocationModal = ref(false);
 const currentAddress = ref("");
 

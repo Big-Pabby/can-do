@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { https } from "#imports";
-import { unref } from "vue"
-import type { MaybeRef } from "vue";
+import type { User } from "~/store/auth";
+
+import { useAuthStore } from "~/store/auth";
 
 export function useFetchServiceUpdates() {
   interface Response {
@@ -9,7 +10,10 @@ export function useFetchServiceUpdates() {
   }
   return useMutation({
     mutationFn: async (serviceIds: string[]) => {
-      return await https.post<Response>(`/v1/services/fetch_updates/`, serviceIds);
+      return await https.post<Response>(
+        `/v1/services/fetch_updates/`,
+        serviceIds
+      );
     },
   });
 }
@@ -18,7 +22,7 @@ export const UseProgress = (jobIdRef: Ref<string>) => {
     progress: number;
     changes_found: number;
   }
-  
+
   const queryFn = async () => {
     console.log("Fetching progress for job ID:", jobIdRef.value);
     const response = await https.get<Response>(
@@ -26,7 +30,7 @@ export const UseProgress = (jobIdRef: Ref<string>) => {
     );
     return response.data;
   };
-  
+
   return useQuery<Response>({
     queryKey: ["progress", jobIdRef], // Pass the ref, vue-query will track it
     queryFn,
@@ -103,6 +107,52 @@ export function useConsentInsight() {
     // },
   });
 }
+export function useSignUp() {
+  //   const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      username: string;
+      phone_number: string;
+      email: string;
+      password: string;
+      service_interest: string[];
+    }) => {
+      const response = await https.post(`/v1/auth/signup`, payload);
+      return response;
+    },
+    // onSuccess: () => {
+    //   queryClient.invalidateQueries({ queryKey: ["business_products"] });
+    // },
+  });
+}
+export interface AuthTokenResponse {
+  token_type: string;
+  access_token: string;
+  refresh_token: string;
+  access_expires_at: string; // ISO timestamp string
+  refresh_expires_at: string; // ISO timestamp string
+}
+
+export function useSignIn() {
+  //   const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: FormData) => {
+      const response = await https.post<AuthTokenResponse>(
+        `/v1/auth/token`,
+        payload, // <-- payload goes here as the body
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+      return response;
+    },
+    // onSuccess: () => {
+    //   queryClient.invalidateQueries({ queryKey: ["business_products"] });
+    // },
+  });
+}
 export function useUpload() {
   //   const queryClient = useQueryClient();
   return useMutation({
@@ -156,15 +206,27 @@ export function UseDeleteService() {
 }
 
 export function UseCategories() {
-    const queryFn = async () => {
-    const response = await https.get(
-      `/v1/services/categories/`
-    );
+  const queryFn = async () => {
+    const response = await https.get(`/v1/services/categories/`);
     return response.data;
   };
 
   return useQuery({
     queryKey: ["categories"],
     queryFn,
+  });
+}
+export function UseProfile() {
+  const authStore = useAuthStore();
+
+  const queryFn = async () => {
+    const response = await https.get<User>("/v1/auth/me");
+    return response.data;
+  };
+
+  return useQuery<User>({
+    queryKey: ["user_profile"],
+    queryFn,
+   
   });
 }

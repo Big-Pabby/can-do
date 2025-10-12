@@ -5,11 +5,13 @@ import type {
   AxiosResponse,
   AxiosError,
 } from "axios";
+import { useAuthStore } from "~/store/auth";
+
 
 // Create axios instance
 const https: AxiosInstance = axios.create({
   baseURL: "https://app.candopeople.uk/", // dev API
-
+  timeout: 40000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -19,7 +21,7 @@ const https: AxiosInstance = axios.create({
 https.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access-token");
+      const token = useAuthStore().tokens?.access_token;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

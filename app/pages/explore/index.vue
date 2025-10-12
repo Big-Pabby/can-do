@@ -175,7 +175,9 @@ definePageMeta({
 const selectedCoordinates = ref<{ lat: number; lng: number } | null>(null);
 const coords = computed(() => selectedCoordinates.value);
 // State for selected service location for directions
-const selectedServiceLocation = ref<{ lat: number; lng: number } | null>(null);
+const selectedServiceLocation = computed(() => {
+  return useLocationStore().selectedServiceLocation;
+});
 
 // Filter/search refs
 const searchQuery = ref("");
@@ -332,6 +334,6 @@ function handleDirections(service: any) {
     return;
   }
   toggleType.value = "map";
-  selectedServiceLocation.value = { lat: destLat, lng: destLng };
+  useLocationStore().setSelectedServiceLocation(destLat, destLng);
 }
 </script>

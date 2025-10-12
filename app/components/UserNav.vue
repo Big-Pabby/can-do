@@ -10,7 +10,10 @@
     />
     <img src="/images/logo.svg" alt="" />
     <div class="flex items-center gap-16">
-      <div @click="showLocationModal = true" class="flex cursor-pointer items-center gap-4">
+      <div
+        @click="showLocationModal = true"
+        class="flex cursor-pointer items-center gap-4"
+      >
         <div
           class="bg-[#EAF8FE] w-[40px] h-[40px] rounded-full flex items-center justify-center font-medium text-[#12A0D8]"
         >
@@ -27,11 +30,11 @@
         <div
           class="bg-[#EAF8FE] w-[40px] h-[40px] rounded-full flex items-center justify-center font-medium text-[#12A0D8]"
         >
-          SM
+          {{ user?.username ? user.username.charAt(0).toUpperCase() : "U" }}
         </div>
         <div class="flex-1">
-          <h4 class="text-sm font-medium">Josh West</h4>
-          <p class="text-xs">joshwest@sm.com</p>
+          <h4 class="text-sm font-medium">{{ user?.username }}</h4>
+          <p class="text-xs">{{ user?.email }}</p>
         </div>
       </div>
     </div>
@@ -41,21 +44,31 @@
 import { Icon } from "@iconify/vue";
 import { computed } from "vue";
 import { useLocationStore } from "~/store/location";
+import { useAuthStore } from "~/store/auth";
 
-const userLocation = computed(() => useLocationStore().address || "Set Location");
+const userLocation = computed(
+  () => useLocationStore().address || "Set Location"
+);
 const showLocationModal = ref(false);
 const currentAddress = ref("");
+const user = computed(() => useAuthStore().user);
 
 const handleLocationSave = (data: {
   address: string;
   lat?: number;
   lng?: number;
+  district?: string;
 }) => {
   console.log("Location saved:", data);
   currentAddress.value = data.address;
 
   // Save to local storage or API
-  useLocationStore().setLocation(data.lat || 0, data.lng || 0, data.address);
+  useLocationStore().setLocation(
+    data.lat || 0,
+    data.lng || 0,
+    data.address,
+    data.district || ""
+  );
 
   // Optional: Fetch nearby services
   // await fetchNearbyServices(data.latitude, data.longitude)
