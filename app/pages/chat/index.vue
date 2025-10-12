@@ -242,7 +242,7 @@
               @keyup.enter="sendMessage"
               :disabled="isPending"
             />
-            <div class="button-group">
+            <!-- <div class="button-group">
               <button
                 class="action-btn send-btn"
                 @click="sendMessage"
@@ -257,7 +257,7 @@
               >
                 <Icon icon="ri:mic-line" class="w-5 h-5" />
               </button>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
