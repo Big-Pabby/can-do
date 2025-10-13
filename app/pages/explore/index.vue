@@ -41,7 +41,7 @@
       <div class="flex items-center gap-2">
         <div
           @click="showModal = true"
-          class="py-3 px-5 rounded-full flex items-center gap-2 border border-[#E5E7EB] bg-[#F9FAFB]"
+          class="py-3 px-5 cursor-pointer rounded-full flex items-center gap-2 border border-[#E5E7EB] bg-[#F9FAFB]"
         >
           <Icon
             icon="mage:filter"
@@ -56,7 +56,10 @@
           class="rounded-full flex-1 w-full flex items-center gap-2 border border-[#E5E7EB] bg-[#F9FAFB] p-1"
         >
           <div
-            @click="toggleType = 'map'"
+            @click="
+              toggleType = 'map';
+              pageSize = 1000;
+            "
             :class="`${
               toggleType === 'map'
                 ? 'text-[#B0B72E] bg-white'
@@ -71,7 +74,10 @@
             <p>Map</p>
           </div>
           <div
-            @click="toggleType = 'list'"
+            @click="
+              toggleType = 'list';
+              pageSize = 12;
+            "
             :class="`${
               toggleType === 'list'
                 ? 'text-[#B0B72E] bg-white'
@@ -85,7 +91,7 @@
       </div>
     </div>
     <div class="text-center text-[#6B7280]" v-if="isLoading">Loading...</div>
-    <div v-else>
+    <div v-else :class="`${selectedService ? 'md:mb-0 mb-[120px]' : ''}`">
       <div v-if="toggleType === 'map'" class="flex items-start h-screen gap-6">
         <div class="flex-1 bg-white h-full md:rounded-[16px]">
           <Map
@@ -99,8 +105,12 @@
         </div>
         <div class="md:w-4/12 md:block hidden space-y-4 h-full overflow-y-auto">
           <h4 class="font-medium">Nearby Services</h4>
-          <div v-for="service in data?.results.slice(0, 10)" :key="service.id">
-            <ServiceCard :service="service" @directions="handleDirections" />
+          <div v-for="service in sortedServices.slice(0, 10)" :key="service.id">
+            <ServiceCard
+              :service="service"
+              @directions="handleDirections"
+              :isSelected="service.id === selectedService?.id"
+            />
           </div>
         </div>
       </div>
@@ -179,6 +189,7 @@ const selectedCoordinates = computed(() => {
   };
 });
 const coords = computed(() => selectedCoordinates.value);
+const selectedService = computed(() => useLocationStore().selectedService);
 // State for selected service location for directions
 const selectedServiceLocation = computed(() => {
   return useLocationStore().selectedServiceLocation;
@@ -192,14 +203,14 @@ const excludedAreas = ref<string[] | null>(null);
 
 // Pagination state
 const currentPage = ref(1);
-const pageSize = 102;
+const pageSize = ref(1000);
 const totalPages = computed(() => {
   if (!data?.value?.count) return 1;
-  return Math.ceil(data.value.count / pageSize);
+  return Math.ceil(data.value.count / pageSize.value);
 });
 
 const reactivePage = computed(() => currentPage.value);
-const reactivePageSize = computed(() => pageSize);
+const reactivePageSize = computed(() => pageSize.value);
 const { data, error, isLoading, refetch } = UseMapServices(
   reactivePage,
   reactivePageSize,
@@ -211,7 +222,23 @@ const { data, error, isLoading, refetch } = UseMapServices(
     excludedAreas: excludedAreas,
   }
 );
+const sortedServices = computed(() => {
+  if (!data.value) return [];
 
+  const services = data.value.results.slice(0, 10);
+  const selectedId = selectedService.value?.id;
+
+  if (!selectedId) {
+    return services;
+  }
+
+  // Split into selected and non-selected
+  const selected = services.filter((s) => s.id === selectedId);
+  const others = services.filter((s) => s.id !== selectedId);
+
+  // Return selected first, then others
+  return [...selected, ...others];
+});
 const toggleType = ref("map");
 const showModal = ref(false);
 
@@ -327,7 +354,6 @@ function handleLocationSelected(coords: {
 
 // Handle directions button click from ServiceCard
 function handleDirections(service: any) {
-  console.log(service);
   if (!selectedCoordinates.value) {
     alert("User location not available");
     return;
@@ -339,6 +365,10 @@ function handleDirections(service: any) {
     return;
   }
   toggleType.value = "map";
-  useLocationStore().setSelectedServiceLocation({ lat: destLat, lng: destLng });
+  useLocationStore().setSelectedServiceLocation(
+    { lat: destLat, lng: destLng },
+    service
+  );
+  pageSize.value = 1000;
 }
 </script>

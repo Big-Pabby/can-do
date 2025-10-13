@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import type { Service } from "#imports";
 
 interface Location {
   lat: number;
@@ -6,6 +7,7 @@ interface Location {
   address: string;
   district: string;
   selectedServiceLocation: { lat: number; lng: number } | null;
+  selectedService: Service | null;
 }
 
 export const useLocationStore = defineStore("location", {
@@ -15,6 +17,7 @@ export const useLocationStore = defineStore("location", {
     address: "Set Location",
     district: "",
     selectedServiceLocation: null,
+    selectedService: null
   }),
   actions: {
     setLocation(lat: number, lng: number, address: string, district?: string) {
@@ -28,8 +31,10 @@ export const useLocationStore = defineStore("location", {
       this.lng = 0;
       this.address = "";
     },
-    setSelectedServiceLocation(data: {lat: number, lng: number} | null) {
+    setSelectedServiceLocation(data: {lat: number, lng: number} | null, service: Service) {
       this.selectedServiceLocation = data;
+    
+      this.selectedService = service
     },
   },
   persist: true,

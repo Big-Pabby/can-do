@@ -440,7 +440,7 @@ function handleDirections(service: any) {
     alert("Service location not available");
     return;
   }
-  useLocationStore().setSelectedServiceLocation({lat:destLat, lng: destLng});
+  useLocationStore().setSelectedServiceLocation({lat:destLat, lng: destLng}, service);
   navigateTo("/explore");
 }
 

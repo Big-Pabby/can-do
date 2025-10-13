@@ -133,7 +133,10 @@ function handleDirections(service: any) {
     return;
   }
 
-  useLocationStore().setSelectedServiceLocation({ lat: destLat, lng: destLng });
+  useLocationStore().setSelectedServiceLocation(
+    { lat: destLat, lng: destLng },
+    service
+  );
   navigateTo("/explore");
 }
 </script>

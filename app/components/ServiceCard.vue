@@ -1,5 +1,18 @@
 <template>
-  <div class="border border-[#F3F4F6] space-y-3 bg-white rounded-[12px] p-4">
+  <div
+    class="border space-y-3 bg-white rounded-[12px] p-4 transition-all duration-300"
+    :class="isSelected ? 'border-[#12A0D8] shadow-lg ' : 'border-[#F3F4F6]'"
+  >
+    <!-- Selected Badge -->
+    <div v-if="isSelected" class="flex items-center gap-2 mb-2">
+      <div
+        class="px-3 py-1 bg-[#12A0D8] text-white text-xs rounded-full font-medium flex items-center gap-1"
+      >
+        <Icon icon="mdi:map-marker" class="w-3 h-3" />
+        <span>Selected Destination</span>
+      </div>
+    </div>
+
     <h4 class="font-medium text-[#111827] line-clamp-1">
       {{ service.details.name }}
     </h4>
@@ -63,39 +76,44 @@
       <button
         v-if="!actions"
         @click="handleCall(service.details.phone)"
-        class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white"
+        class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white hover:bg-[#0E8AB8] transition-colors cursor-pointer"
       >
         Call Now
       </button>
       <button
         v-if="!actions"
-        class="border border-[#FE4D67] rounded-full py-2 px-3.5 text-sm text-[#FE4D67]"
+        class="border border-[#FE4D67] rounded-full py-2 px-3.5 text-sm text-[#FE4D67] hover:bg-[#FE4D67] hover:text-white transition-colors cursor-pointer"
         @click="$emit('directions', service)"
       >
-        Directions
+        {{ "Directions" }}
       </button>
       <nuxt-link
         :to="`/explore/${service.id}`"
-        class="border border-[#B0B72E] rounded-full py-2 px-3.5 text-sm text-[#B0B72E]"
+        class="border border-[#B0B72E] rounded-full py-2 px-3.5 text-sm text-[#B0B72E] hover:bg-[#B0B72E] hover:text-white transition-colors cursor-pointer"
       >
         Details
       </nuxt-link>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import type { Service } from "#imports";
+
 const props = defineProps<{
   service: Service;
   actions?: boolean;
+  isSelected?: boolean;
 }>();
+
 function getStarFill(rating: number | undefined, position: number): string {
   if (!rating) return "text-gray-300";
 
   const roundedRating = Math.round(rating);
   return position <= roundedRating ? "text-yellow-400" : "text-gray-300";
 }
+
 function handleCall(phoneNumber: string) {
   if (!phoneNumber) return;
 

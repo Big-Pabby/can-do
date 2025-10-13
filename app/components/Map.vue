@@ -13,14 +13,6 @@
       </button>
 
       <div class="directions-content">
-        <!-- Transportation Mode Icon -->
-        <!-- <div class="transport-icon">
-          <Icon
-            :icon="getTransportIcon(travelMode)"
-            class="w-8 h-8 text-blue-600"
-          />
-        </div> -->
-
         <!-- Route Information -->
         <div class="route-info">
           <div class="info-row">
@@ -82,6 +74,7 @@ const props = defineProps<{
   initialLng?: number;
   origin?: { lat: number; lng: number };
   destination?: { lat: number; lng: number };
+  preserveView?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -89,11 +82,19 @@ const emit = defineEmits<{
     e: "locationSelected",
     coords: { lat: number; lng: number; address: string; district: string }
   ): void;
+  (e: "zoom-changed", zoom: number): void;
+  (
+    e: "bounds-changed",
+    bounds: { north: number; south: number; east: number; west: number }
+  ): void;
 }>();
 
 let map: any = null;
 let directionsRenderer: any = null;
 let directionsService: any = null;
+let originMarker: any = null;
+let destinationMarker: any = null;
+let currentOpenInfoWindow: any = null; // Track currently open info window
 const mapRef = ref<HTMLDivElement | null>(null);
 const lat = ref(0);
 const lng = ref(0);
@@ -102,6 +103,10 @@ const district = ref("");
 const routeDistance = ref<string>("");
 const routeDuration = ref<string>("");
 const travelMode = ref<string>("DRIVING");
+const isInitialized = ref(false);
+
+// Store existing markers to update them instead of recreating
+const serviceMarkersMap = new Map();
 
 const travelModes = [
   { value: "TRANSIT", label: "Transit", icon: "mdi:bus" },
@@ -124,22 +129,25 @@ const cancelDirections = () => {
   if (directionsRenderer) {
     directionsRenderer.setDirections({ routes: [] });
   }
+  if (originMarker) originMarker.setMap(null);
+  if (destinationMarker) destinationMarker.setMap(null);
   routeDistance.value = "";
   routeDuration.value = "";
-  useLocationStore().setSelectedServiceLocation(null)
+  useLocationStore().setSelectedServiceLocation(null);
 };
 
 const changeTravelMode = (mode: string) => {
   travelMode.value = mode;
   if (props.origin && props.destination) {
-    calculateRoute(props.origin, props.destination, mode);
+    calculateRoute(props.origin, props.destination, mode, serviceMarkersMap);
   }
 };
 
 const calculateRoute = (
   origin: any,
   destination: any,
-  mode: string = "DRIVING"
+  mode: string = "DRIVING",
+  markersMap: any
 ) => {
   if (!directionsService || !directionsRenderer) return;
 
@@ -155,22 +163,104 @@ const calculateRoute = (
         const leg = result.routes[0]?.legs[0];
         routeDistance.value = leg?.distance?.text || "";
         routeDuration.value = leg?.duration?.text || "";
+
+        // Clear existing custom markers
+        if (originMarker) originMarker.setMap(null);
+        if (destinationMarker) destinationMarker.setMap(null);
+
+        // Create custom origin marker (Point A)
+        originMarker = new google.maps.Marker({
+          position: leg.start_location,
+          map,
+          icon: {
+            url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            scaledSize: new google.maps.Size(40, 40),
+          },
+          title: "Your Location",
+          label: {
+            text: "A",
+            color: "white",
+            fontWeight: "bold",
+            fontSize: "16px",
+          },
+          zIndex: 10001,
+          optimized: false,
+        });
+
+        // Get the actual destination coordinates that were passed
+        const destLat =
+          typeof destination.lat === "function"
+            ? destination.lat()
+            : destination.lat;
+        const destLng =
+          typeof destination.lng === "function"
+            ? destination.lng()
+            : destination.lng;
+
+        // Find the service by coordinates with a more lenient matching
+        let serviceData = null;
+        let minDistance = Infinity;
+
+        for (const [key, value] of markersMap.entries()) {
+          const [lat, lng] = key.split(",").map(Number);
+          const distance = Math.sqrt(
+            Math.pow(lat - destLat, 2) + Math.pow(lng - destLng, 2)
+          );
+
+          if (distance < minDistance && distance < 0.001) {
+            minDistance = distance;
+            serviceData = value;
+          }
+        }
+
+        // Create custom destination marker (Point B) at the exact service location
+        if (serviceData) {
+          const servicePosition = serviceData.marker.getPosition();
+
+          destinationMarker = new google.maps.Marker({
+            position: servicePosition,
+            map,
+            icon: {
+              url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+              scaledSize: new google.maps.Size(40, 40),
+            },
+            title: "Destination: " + serviceData.service.details.name,
+            label: {
+              text: "B",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "16px",
+            },
+            zIndex: 10000,
+            optimized: false,
+          });
+
+          destinationMarker.addListener("click", () => {
+            // Close any currently open info window
+            if (currentOpenInfoWindow) {
+              currentOpenInfoWindow.close();
+            }
+            serviceData.info.open(map, serviceData.marker);
+            currentOpenInfoWindow = serviceData.info;
+          });
+
+          serviceData.marker.setZIndex(9999);
+        }
       } else {
         directionsRenderer.setDirections({ routes: [] });
         routeDistance.value = "";
         routeDuration.value = "";
+        if (originMarker) originMarker.setMap(null);
+        if (destinationMarker) destinationMarker.setMap(null);
         console.warn("Directions request failed:", status);
       }
     }
   );
 };
 
-onMounted(() => {
-  if (!window.google) return;
-
-  map = new google.maps.Map(mapRef.value!, {
-    zoom: 17,
-  });
+// Update markers when services change
+const updateMarkers = () => {
+  if (!map || !isInitialized.value) return;
 
   const categoryColors: Record<string, string> = {
     "Food & Nutrition":
@@ -195,11 +285,22 @@ onMounted(() => {
       "http://maps.google.com/mapfiles/ms/icons/grey-dot.png",
   };
 
+  // Track which services are in the new list
+  const currentServiceKeys = new Set<string>();
+
   props.services.forEach((service) => {
     const serviceLat = Number(service.details.lat);
     const serviceLng = Number(service.details.lng);
 
     if (!isNaN(serviceLat) && !isNaN(serviceLng)) {
+      const key = `${serviceLat},${serviceLng}`;
+      currentServiceKeys.add(key);
+
+      // Skip if marker already exists
+      if (serviceMarkersMap.has(key)) {
+        return;
+      }
+
       const category =
         service.details.categories || "Community & General Support";
       const icon =
@@ -237,8 +338,19 @@ onMounted(() => {
         `,
       });
 
+      serviceMarkersMap.set(key, { marker, info, service });
+
       marker.addListener("click", () => {
+        // Close the previously opened info window
+        if (currentOpenInfoWindow) {
+          currentOpenInfoWindow.close();
+        }
+        
+        // Open the new info window
         info.open(map, marker);
+        
+        // Update the reference to the currently open window
+        currentOpenInfoWindow = info;
 
         google.maps.event.addListenerOnce(info, "domready", () => {
           const directionsBtn = document.getElementById(
@@ -250,9 +362,11 @@ onMounted(() => {
                 calculateRoute(
                   { lat: props.origin.lat, lng: props.origin.lng },
                   { lat: serviceLat, lng: serviceLng },
-                  travelMode.value
+                  travelMode.value,
+                  serviceMarkersMap
                 );
                 info.close();
+                currentOpenInfoWindow = null; // Clear reference when closed
               } else {
                 alert("Please select your location on the map first.");
               }
@@ -277,13 +391,66 @@ onMounted(() => {
           }
         });
       });
+      
+      // Listen for info window close event to clear reference
+      google.maps.event.addListener(info, "closeclick", () => {
+        currentOpenInfoWindow = null;
+      });
+    }
+  });
+
+  // Remove markers that are no longer in the services list (optional - only if you want to clean up)
+  // Comment this out if you want to keep all loaded markers on the map
+  // for (const [key, value] of serviceMarkersMap.entries()) {
+  //   if (!currentServiceKeys.has(key)) {
+  //     value.marker.setMap(null);
+  //     serviceMarkersMap.delete(key);
+  //   }
+  // }
+};
+
+onMounted(() => {
+  if (!window.google) return;
+
+  map = new google.maps.Map(mapRef.value!, {
+    zoom: 17,
+  });
+
+  map.addListener("zoom_changed", () => {
+    const zoom = map.getZoom();
+    emit("zoom-changed", zoom);
+  });
+
+  map.addListener("bounds_changed", () => {
+    const bounds = map.getBounds();
+    if (bounds) {
+      const boundsData = {
+        north: bounds.getNorthEast().lat(),
+        south: bounds.getSouthWest().lat(),
+        east: bounds.getNorthEast().lng(),
+        west: bounds.getSouthWest().lng(),
+      };
+      emit("bounds-changed", boundsData);
+    }
+  });
+
+  map.addListener("idle", () => {
+    const zoom = map.getZoom();
+    const bounds = map.getBounds();
+
+    if (bounds) {
+      const center = map.getCenter();
+      const ne = bounds.getNorthEast();
+      const distance =
+        google.maps.geometry.spherical.computeDistanceBetween(center, ne) /
+        1000;
     }
   });
 
   let currentMarker: any = null;
   const geocoder = new google.maps.Geocoder();
 
-  function setMarker(latVal: number, lngVal: number) {
+  function setMarker(latVal: number, lngVal: number, shouldCenter: boolean = true) {
     lat.value = latVal;
     lng.value = lngVal;
 
@@ -296,7 +463,9 @@ onMounted(() => {
       title: "Selected Location",
     });
 
-    map.setCenter({ lat: latVal, lng: lngVal });
+    if (shouldCenter) {
+      map.setCenter({ lat: latVal, lng: lngVal });
+    }
 
     geocoder.geocode(
       { location: { lat: latVal, lng: lngVal } },
@@ -332,6 +501,11 @@ onMounted(() => {
 
   map.addListener("click", (e: any) => {
     if (e.latLng) {
+      // Close any open info window when clicking on the map
+      if (currentOpenInfoWindow) {
+        currentOpenInfoWindow.close();
+        currentOpenInfoWindow = null;
+      }
       setMarker(e.latLng.lat(), e.latLng.lng());
     }
   });
@@ -342,15 +516,37 @@ onMounted(() => {
       strokeWeight: 7,
       strokeOpacity: 1,
     },
-    suppressMarkers: false,
+    suppressMarkers: true,
   });
   directionsService = new window.google.maps.DirectionsService();
   directionsRenderer.setMap(map);
 
+  // Store the map reference for later use
+  (map as any).__serviceMarkersMap = serviceMarkersMap;
+
+  isInitialized.value = true;
+  
+  // Initial marker creation
+  updateMarkers();
+
   if (props.origin && props.destination) {
-    calculateRoute(props.origin, props.destination, travelMode.value);
+    calculateRoute(
+      props.origin,
+      props.destination,
+      travelMode.value,
+      serviceMarkersMap
+    );
   }
 });
+
+// Watch for services changes and update markers
+watch(
+  () => props.services,
+  () => {
+    updateMarkers();
+  },
+  { deep: true }
+);
 
 watch(
   () => [props.origin, props.destination],
@@ -362,7 +558,7 @@ watch(
       origin &&
       destination
     ) {
-      calculateRoute(origin, destination, travelMode.value);
+      calculateRoute(origin, destination, travelMode.value, serviceMarkersMap);
     } else if (directionsRenderer) {
       directionsRenderer.setDirections({ routes: [] });
       routeDistance.value = "";
@@ -381,6 +577,16 @@ watch(
         address: newAddress,
         district: newDistrict,
       });
+    }
+  }
+);
+
+// Watch for initial coordinates changes, but respect preserveView
+watch(
+  () => [props.initialLat, props.initialLng, props.preserveView],
+  ([newLat, newLng, preserve]) => {
+    if (map && newLat && newLng && isInitialized.value && !preserve) {
+      map.setCenter({ lat: newLat, lng: newLng });
     }
   }
 );
@@ -405,11 +611,11 @@ watch(
   border-radius: 1rem;
   padding: 1.25rem;
   z-index: 60;
-  
+
   border: 1px solid #e5e7eb;
   min-width: 320px;
   width: 100%;
-  
+
   max-width: 100vw;
 }
 
@@ -536,7 +742,6 @@ watch(
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-/* Mobile responsive */
 @media (max-width: 640px) {
   .directions-card {
     bottom: 0.5rem;
@@ -545,18 +750,12 @@ watch(
   }
 
   .route-info {
-    /* flex-direction: column; */
     gap: 0.75rem;
   }
 
   .info-row {
     width: 100%;
   }
-
-  /* .divider {
-    width: 100%;
-    height: 1px;
-  } */
 
   .transport-icon {
     width: 2.5rem;
