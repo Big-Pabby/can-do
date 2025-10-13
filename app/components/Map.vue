@@ -323,7 +323,7 @@ const updateMarkers = () => {
               <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.address}</p>
               <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.hours}</p>
             </div>
-            <div class="flex gap-3 flex-wrap justify-between">
+            <div class="flex gap-3 flex-wrap">
               <button id="call-btn-${service.id}" class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white">
                 Call Now
               </button>
