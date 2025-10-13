@@ -323,7 +323,7 @@ const updateMarkers = () => {
               <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.address}</p>
               <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.hours}</p>
             </div>
-            <div class="flex gap-3 justify-between">
+            <div class="flex gap-3 flex-wrap justify-between">
               <button id="call-btn-${service.id}" class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white">
                 Call Now
               </button>
@@ -345,10 +345,10 @@ const updateMarkers = () => {
         if (currentOpenInfoWindow) {
           currentOpenInfoWindow.close();
         }
-        
+
         // Open the new info window
         info.open(map, marker);
-        
+
         // Update the reference to the currently open window
         currentOpenInfoWindow = info;
 
@@ -391,7 +391,7 @@ const updateMarkers = () => {
           }
         });
       });
-      
+
       // Listen for info window close event to clear reference
       google.maps.event.addListener(info, "closeclick", () => {
         currentOpenInfoWindow = null;
@@ -450,7 +450,11 @@ onMounted(() => {
   let currentMarker: any = null;
   const geocoder = new google.maps.Geocoder();
 
-  function setMarker(latVal: number, lngVal: number, shouldCenter: boolean = true) {
+  function setMarker(
+    latVal: number,
+    lngVal: number,
+    shouldCenter: boolean = true
+  ) {
     lat.value = latVal;
     lng.value = lngVal;
 
@@ -525,7 +529,7 @@ onMounted(() => {
   (map as any).__serviceMarkersMap = serviceMarkersMap;
 
   isInitialized.value = true;
-  
+
   // Initial marker creation
   updateMarkers();
 
