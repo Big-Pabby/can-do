@@ -116,7 +116,7 @@ const categoryEmojis: Record<string, string> = {
   "Health & Medical": "🏥",
   "Justice & Legal Support": "⚖️",
   "Financial & Benefits Support": "💰",
-  "Employment, Training & Education": "🎓",
+  "Employment Services": "🎓",
   "Community & General Support": "🤝",
 };
 watch(profile, (newProfile) => {
