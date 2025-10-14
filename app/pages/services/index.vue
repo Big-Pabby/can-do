@@ -64,6 +64,7 @@
                     class="text-white accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
                   />
                 </div>
+               
               </TableHead>
               <TableHead><p class="text-left">Service Name</p> </TableHead>
               <TableHead>Categories </TableHead>
@@ -128,9 +129,9 @@
               <TableCell>
                 <div class="flex flex-wrap gap-2">
                   <template
-                    v-for="cat in typeof service.details?.sub_category ===
+                    v-for="cat in typeof service.details?.subcategories ===
                     'string'
-                      ? service.details.sub_category
+                      ? service.details.subcategories
                           .split(',')
                           .map((c) => c.trim())
                           .filter(Boolean)

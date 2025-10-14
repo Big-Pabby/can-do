@@ -17,7 +17,7 @@ export interface Service {
     website: string;
     org_name: string;
     categories: string;
-    sub_category: string;
+    subcategories: string;
     description: string;
     eligibility: string;
     contact: string;
@@ -29,15 +29,14 @@ export interface Service {
     verification_status: string;
     total_ratings: number;
     rating: number;
-    lat:string;
-    lng:string;
+    lat: string;
+    lng: string;
     confidence: number;
     location?: ServiceLocation;
   };
   date_created: string;
   date_updated: string;
 }
-
 
 // Core service categories mapping
 export const CORE_SERVICE_CATEGORIES = {
@@ -143,18 +142,20 @@ export const useServices = () => {
   interface Response {
     total_pages: number;
     count: number;
-    results: Service[]
+    results: Service[];
   }
 
   // Fetch services from API
   const { data, isLoading, isError, refetch } = useQuery({
     // Include pagination in the key so it refetches when page/size change
     queryKey: ["services", currentPage],
-    
+
     queryFn: async () => {
       const res = await https.get<Response>("v1/services/");
+      console.log(res.data.results);
       return res.data.results;
     },
+
     staleTime: 1000 * 60 * 5,
   });
 
@@ -162,7 +163,7 @@ export const useServices = () => {
 
   // Helper function to normalize and extract categories from service
   const extractServiceCategories = (service: Service): string[] => {
-    const categoriesStr = service.details.sub_category;
+    const categoriesStr = service.details.subcategories;
     if (!categoriesStr || typeof categoriesStr !== "string") return [];
 
     return categoriesStr
@@ -198,6 +199,7 @@ export const useServices = () => {
   const coreServices = computed(() => {
     return services.value.filter((service) => {
       const serviceCategories = extractServiceCategories(service);
+     
       const coreCategories = mapToCoreCategories(serviceCategories);
       return coreCategories.length > 0;
     });

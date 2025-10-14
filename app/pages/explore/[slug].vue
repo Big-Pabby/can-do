@@ -45,7 +45,7 @@
         <Icon icon="tabler:arrow-left" width="20" height="20" />
         Back
       </button>
-      <div
+      <!-- <div
         class="border md:flex hidden border-[#F3F4F6] bg-white rounded-[12px] p-6 justify-between items-center"
       >
         <div class="space-y-1">
@@ -93,7 +93,7 @@
             </svg>
           </button>
         </div>
-      </div>
+      </div> -->
       <div
         class="md:bg-white bg-[#12A0D8] md:rounded-[12px] p-6 flex flex-col gap-4 justify-between items-start"
       >
@@ -147,24 +147,68 @@
           </div>
         </div>
 
-        <div>
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex-1">
-              <h1 class="text-2xl font-bold md:text-gray-900 text-white mb-2">
-                {{ service.details.name }}
-              </h1>
+        <div class="w-full">
+          <div class="flex w-full items-start justify-between mb-4">
+            <div class=" w-full">
+              <div class="flex justify-between w-full md:items-center">
+                <h1 class="text-2xl font-bold md:text-gray-900 text-white mb-2">
+                  {{ service.details.name }}
+                </h1>
+                <div class="flex gap-6 items-center">
+                  <button
+                    @click="shareService"
+                    class="p-2 rounded-full flex items-center justify-center border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition"
+                    aria-label="Share"
+                  >
+                    <svg
+                      class="w-5 h-5 text-[#B0B72E]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    @click="toggleBookmark"
+                    class="p-2 rounded-full bg-[#EAF8FE] border border-[#80D6F7] hover:bg-gray-50 transition"
+                    aria-label="Bookmark"
+                  >
+                    <svg
+                      class="w-5 h-5 text-[#12A0D8]"
+                      :class="{ 'fill-current text-cyan-600': isBookmarked }"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
               <div class="flex items-center flex-wrap gap-2 text-sm">
-                <span
-                  class="px-3 py-1 border border-[#6BCFF6] bg-[#EAF8FE] text-[#12A0D8] text-xs rounded-full font-medium"
+                <!-- <span
+                  class="px-3 md:hidden block py-1 border border-[#6BCFF6] bg-[#EAF8FE] text-[#12A0D8] text-xs rounded-full font-medium"
                 >
                   {{ service.details.categories }}
                 </span>
                 <span
-                  v-if="service.details.sub_category"
-                  class="px-3 border border-[#B3DAFF] py-1 bg-[#F0F8FF] text-[#005AAD] text-xs rounded-full"
+                  v-if="service.details.subcategories"
+                  class="px-3 md:hidden block border border-[#B3DAFF] py-1 bg-[#F0F8FF] text-[#005AAD] text-xs rounded-full"
                 >
-                  {{ service.details.sub_category }}
-                </span>
+                  {{ service.details.subcategories }}
+                </span> -->
                 <div
                   class="flex bg-[#FFFBEB] border py-[6px] rounded-full px-[8px] border-[#FDE68A] items-center gap-2"
                 >
@@ -196,7 +240,7 @@
             </div>
           </div>
 
-          <div
+          <!-- <div
             class="flex items-center gap-4 text-sm md:text-gray-600 text-white mb-4"
           >
             <div class="flex items-center gap-2">
@@ -205,13 +249,46 @@
                 service.details.address || "Hours not specified"
               }}</span>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Main Content -->
         <div class="space-y-6 md:p-0 p-4">
+          <div
+            class="bg-white rounded-lg p-6 space-y-2 text-sm font-medium text-[#4B5563]"
+          >
+            <div class="space-y-1 pb-2">
+              <h5 class="text-xs text-[#4B5563]">Address</h5>
+              <p class="text-sm font-medium text-[#111827]">
+                {{ service.details.address }}
+                <span
+                  class="underline text-[#12A0D8]"
+                  @click="handleDirections(service)"
+                  >View on Map</span
+                >
+              </p>
+            </div>
+            <hr />
+            <div class="space-y-1 pb-2">
+              <h5 class="text-xs text-[#4B5563]">Service Category</h5>
+              <span class="text-sm font-medium text-[#111827]">
+                {{ service.details.categories }}
+              </span>
+            </div>
+            <hr />
+            <div class="space-y-1 pb-2">
+              <h5 class="text-xs text-[#4B5563]">Service Sub category</h5>
+              <span
+                v-if="service.details.subcategories"
+                class="text-sm font-medium text-[#111827]"
+              >
+                {{ service.details.subcategories }}
+              </span>
+            </div>
+            <hr />
+          </div>
           <!-- Contact Information -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
@@ -269,10 +346,14 @@
                   <Icon icon="akar-icons:globe" width="20" height="20" />
                 </div>
                 <div class="space-y-1">
-                  <h4 class="text-xs text-[#4B5563]">Webisite</h4>
-                  <p class="text-sm font-medium">
+                  <h4 class="text-xs text-[#4B5563]">Website</h4>
+                  <a
+                    :href="service.details.website"
+                    target="_blank"
+                    class="text-sm underline text-[#12A0D8] font-medium line-clamp-1"
+                  >
                     {{ service.details.website || "website not available" }}
-                  </p>
+                  </a>
                 </div>
               </div>
               <hr />
@@ -286,18 +367,23 @@
               class="bg-white rounded-lg p-6 text-sm font-medium text-[#4B5563] space-y-4"
             >
               <div v-for="(item, index) in eligibility" :key="index">
-                <div class="flex gap-2 items-center">
+                <div class="flex gap-2 items-start">
                   <Icon
                     icon="icon-park-outline:check-one"
                     width="20"
                     height="20"
                     style="color: #b0b72e"
                   />
-                  <p class="text-sm">{{ item }}</p>
+                  <p class="text-sm flex-1">{{ item }}</p>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="md:block hidden lg:col-span-1">
+          <!-- Map Preview -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
               Opening Hours
@@ -320,32 +406,6 @@
                   <p class="text-sm">{{ item }}</p>
                 </div>
                 <hr />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="md:block hidden lg:col-span-1">
-          <!-- Map Preview -->
-          <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
-            <div
-              class="h-64 bg-gradient-to-br from-cyan-100 to-blue-100 relative"
-            >
-              <div class="absolute inset-0 flex items-center justify-center">
-                <svg
-                  class="w-16 h-16 text-cyan-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                  />
-                </svg>
               </div>
             </div>
           </div>
@@ -411,8 +471,6 @@ definePageMeta({
   layout: "user",
 });
 
-
-
 const {
   data: service,
   isLoading,
@@ -457,7 +515,10 @@ function handleDirections(service: any) {
     return;
   }
 
-  useLocationStore().setSelectedServiceLocation(destLat, destLng);
+  useLocationStore().setSelectedServiceLocation(
+    { lat: destLat, lng: destLng },
+    service
+  );
   navigateTo("/explore");
 }
 

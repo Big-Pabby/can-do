@@ -74,18 +74,12 @@ const props = defineProps<{
   initialLng?: number;
   origin?: { lat: number; lng: number };
   destination?: { lat: number; lng: number };
-  preserveView?: boolean;
 }>();
 
 const emit = defineEmits<{
   (
     e: "locationSelected",
     coords: { lat: number; lng: number; address: string; district: string }
-  ): void;
-  (e: "zoom-changed", zoom: number): void;
-  (
-    e: "bounds-changed",
-    bounds: { north: number; south: number; east: number; west: number }
   ): void;
 }>();
 
@@ -94,7 +88,6 @@ let directionsRenderer: any = null;
 let directionsService: any = null;
 let originMarker: any = null;
 let destinationMarker: any = null;
-let currentOpenInfoWindow: any = null; // Track currently open info window
 const mapRef = ref<HTMLDivElement | null>(null);
 const lat = ref(0);
 const lng = ref(0);
@@ -103,10 +96,6 @@ const district = ref("");
 const routeDistance = ref<string>("");
 const routeDuration = ref<string>("");
 const travelMode = ref<string>("DRIVING");
-const isInitialized = ref(false);
-
-// Store existing markers to update them instead of recreating
-const serviceMarkersMap = new Map();
 
 const travelModes = [
   { value: "TRANSIT", label: "Transit", icon: "mdi:bus" },
@@ -133,13 +122,36 @@ const cancelDirections = () => {
   if (destinationMarker) destinationMarker.setMap(null);
   routeDistance.value = "";
   routeDuration.value = "";
+
+  // Show all service markers again
+  console.log("Showing all service markers again");
+  const markersMap = (map as any).__serviceMarkersMap;
+  if (markersMap) {
+    for (const [key, value] of markersMap.entries()) {
+      value.marker.setMap(map); // Re-add to map
+      value.marker.setVisible(true);
+      console.log("Showing marker at:", key);
+    }
+  }
+
   useLocationStore().setSelectedServiceLocation(null);
 };
 
 const changeTravelMode = (mode: string) => {
+  console.log("Changing travel mode to:", mode);
   travelMode.value = mode;
-  if (props.origin && props.destination) {
-    calculateRoute(props.origin, props.destination, mode, serviceMarkersMap);
+
+  if (props.origin && props.destination && map) {
+    const markersMap = (map as any).__serviceMarkersMap;
+    if (markersMap) {
+      console.log("Recalculating route with new mode:", mode);
+      // Clear existing route first
+      if (directionsRenderer) {
+        directionsRenderer.setDirections({ routes: [] });
+      }
+      // Recalculate with new mode
+      calculateRoute(props.origin, props.destination, mode, markersMap);
+    }
   }
 };
 
@@ -147,17 +159,27 @@ const calculateRoute = (
   origin: any,
   destination: any,
   mode: string = "DRIVING",
-  markersMap: any
+  serviceMarkersMap: any
 ) => {
   if (!directionsService || !directionsRenderer) return;
+
+  console.log("Hiding all service markers, total:", serviceMarkersMap.size);
+
+  // Hide all service markers when showing directions
+  for (const [key, value] of serviceMarkersMap.entries()) {
+    console.log("Hiding marker at:", key);
+    value.marker.setVisible(false);
+    value.marker.setMap(null); // Also remove from map completely
+  }
 
   directionsService.route(
     {
       origin,
       destination,
-      travelMode: mode,
+      travelMode: window.google.maps.TravelMode[mode], // Use the proper Google Maps TravelMode enum
     },
     (result: any, status: string) => {
+      console.log("Route calculation result:", status, "for mode:", mode);
       if (status === "OK") {
         directionsRenderer.setDirections(result);
         const leg = result.routes[0]?.legs[0];
@@ -187,6 +209,13 @@ const calculateRoute = (
           optimized: false,
         });
 
+        // Ensure all service markers stay hidden after route is calculated
+        console.log("Double-checking markers are hidden");
+        for (const [key, value] of serviceMarkersMap.entries()) {
+          value.marker.setVisible(false);
+          value.marker.setMap(null); // Completely remove from map
+        }
+
         // Get the actual destination coordinates that were passed
         const destLat =
           typeof destination.lat === "function"
@@ -197,24 +226,37 @@ const calculateRoute = (
             ? destination.lng()
             : destination.lng;
 
+        console.log("Looking for service at:", destLat, destLng);
+        console.log(
+          "Available services:",
+          Array.from(serviceMarkersMap.keys())
+        );
+
         // Find the service by coordinates with a more lenient matching
         let serviceData = null;
         let minDistance = Infinity;
 
-        for (const [key, value] of markersMap.entries()) {
+        for (const [key, value] of serviceMarkersMap.entries()) {
           const [lat, lng] = key.split(",").map(Number);
           const distance = Math.sqrt(
             Math.pow(lat - destLat, 2) + Math.pow(lng - destLng, 2)
           );
 
           if (distance < minDistance && distance < 0.001) {
+            // Within ~100 meters
             minDistance = distance;
             serviceData = value;
           }
         }
 
+        console.log(
+          "Found service:",
+          serviceData ? serviceData.service.details.name : "None"
+        );
+
         // Create custom destination marker (Point B) at the exact service location
         if (serviceData) {
+          // Get the service marker position
           const servicePosition = serviceData.marker.getPosition();
 
           destinationMarker = new google.maps.Marker({
@@ -222,7 +264,7 @@ const calculateRoute = (
             map,
             icon: {
               url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
-              scaledSize: new google.maps.Size(40, 40),
+              scaledSize: new google.maps.Size(40, 40), // Make it slightly larger
             },
             title: "Destination: " + serviceData.service.details.name,
             label: {
@@ -231,20 +273,21 @@ const calculateRoute = (
               fontWeight: "bold",
               fontSize: "16px",
             },
-            zIndex: 10000,
-            optimized: false,
+            zIndex: 10000, // Much higher z-index to ensure it appears on top
+            optimized: false, // Disable optimization to ensure proper layering
           });
 
+          // When clicking Point B, show the service info window
           destinationMarker.addListener("click", () => {
-            // Close any currently open info window
-            if (currentOpenInfoWindow) {
-              currentOpenInfoWindow.close();
-            }
             serviceData.info.open(map, serviceData.marker);
-            currentOpenInfoWindow = serviceData.info;
           });
 
+          // Also make the original service marker clickable to open info
           serviceData.marker.setZIndex(9999);
+
+          console.log("Point B marker created successfully");
+        } else {
+          console.warn("No service found for destination coordinates");
         }
       } else {
         directionsRenderer.setDirections({ routes: [] });
@@ -258,9 +301,12 @@ const calculateRoute = (
   );
 };
 
-// Update markers when services change
-const updateMarkers = () => {
-  if (!map || !isInitialized.value) return;
+onMounted(() => {
+  if (!window.google) return;
+
+  map = new google.maps.Map(mapRef.value!, {
+    zoom: 17,
+  });
 
   const categoryColors: Record<string, string> = {
     "Food & Nutrition":
@@ -285,22 +331,17 @@ const updateMarkers = () => {
       "http://maps.google.com/mapfiles/ms/icons/grey-dot.png",
   };
 
-  // Track which services are in the new list
-  const currentServiceKeys = new Set<string>();
+  // Store service markers and info windows for later access
+  const serviceMarkersMap = new Map();
+
+  // Store the map reference for later use
+  (map as any).__serviceMarkersMap = serviceMarkersMap;
 
   props.services.forEach((service) => {
     const serviceLat = Number(service.details.lat);
     const serviceLng = Number(service.details.lng);
 
     if (!isNaN(serviceLat) && !isNaN(serviceLng)) {
-      const key = `${serviceLat},${serviceLng}`;
-      currentServiceKeys.add(key);
-
-      // Skip if marker already exists
-      if (serviceMarkersMap.has(key)) {
-        return;
-      }
-
       const category =
         service.details.categories || "Community & General Support";
       const icon =
@@ -323,7 +364,7 @@ const updateMarkers = () => {
               <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.address}</p>
               <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.hours}</p>
             </div>
-            <div class="flex gap-3 flex-wrap">
+            <div class="flex gap-3 justify-between">
               <button id="call-btn-${service.id}" class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white">
                 Call Now
               </button>
@@ -338,19 +379,15 @@ const updateMarkers = () => {
         `,
       });
 
-      serviceMarkersMap.set(key, { marker, info, service });
+      // Store marker and info window for later access
+      serviceMarkersMap.set(`${serviceLat},${serviceLng}`, {
+        marker,
+        info,
+        service,
+      });
 
       marker.addListener("click", () => {
-        // Close the previously opened info window
-        if (currentOpenInfoWindow) {
-          currentOpenInfoWindow.close();
-        }
-
-        // Open the new info window
         info.open(map, marker);
-
-        // Update the reference to the currently open window
-        currentOpenInfoWindow = info;
 
         google.maps.event.addListenerOnce(info, "domready", () => {
           const directionsBtn = document.getElementById(
@@ -366,7 +403,6 @@ const updateMarkers = () => {
                   serviceMarkersMap
                 );
                 info.close();
-                currentOpenInfoWindow = null; // Clear reference when closed
               } else {
                 alert("Please select your location on the map first.");
               }
@@ -391,70 +427,13 @@ const updateMarkers = () => {
           }
         });
       });
-
-      // Listen for info window close event to clear reference
-      google.maps.event.addListener(info, "closeclick", () => {
-        currentOpenInfoWindow = null;
-      });
-    }
-  });
-
-  // Remove markers that are no longer in the services list (optional - only if you want to clean up)
-  // Comment this out if you want to keep all loaded markers on the map
-  // for (const [key, value] of serviceMarkersMap.entries()) {
-  //   if (!currentServiceKeys.has(key)) {
-  //     value.marker.setMap(null);
-  //     serviceMarkersMap.delete(key);
-  //   }
-  // }
-};
-
-onMounted(() => {
-  if (!window.google) return;
-
-  map = new google.maps.Map(mapRef.value!, {
-    zoom: 17,
-  });
-
-  map.addListener("zoom_changed", () => {
-    const zoom = map.getZoom();
-    emit("zoom-changed", zoom);
-  });
-
-  map.addListener("bounds_changed", () => {
-    const bounds = map.getBounds();
-    if (bounds) {
-      const boundsData = {
-        north: bounds.getNorthEast().lat(),
-        south: bounds.getSouthWest().lat(),
-        east: bounds.getNorthEast().lng(),
-        west: bounds.getSouthWest().lng(),
-      };
-      emit("bounds-changed", boundsData);
-    }
-  });
-
-  map.addListener("idle", () => {
-    const zoom = map.getZoom();
-    const bounds = map.getBounds();
-
-    if (bounds) {
-      const center = map.getCenter();
-      const ne = bounds.getNorthEast();
-      const distance =
-        google.maps.geometry.spherical.computeDistanceBetween(center, ne) /
-        1000;
     }
   });
 
   let currentMarker: any = null;
   const geocoder = new google.maps.Geocoder();
 
-  function setMarker(
-    latVal: number,
-    lngVal: number,
-    shouldCenter: boolean = true
-  ) {
+  function setMarker(latVal: number, lngVal: number) {
     lat.value = latVal;
     lng.value = lngVal;
 
@@ -467,9 +446,7 @@ onMounted(() => {
       title: "Selected Location",
     });
 
-    if (shouldCenter) {
-      map.setCenter({ lat: latVal, lng: lngVal });
-    }
+    map.setCenter({ lat: latVal, lng: lngVal });
 
     geocoder.geocode(
       { location: { lat: latVal, lng: lngVal } },
@@ -505,11 +482,6 @@ onMounted(() => {
 
   map.addListener("click", (e: any) => {
     if (e.latLng) {
-      // Close any open info window when clicking on the map
-      if (currentOpenInfoWindow) {
-        currentOpenInfoWindow.close();
-        currentOpenInfoWindow = null;
-      }
       setMarker(e.latLng.lat(), e.latLng.lng());
     }
   });
@@ -520,37 +492,23 @@ onMounted(() => {
       strokeWeight: 7,
       strokeOpacity: 1,
     },
-    suppressMarkers: true,
+    suppressMarkers: true, // We'll create custom markers
   });
   directionsService = new window.google.maps.DirectionsService();
   directionsRenderer.setMap(map);
 
-  // Store the map reference for later use
-  (map as any).__serviceMarkersMap = serviceMarkersMap;
-
-  isInitialized.value = true;
-
-  // Initial marker creation
-  updateMarkers();
-
   if (props.origin && props.destination) {
-    calculateRoute(
-      props.origin,
-      props.destination,
-      travelMode.value,
-      serviceMarkersMap
-    );
+    const markersMap = (map as any).__serviceMarkersMap;
+    if (markersMap) {
+      calculateRoute(
+        props.origin,
+        props.destination,
+        travelMode.value,
+        markersMap
+      );
+    }
   }
 });
-
-// Watch for services changes and update markers
-watch(
-  () => props.services,
-  () => {
-    updateMarkers();
-  },
-  { deep: true }
-);
 
 watch(
   () => [props.origin, props.destination],
@@ -562,13 +520,27 @@ watch(
       origin &&
       destination
     ) {
-      calculateRoute(origin, destination, travelMode.value, serviceMarkersMap);
+      const markersMap = (map as any).__serviceMarkersMap;
+      if (markersMap) {
+        calculateRoute(origin, destination, travelMode.value, markersMap);
+      }
     } else if (directionsRenderer) {
       directionsRenderer.setDirections({ routes: [] });
       routeDistance.value = "";
       routeDuration.value = "";
+
+      // Show all markers when no directions
+      console.log("No directions, showing all markers");
+      const markersMap = (map as any).__serviceMarkersMap;
+      if (markersMap) {
+        for (const [key, value] of markersMap.entries()) {
+          value.marker.setMap(map); // Re-add to map
+          value.marker.setVisible(true);
+        }
+      }
     }
-  }
+  },
+  { deep: true, immediate: true }
 );
 
 watch(
@@ -581,16 +553,6 @@ watch(
         address: newAddress,
         district: newDistrict,
       });
-    }
-  }
-);
-
-// Watch for initial coordinates changes, but respect preserveView
-watch(
-  () => [props.initialLat, props.initialLng, props.preserveView],
-  ([newLat, newLng, preserve]) => {
-    if (map && newLat && newLng && isInitialized.value && !preserve) {
-      map.setCenter({ lat: newLat, lng: newLng });
     }
   }
 );
@@ -746,6 +708,7 @@ watch(
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
+/* Mobile responsive */
 @media (max-width: 640px) {
   .directions-card {
     bottom: 0.5rem;

@@ -58,7 +58,7 @@
           <div
             @click="
               toggleType = 'map';
-              pageSize = 1000;
+              pageSize = 10000;
             "
             :class="`${
               toggleType === 'map'
@@ -203,7 +203,7 @@ const excludedAreas = ref<string[] | null>(null);
 
 // Pagination state
 const currentPage = ref(1);
-const pageSize = ref(1000);
+const pageSize = ref(10000);
 const totalPages = computed(() => {
   if (!data?.value?.count) return 1;
   return Math.ceil(data.value.count / pageSize.value);
@@ -369,6 +369,6 @@ function handleDirections(service: any) {
     { lat: destLat, lng: destLng },
     service
   );
-  pageSize.value = 1000;
+  pageSize.value = 10000;
 }
 </script>
