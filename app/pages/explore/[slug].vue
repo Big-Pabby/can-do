@@ -149,12 +149,14 @@
 
         <div class="w-full">
           <div class="flex w-full items-start justify-between mb-4">
-            <div class=" w-full">
+            <div class="w-full">
               <div class="flex justify-between w-full md:items-center">
-                <h1 class="text-2xl font-bold md:text-gray-900 text-white mb-2">
+                <h1
+                  class="md:text-2xl text-xl font-bold md:text-gray-900 text-white mb-2"
+                >
                   {{ service.details.name }}
                 </h1>
-                <div class="flex gap-6 items-center">
+                <div class="md:flex hidden gap-6 items-center">
                   <button
                     @click="shareService"
                     class="p-2 rounded-full flex items-center justify-center border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition"
@@ -256,48 +258,48 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Main Content -->
         <div class="space-y-6 md:p-0 p-4">
-          <div
-            class="bg-white rounded-lg p-6 space-y-2 text-sm font-medium text-[#4B5563]"
-          >
-            <div class="space-y-1 pb-2">
-              <h5 class="text-xs text-[#4B5563]">Address</h5>
-              <p class="text-sm font-medium text-[#111827]">
-                {{ service.details.address }}
-                <span
-                  class="underline text-[#12A0D8]"
-                  @click="handleDirections(service)"
-                  >View on Map</span
-                >
-              </p>
-            </div>
-            <hr />
-            <div class="space-y-1 pb-2">
-              <h5 class="text-xs text-[#4B5563]">Service Category</h5>
-              <span class="text-sm font-medium text-[#111827]">
-                {{ service.details.categories }}
-              </span>
-            </div>
-            <hr />
-            <div class="space-y-1 pb-2">
-              <h5 class="text-xs text-[#4B5563]">Service Sub category</h5>
-              <span
-                v-if="service.details.subcategories"
-                class="text-sm font-medium text-[#111827]"
-              >
-                {{ service.details.subcategories }}
-              </span>
-            </div>
-            <hr />
-          </div>
           <!-- Contact Information -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
-              Service Description
+              Service Information
             </h2>
             <div
-              class="bg-white rounded-lg p-6 text-sm font-medium text-[#4B5563]"
+              class="bg-white rounded-lg p-6 space-y-2 text-sm font-medium text-[#4B5563]"
             >
-              {{ service.details.description || "No description available." }}
+              <p class="pb-2">
+                {{ service.details.description || "No description available." }}
+              </p>
+
+              <hr />
+              <div class="space-y-1 py-2">
+                <h5 class="text-xs text-[#4B5563]">Service Category</h5>
+                <span class="text-sm font-medium text-[#111827]">
+                  {{ service.details.categories }}
+                </span>
+              </div>
+              <hr />
+              <div class="space-y-1 py-2">
+                <h5 class="text-xs text-[#4B5563]">Service Sub category</h5>
+                <span
+                  v-if="service.details.subcategories"
+                  class="text-sm font-medium text-[#111827]"
+                >
+                  {{ service.details.subcategories }}
+                </span>
+              </div>
+              <hr />
+              <div class="space-y-1 py-2">
+                <h5 class="text-xs text-[#4B5563]">Address</h5>
+                <p class="text-sm font-medium text-[#111827]">
+                  {{ service.details.address }}
+                  <span
+                    class="underline text-[#12A0D8]"
+                    @click="handleDirections(service)"
+                    >View on Map</span
+                  >
+                </p>
+              </div>
+              <hr />
             </div>
           </div>
           <div class="space-y-1">
@@ -359,30 +361,10 @@
               <hr />
             </div>
           </div>
-          <div class="space-y-1">
-            <h2 class="text-base font-medium text-gray-900 mb-4">
-              Eligibility Criteria
-            </h2>
-            <div
-              class="bg-white rounded-lg p-6 text-sm font-medium text-[#4B5563] space-y-4"
-            >
-              <div v-for="(item, index) in eligibility" :key="index">
-                <div class="flex gap-2 items-start">
-                  <Icon
-                    icon="icon-park-outline:check-one"
-                    width="20"
-                    height="20"
-                    style="color: #b0b72e"
-                  />
-                  <p class="text-sm flex-1">{{ item }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Sidebar -->
-        <div class="md:block hidden lg:col-span-1">
+        <div class="lg:col-span-1 space-y-6 md:p-0 p-4">
           <!-- Map Preview -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
@@ -406,6 +388,26 @@
                   <p class="text-sm">{{ item }}</p>
                 </div>
                 <hr />
+              </div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <h2 class="text-base font-medium text-gray-900 mb-4">
+              Eligibility Criteria
+            </h2>
+            <div
+              class="bg-white rounded-lg p-6 text-sm font-medium text-[#4B5563] space-y-4"
+            >
+              <div v-for="(item, index) in eligibility" :key="index">
+                <div class="flex gap-2 items-start">
+                  <Icon
+                    icon="icon-park-outline:check-one"
+                    width="20"
+                    height="20"
+                    style="color: #b0b72e"
+                  />
+                  <p class="text-sm flex-1">{{ item }}</p>
+                </div>
               </div>
             </div>
           </div>

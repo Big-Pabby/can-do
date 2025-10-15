@@ -88,6 +88,7 @@ let directionsRenderer: any = null;
 let directionsService: any = null;
 let originMarker: any = null;
 let destinationMarker: any = null;
+let currentOpenInfoWindow: any = null; // Track currently open info window
 const mapRef = ref<HTMLDivElement | null>(null);
 const lat = ref(0);
 const lng = ref(0);
@@ -140,7 +141,7 @@ const cancelDirections = () => {
 const changeTravelMode = (mode: string) => {
   console.log("Changing travel mode to:", mode);
   travelMode.value = mode;
-
+  
   if (props.origin && props.destination && map) {
     const markersMap = (map as any).__serviceMarkersMap;
     if (markersMap) {
@@ -164,7 +165,7 @@ const calculateRoute = (
   if (!directionsService || !directionsRenderer) return;
 
   console.log("Hiding all service markers, total:", serviceMarkersMap.size);
-
+  
   // Hide all service markers when showing directions
   for (const [key, value] of serviceMarkersMap.entries()) {
     console.log("Hiding marker at:", key);
@@ -279,7 +280,12 @@ const calculateRoute = (
 
           // When clicking Point B, show the service info window
           destinationMarker.addListener("click", () => {
+            // Close any currently open info window
+            if (currentOpenInfoWindow) {
+              currentOpenInfoWindow.close();
+            }
             serviceData.info.open(map, serviceData.marker);
+            currentOpenInfoWindow = serviceData.info; // Track this as the currently open window
           });
 
           // Also make the original service marker clickable to open info
@@ -379,6 +385,13 @@ onMounted(() => {
         `,
       });
 
+      // Add listener to reset tracking when info window is closed
+      info.addListener("closeclick", () => {
+        if (currentOpenInfoWindow === info) {
+          currentOpenInfoWindow = null;
+        }
+      });
+
       // Store marker and info window for later access
       serviceMarkersMap.set(`${serviceLat},${serviceLng}`, {
         marker,
@@ -387,7 +400,13 @@ onMounted(() => {
       });
 
       marker.addListener("click", () => {
+        // Close any currently open info window before opening a new one
+        if (currentOpenInfoWindow) {
+          currentOpenInfoWindow.close();
+        }
+        
         info.open(map, marker);
+        currentOpenInfoWindow = info; // Track this as the currently open window
 
         google.maps.event.addListenerOnce(info, "domready", () => {
           const directionsBtn = document.getElementById(
@@ -528,7 +547,7 @@ watch(
       directionsRenderer.setDirections({ routes: [] });
       routeDistance.value = "";
       routeDuration.value = "";
-
+      
       // Show all markers when no directions
       console.log("No directions, showing all markers");
       const markersMap = (map as any).__serviceMarkersMap;
