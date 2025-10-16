@@ -68,21 +68,56 @@
               <!-- District Dropdown -->
               <div
                 v-if="showDistrictDropdown"
-                class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg"
               >
-                <div
-                  v-for="district in data"
-                  :key="district"
-                  @click="toggleDistrict(district)"
-                  class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="selectedDistricts.includes(district)"
-                    class="mr-2"
-                    readonly
-                  />
-                  <span>{{ district }}</span>
+                <!-- Search Input -->
+                <div class="p-2 border-b border-gray-200">
+                  <div class="relative">
+                    <input
+                      v-model="searchQuery"
+                      type="text"
+                      placeholder="Search districts..."
+                      class="w-full px-3 py-2 pl-9 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      @click.stop
+                    />
+                    <svg
+                      class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Districts List -->
+                <div class="max-h-48 overflow-y-auto">
+                  <div
+                    v-for="district in filteredDistricts"
+                    :key="district"
+                    @click="toggleDistrict(district)"
+                    class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="selectedDistricts.includes(district)"
+                      class="mr-2"
+                      readonly
+                    />
+                    <span>{{ district }}</span>
+                  </div>
+                  <div
+                    v-if="filteredDistricts.length === 0"
+                    class="px-4 py-3 text-sm text-gray-500 text-center"
+                  >
+                    No districts found
+                  </div>
                 </div>
               </div>
             </div>
@@ -174,10 +209,21 @@ const emit = defineEmits(["close", "submit"]);
 const showDistrictDropdown = ref(false);
 const selectedDistricts = ref([]);
 const radius = ref(100);
+const searchQuery = ref("");
 
 // Computed property to check if all districts are selected
 const allSelected = computed(() => {
   return data.value && selectedDistricts.value.length === data.value.length;
+});
+
+// Computed property to filter districts based on search query
+const filteredDistricts = computed(() => {
+  if (!data.value) return [];
+  if (!searchQuery.value) return data.value;
+  
+  return data.value.filter((district) =>
+    district.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
 });
 
 // Toggle select all/deselect all
@@ -207,6 +253,7 @@ const removeDistrict = (district) => {
 
 const closeModal = () => {
   showDistrictDropdown.value = false;
+  searchQuery.value = "";
   emit("close");
 };
 
