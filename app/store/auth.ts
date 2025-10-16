@@ -14,16 +14,21 @@ export type User = {
 interface Auth {
   tokens: AuthTokenResponse | null;
   user: User | null;
+  jobId: string | null;
 }
 
 export const useAuthStore = defineStore("Auth", {
   state: (): Auth => ({
     tokens: null,
     user: null,
+    jobId: null,
   }),
   actions: {
     setUser(user: User) {
       this.user = user;
+    },
+    setJobId(id: string | null) {
+      this.jobId = id;
     },
     clearUser() {
       this.user = null;

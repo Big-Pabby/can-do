@@ -347,7 +347,7 @@
                 >
                   <Icon icon="akar-icons:globe" width="20" height="20" />
                 </div>
-                <div class="space-y-1">
+                <div class="flex-1 space-y-1">
                   <h4 class="text-xs text-[#4B5563]">Website</h4>
                   <a
                     :href="service.details.website"

@@ -1,5 +1,17 @@
 <template>
   <div class="">
+    <DataCollectionModal
+      :isOpen="isModalOpen"
+      :loading="collectPending"
+      @close="isModalOpen = false"
+      @submit="handleDataSubmit"
+    />
+    <ProgressModal
+      :isOpen="isProgressOpen"
+      :initialProgress="progressWS.progress.value"
+      @complete="handleComplete"
+      @refresh="handleRefresh"
+    />
     <div class="bg-white rounded-[16px] px-4 space-y-4 py-8 sm:px-6 lg:px-8">
       <div class="mb-8 flex justify-between items-center gap-6">
         <div class="flex-1">
@@ -10,6 +22,12 @@
             Browse and filter through our comprehensive list of services
           </p>
         </div>
+        <button
+          class="bg-[#B0B72E] py-2.5 px-12 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="isModalOpen = true"
+        >
+          Data Collection
+        </button>
         <button
           class="bg-[#12A0D8] py-2.5 px-12 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="selectedIds.length === 0 || isPending"
@@ -64,7 +82,6 @@
                     class="text-white accent-[#12A0D8] h-4 w-4 border-gray-300 rounded"
                   />
                 </div>
-               
               </TableHead>
               <TableHead><p class="text-left">Service Name</p> </TableHead>
               <TableHead>Categories </TableHead>
@@ -266,10 +283,100 @@ import { toast } from "vue-sonner";
 import InfoDialog from "../components/InfoDialog.vue";
 import ProgressToast from "../components/ProgressToast.vue";
 import { UseProgress } from "../hooks";
+import { UseDataCollection } from "./hooks";
+import { useAuthStore } from "~/store/auth";
 
 definePageMeta({
   layout: "admin",
 });
+
+const isProgressOpen = ref(false);
+const currentProgress = ref(0);
+const progressWS = useProgressWebSocket();
+const jobid = computed(() => useAuthStore().jobId);
+const startPulling = () => {
+  if (!jobid.value) {
+    console.error("No job ID provided");
+    toast.error("No job ID provided for progress tracking");
+    return;
+  }
+  // Show progress modal
+  isProgressOpen.value = true;
+
+  // Connect to WebSocket
+  // Option 1: If your backend WebSocket URL is different
+  progressWS.connect(
+    jobid.value,
+    `wss://app.candopeople.uk/v1/services/data_collection_status/${jobid.value}`
+  );
+  console.log(progressWS.progress);
+
+  // Option 2: If using default URL
+  // progressWS.connect(jobId)
+
+  // Option 3: If using polling instead
+  // progressWS.startPolling(jobId)
+};
+watch(
+  () => jobid.value,
+  (newJobId) => {
+    if (newJobId != null) {
+      startPulling();
+    } else {
+      isProgressOpen.value = false;
+      progressWS.reset();
+    }
+  },
+  { immediate: true }
+);
+const handleComplete = () => {
+  console.log("Data pulling complete!");
+  toast.success("Services data updated successfully!", {
+    style: {
+      background: "#F0FDF4",
+      border: "1px solid #BBF7D0",
+      color: "#16A34A",
+    },
+  });
+
+  // Optionally close the modal after a delay
+  setTimeout(() => {
+    isProgressOpen.value = false;
+    progressWS.reset();
+  }, 2000);
+};
+
+const handleRefresh = () => {
+  // Reload the page or refresh data
+  window.location.reload();
+};
+
+const isModalOpen = ref(false);
+const { mutate, isPending: collectPending } = UseDataCollection();
+
+const handleDataSubmit = (data: any) => {
+  console.log("Selected data:", data);
+  mutate(
+    { locations: data.districts, radius: 1500 },
+    {
+      onSuccess: async ({ data }) => {
+        toast.success("Data Collection Initiated!", {
+          style: {
+            background: "#F0FDF4",
+            border: "1px solid #BBF7D0",
+            color: "#16A34A",
+          },
+        });
+        const jobId = data.job_id;
+        useAuthStore().setJobId(jobId);
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.message || "Failed to re-run.";
+        toast.error(msg);
+      },
+    }
+  );
+};
 
 const {
   paginatedServices,
@@ -380,6 +487,9 @@ const paginationPages = computed(() => {
   if (current < total - 3) pages.push("...");
   pages.push(total);
   return pages;
+});
+onUnmounted(() => {
+  progressWS.disconnect();
 });
 </script>
 
