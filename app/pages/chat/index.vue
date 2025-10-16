@@ -578,9 +578,12 @@ const sendMessage = () => {
     lat: locationStore.lat,
     lng: locationStore.lng,
   };
+  const allTexts = messages.value.map((msg) => msg.text);
+  const combinedText = allTexts.join(",");
+
 
   mutate(
-    { ...location, message: userInput },
+    { ...location, message: `${userInput}, ${JSON.stringify(combinedText)}` },
     {
       onSuccess: async ({ data }) => {
         const botMessage: Message = {
