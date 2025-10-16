@@ -44,7 +44,7 @@ export const useProgressWebSocket = () => {
         try {
           const data: ProgressUpdate = JSON.parse(event.data);
           console.log("Progress update:", data);
-          
+
           progress.value = data.progress;
           message.value = data.message || data.status || "";
           successCount.value = data.success_count || 0;
@@ -54,7 +54,7 @@ export const useProgressWebSocket = () => {
           if (data.status === "Completed") {
             setTimeout(() => {
               const totalProcessed = successCount.value + failureCount.value;
-              
+
               toast.success("Data Collection Complete!", {
                 description: `Successfully collected: ${successCount.value} | Failed: ${failureCount.value} | Total: ${totalProcessed}`,
                 style: {
@@ -64,9 +64,9 @@ export const useProgressWebSocket = () => {
                 },
                 duration: 5000,
               });
-              
+
               disconnect();
-              useAuthStore().setJobId(null);
+
               reset();
             }, 1000);
           }
@@ -75,7 +75,9 @@ export const useProgressWebSocket = () => {
           if (data.status === "Failed") {
             setTimeout(() => {
               toast.error("Data Collection Failed!", {
-                description: data.message || "An error occurred during data collection. Please try again.",
+                description:
+                  data.message ||
+                  "An error occurred during data collection. Please try again.",
                 style: {
                   background: "#FEF2F2",
                   border: "1px solid #FECACA",
@@ -83,7 +85,7 @@ export const useProgressWebSocket = () => {
                 },
                 duration: 5000,
               });
-              
+
               disconnect();
               useAuthStore().setJobId(null);
               reset();
@@ -106,7 +108,8 @@ export const useProgressWebSocket = () => {
         status.value = "error";
         console.error("WebSocket error:", error);
         toast.error("Connection Error", {
-          description: "Lost connection to the server. Progress tracking may be unavailable.",
+          description:
+            "Lost connection to the server. Progress tracking may be unavailable.",
           style: {
             background: "#FEF2F2",
             border: "1px solid #FECACA",
