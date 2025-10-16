@@ -42,7 +42,7 @@ export const useAuthStore = defineStore("Auth", {
     logout() {
       this.clearUser();
       this.clearTokens();
-    }
+    },
   },
   persist: true,
 });

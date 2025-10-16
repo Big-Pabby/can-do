@@ -8,6 +8,9 @@
     />
     <ProgressModal
       :isOpen="isProgressOpen"
+      
+      :success="progressWS.successCount.value"
+      :failed="progressWS.failureCount.value"
       :initialProgress="progressWS.progress.value"
       @complete="handleComplete"
       @refresh="handleRefresh"
@@ -285,6 +288,7 @@ import ProgressToast from "../components/ProgressToast.vue";
 import { UseProgress } from "../hooks";
 import { UseDataCollection } from "./hooks";
 import { useAuthStore } from "~/store/auth";
+import { fail } from "assert";
 
 definePageMeta({
   layout: "admin",
