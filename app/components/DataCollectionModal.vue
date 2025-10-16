@@ -8,7 +8,7 @@
         @click.self="closeModal"
       >
         <!-- Modal Content -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+        <div class="bg-white rounded-lg max-h-[95vh] overflow-y-auto shadow-xl w-full max-w-md p-6 relative">
           <!-- Close Button -->
           <button
             @click="closeModal"
@@ -33,15 +33,25 @@
 
           <!-- District Selection -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Select District(s)
-            </label>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Select District(s)
+              </label>
+              <button
+                @click="toggleSelectAll"
+                class="text-xs text-[#12A0D8] hover:underline font-medium"
+              >
+                {{ allSelected ? 'Deselect All' : 'Select All' }}
+              </button>
+            </div>
             <div class="relative">
               <button
                 @click="showDistrictDropdown = !showDistrictDropdown"
                 class="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
               >
-                <span class="text-gray-700">Select</span>
+                <span class="text-gray-700">
+                  {{ selectedDistricts.length === 0 ? 'Select' : `${selectedDistricts.length} selected` }}
+                </span>
                 <svg
                   class="w-5 h-5 text-gray-400"
                   fill="currentColor"
@@ -70,6 +80,7 @@
                     type="checkbox"
                     :checked="selectedDistricts.includes(district)"
                     class="mr-2"
+                    readonly
                   />
                   <span>{{ district }}</span>
                 </div>
@@ -94,67 +105,27 @@
             </div>
           </div>
 
-          <!-- Category Selection -->
+          <!-- Radius Input -->
           <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Select Category
+              Radius (in km)
             </label>
             <div class="relative">
-              <button
-                @click="showCategoryDropdown = !showCategoryDropdown"
-                class="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
-              >
-                <span class="text-gray-700">Select</span>
-                <svg
-                  class="w-5 h-5 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </button>
-
-              <!-- Category Dropdown -->
-              <div
-                v-if="showCategoryDropdown"
-                class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-              >
-                <div
-                  v-for="category in categories"
-                  :key="category"
-                  @click="toggleCategory(category)"
-                  class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="selectedCategories.includes(category)"
-                    class="mr-2"
-                  />
-                  <span>{{ category }}</span>
-                </div>
+              <input
+                v-model.number="radius"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="Enter radius in kilometers"
+                class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <div class="absolute right-3 top-2.5 text-gray-400 text-sm">
+                km
               </div>
             </div>
-
-            <!-- Selected Categories Tags -->
-            <div class="flex flex-wrap gap-2 mt-3">
-              <span
-                v-for="category in selectedCategories"
-                :key="category"
-                class="inline-flex items-center px-3 py-1 rounded-full border border-[#12A0D8] text-sm bg-[#F0F8FF] text-[#12A0D8]"
-              >
-                {{ category }}
-                <button
-                  @click="removeCategory(category)"
-                  class="ml-2 text-[#12A0D8] hover:text-blue-900"
-                >
-                  ×
-                </button>
-              </span>
-            </div>
+            <p class="text-xs text-gray-500 mt-1">
+              Specify the search radius from selected districts
+            </p>
           </div>
 
           <!-- Action Buttons -->
@@ -166,11 +137,11 @@
               Close
             </button>
             <button
-              :disabled="loading"
+              :disabled="loading || selectedDistricts.length === 0 || !radius"
               @click="pullData"
-              class="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white rounded-full bg-[#12A0D8] font-medium transition-colors"
+              class="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white rounded-full bg-[#12A0D8] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-            <Icon v-if="loading" icon="codex:loader" width="20" height="20"  style="color: #fff" />
+              <Icon v-if="loading" icon="codex:loader" width="20" height="20" style="color: #fff" />
               Pull Data
             </button>
           </div>
@@ -182,7 +153,7 @@
 
 <script setup>
 import { Icon } from "@iconify/vue";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { UseDistrict } from "~/pages/services/hooks";
 
 const props = defineProps({
@@ -201,32 +172,22 @@ const { data, isLoading } = UseDistrict();
 const emit = defineEmits(["close", "submit"]);
 
 const showDistrictDropdown = ref(false);
-const showCategoryDropdown = ref(false);
-
 const selectedDistricts = ref([]);
-const selectedCategories = ref([]);
+const radius = ref(100);
 
-const districts = ref([
-  "Maidenhead",
-  "Windsor",
-  "Ascot",
-  "Bracknell",
-  "Slough",
-  "Reading",
-]);
+// Computed property to check if all districts are selected
+const allSelected = computed(() => {
+  return data.value && selectedDistricts.value.length === data.value.length;
+});
 
-const categories = ref([
-  "Food & Nutrition",
-  "Shelter & Housing",
-  "Clothing & Essentials",
-  "Addiction & Recovery",
-  "Mental Health & Wellbeing",
-  "Health & Medical",
-  "Justice & Legal Support",
-  "Financial & Benefits Support",
-  "Employment, Training & Education",
-  "Community & General Support",
-]);
+// Toggle select all/deselect all
+const toggleSelectAll = () => {
+  if (allSelected.value) {
+    selectedDistricts.value = [];
+  } else {
+    selectedDistricts.value = [...data.value];
+  }
+};
 
 const toggleDistrict = (district) => {
   const index = selectedDistricts.value.indexOf(district);
@@ -244,32 +205,19 @@ const removeDistrict = (district) => {
   }
 };
 
-const toggleCategory = (category) => {
-  const index = selectedCategories.value.indexOf(category);
-  if (index > -1) {
-    selectedCategories.value.splice(index, 1);
-  } else {
-    selectedCategories.value.push(category);
-  }
-};
-
-const removeCategory = (category) => {
-  const index = selectedCategories.value.indexOf(category);
-  if (index > -1) {
-    selectedCategories.value.splice(index, 1);
-  }
-};
-
 const closeModal = () => {
   showDistrictDropdown.value = false;
-  showCategoryDropdown.value = false;
   emit("close");
 };
 
 const pullData = () => {
+  if (selectedDistricts.value.length === 0 || !radius.value) {
+    return;
+  }
+
   const payload = {
     districts: selectedDistricts.value,
-    categories: selectedCategories.value,
+    radius: radius.value,
   };
   emit("submit", payload);
   closeModal();
@@ -285,5 +233,17 @@ const pullData = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Hide number input arrows for webkit browsers */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hide number input arrows for Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 </style>

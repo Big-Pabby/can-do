@@ -1,6 +1,8 @@
 <template>
   <div class="md:space-y-4">
-    <div class="md:hidden block"><mobile-nav /></div>
+    <div v-if="!selectedServiceLocation" class="md:hidden block">
+      <mobile-nav />
+    </div>
     <AdvanceFilter
       v-model="showModal"
       :initial-category="''"
@@ -19,7 +21,9 @@
       </p>
     </div>
     <div
-      class="md:border border-[#F3F4F6] flex md:flex-row flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5"
+      :class="`md:border ${
+        !selectedServiceLocation ? 'flex' : 'hidden'
+      } border-[#F3F4F6] md:flex-row flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5`"
     >
       <div
         class="bg-white border border-gray-300 md:rounded-[10px] rounded-full p-3 focus:outline-none flex gap-4 w-full justify-between items-center focus:ring-2 flex-1 focus:ring-blue-500"

@@ -357,7 +357,7 @@ const { mutate, isPending: collectPending } = UseDataCollection();
 const handleDataSubmit = (data: any) => {
   console.log("Selected data:", data);
   mutate(
-    { locations: data.districts, radius: 1500 },
+    { locations: data.districts, radius: data.radius * 1000 },
     {
       onSuccess: async ({ data }) => {
         toast.success("Data Collection Initiated!", {
