@@ -5,7 +5,7 @@ import { useAuthStore } from "~/store/auth";
 export interface ProgressUpdate {
   jobId: string;
   progress: number;
-  current_process: "Pending" | "Processing" | "Completed" | "Failed";
+  status: "Pending" | "Processing" | "Completed" | "Failed";
   message?: string;
 }
 
@@ -41,12 +41,12 @@ export const useProgressWebSocket = () => {
           const data: ProgressUpdate = JSON.parse(event.data);
           console.log("Progress update:", data);
            progress.value = data.progress;
-            message.value = data.current_process || "";
+            message.value = data.status || "";
 
             console.log("Progress update:", data);
 
             // Auto-close on completion or failure
-            if (data.current_process === "Completed" || data.current_process === "Failed") {
+            if (data.status === "Completed" || data.status === "Failed") {
               setTimeout(() => {
                 disconnect();
                 useAuthStore().setJobId(null);
