@@ -1,10 +1,12 @@
 // composables/useProgressWebSocket.ts
-import { ref, onUnmounted } from "vue";
+import { ref, onUnmounted, computed } from "vue";
 import { useAuthStore } from "~/store/auth";
+import { toast } from "vue-sonner";
 
 export interface ProgressUpdate {
-  jobId: string;
   progress: number;
+  success_count: number;
+  failure_count: number;
   status: "Pending" | "Processing" | "Completed" | "Failed";
   message?: string;
 }
@@ -15,6 +17,8 @@ export const useProgressWebSocket = () => {
   const status = ref<"idle" | "connecting" | "connected" | "error">("idle");
   const currentJobId = ref<string | null>(null);
   const message = ref<string>("");
+  const successCount = ref(0);
+  const failureCount = ref(0);
 
   const connect = (jobId: string, wsUrl?: string) => {
     // Close existing connection if any
@@ -40,26 +44,75 @@ export const useProgressWebSocket = () => {
         try {
           const data: ProgressUpdate = JSON.parse(event.data);
           console.log("Progress update:", data);
-           progress.value = data.progress;
-            message.value = data.status || "";
+          
+          progress.value = data.progress;
+          message.value = data.message || data.status || "";
+          successCount.value = data.success_count || 0;
+          failureCount.value = data.failure_count || 0;
 
-            console.log("Progress update:", data);
+          // Handle completion
+          if (data.status === "Completed") {
+            setTimeout(() => {
+              const totalProcessed = successCount.value + failureCount.value;
+              
+              toast.success("Data Collection Complete!", {
+                description: `Successfully collected: ${successCount.value} | Failed: ${failureCount.value} | Total: ${totalProcessed}`,
+                style: {
+                  background: "#F0FDF4",
+                  border: "1px solid #BBF7D0",
+                  color: "#16A34A",
+                },
+                duration: 5000,
+              });
+              
+              disconnect();
+              useAuthStore().setJobId(null);
+              reset();
+            }, 1000);
+          }
 
-            // Auto-close on completion or failure
-            if (data.status === "Completed" || data.status === "Failed") {
-              setTimeout(() => {
-                disconnect();
-                useAuthStore().setJobId(null);
-              }, 1000);
-            }
+          // Handle failure
+          if (data.status === "Failed") {
+            setTimeout(() => {
+              toast.error("Data Collection Failed!", {
+                description: data.message || "An error occurred during data collection. Please try again.",
+                style: {
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  color: "#DC2626",
+                },
+                duration: 5000,
+              });
+              
+              disconnect();
+              useAuthStore().setJobId(null);
+              reset();
+            }, 1000);
+          }
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
+          toast.error("Connection Error", {
+            description: "Failed to parse progress update",
+            style: {
+              background: "#FEF2F2",
+              border: "1px solid #FECACA",
+              color: "#DC2626",
+            },
+          });
         }
       };
 
       ws.value.onerror = (error) => {
         status.value = "error";
         console.error("WebSocket error:", error);
+        toast.error("Connection Error", {
+          description: "Lost connection to the server. Progress tracking may be unavailable.",
+          style: {
+            background: "#FEF2F2",
+            border: "1px solid #FECACA",
+            color: "#DC2626",
+          },
+        });
       };
 
       ws.value.onclose = () => {
@@ -69,6 +122,14 @@ export const useProgressWebSocket = () => {
     } catch (error) {
       status.value = "error";
       console.error("Failed to create WebSocket:", error);
+      toast.error("Connection Failed", {
+        description: "Could not establish WebSocket connection",
+        style: {
+          background: "#FEF2F2",
+          border: "1px solid #FECACA",
+          color: "#DC2626",
+        },
+      });
     }
   };
 
@@ -85,6 +146,8 @@ export const useProgressWebSocket = () => {
     progress.value = 0;
     currentJobId.value = null;
     message.value = "";
+    successCount.value = 0;
+    failureCount.value = 0;
   };
 
   // Cleanup on component unmount
@@ -99,70 +162,9 @@ export const useProgressWebSocket = () => {
     progress,
     status,
     message,
+    successCount,
+    failureCount,
     currentJobId,
     isConnected: computed(() => status.value === "connected"),
   };
 };
-
-// Alternative: Polling-based approach if WebSocket is not available
-// export const useProgressPolling = () => {
-//   const progress = ref(0)
-//   const status = ref<'idle' | 'polling' | 'error'>('idle')
-//   const message = ref<string>('')
-//   const intervalId = ref<NodeJS.Timeout | null>(null)
-
-//   const startPolling = async (jobId: string, pollInterval = 2000) => {
-//     stopPolling()
-//     status.value = 'polling'
-
-//     const poll = async () => {
-//       try {
-//         // Replace with your actual API endpoint
-//         const response = await $fetch(`/api/progress/${jobId}`)
-
-//         progress.value = response.progress
-//         message.value = response.message || ''
-
-//         if (response.status === 'completed' || response.status === 'failed') {
-//           stopPolling()
-//         }
-//       } catch (error) {
-//         console.error('Polling error:', error)
-//         status.value = 'error'
-//       }
-//     }
-
-//     // Initial poll
-//     await poll()
-
-//     // Set up interval
-//     intervalId.value = setInterval(poll, pollInterval)
-//   }
-
-//   const stopPolling = () => {
-//     if (intervalId.value) {
-//       clearInterval(intervalId.value)
-//       intervalId.value = null
-//     }
-//     status.value = 'idle'
-//   }
-
-//   const reset = () => {
-//     stopPolling()
-//     progress.value = 0
-//     message.value = ''
-//   }
-
-//   onUnmounted(() => {
-//     stopPolling()
-//   })
-
-//   return {
-//     startPolling,
-//     stopPolling,
-//     reset,
-//     progress,
-//     status,
-//     message
-//   }
-// }
