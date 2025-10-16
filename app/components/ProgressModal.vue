@@ -4,8 +4,9 @@
     <transition name="fade">
       <div v-if="isOpen" class="fixed bottom-6 right-6 z-50">
         <!-- Modal Content -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+        <div class="bg-white rounded-lg shadow-xl w-[450px] p-6 relative">
           <!-- Close Button (only shown when completed) -->
+          
           <button
             v-if="status === 'Completed'"
             @click="handleClose"
@@ -54,31 +55,25 @@
               </span>
             </div>
           </div>
-          <div v-if="status === 'Completed'" class="flex w-full justify-between gap-3 items-center">
+          <div
+            v-if="status === 'Completed'"
+            class="flex w-full justify-between gap-3 items-center"
+          >
             <div class="flex items-center gap-2">
-              <span class="text-sm font-medium "
-                >Successfully Pulled:</span
-              >
-              <span class="text-lg font-bold ">{{
-                success
-              }}</span>
+              <span class="text-sm font-medium">Successfully Pulled:</span>
+              <span class="text-lg font-bold">{{ success }}</span>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-medium ">Failed:</span>
-              <span class="text-lg font-bold ">{{ failed }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-medium "
-                >Total:</span
-              >
-              <span class="text-lg font-bold ">{{
-                success + failed
-              }}</span>
-            </div>
+            <!-- <div class="flex items-center gap-2">
+              <span class="text-sm font-medium">Failed:</span>
+              <span class="text-lg font-bold">{{ failed }}</span>
+            </div> -->
+            <!-- <div class="flex items-center gap-2">
+              <span class="text-sm font-medium">Total:</span>
+              <span class="text-lg font-bold">{{ success + failed }}</span>
+            </div> -->
           </div>
 
           <!-- Status Badge -->
-         
         </div>
       </div>
     </transition>

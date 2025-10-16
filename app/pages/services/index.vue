@@ -8,7 +8,7 @@
     />
     <ProgressModal
       :isOpen="isProgressOpen"
-      
+      :status="progressWS.message.value"
       :success="progressWS.successCount.value"
       :failed="progressWS.failureCount.value"
       :initialProgress="progressWS.progress.value"
@@ -335,19 +335,15 @@ watch(
 );
 const handleComplete = () => {
   console.log("Data pulling complete!");
-  toast.success("Services data updated successfully!", {
-    style: {
-      background: "#F0FDF4",
-      border: "1px solid #BBF7D0",
-      color: "#16A34A",
-    },
-  });
+  // toast.success("Services data updated successfully!", {
+  //   style: {
+  //     background: "#F0FDF4",
+  //     border: "1px solid #BBF7D0",
+  //     color: "#16A34A",
+  //   },
+  // });
 
   // Optionally close the modal after a delay
-  setTimeout(() => {
-    isProgressOpen.value = false;
-    progressWS.reset();
-  }, 2000);
 };
 
 const handleRefresh = () => {

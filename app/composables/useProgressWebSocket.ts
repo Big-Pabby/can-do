@@ -19,6 +19,7 @@ export const useProgressWebSocket = () => {
   const message = ref<string>("");
   const successCount = ref(0);
   const failureCount = ref(0);
+  const jobStatus = ref<string>("Processing");
 
   const connect = (jobId: string, wsUrl?: string) => {
     // Close existing connection if any
@@ -54,9 +55,9 @@ export const useProgressWebSocket = () => {
           if (data.status === "Completed") {
             setTimeout(() => {
               const totalProcessed = successCount.value + failureCount.value;
-
+              
               toast.success("Data Collection Complete!", {
-                description: `Successfully collected: ${successCount.value} | Failed: ${failureCount.value} | Total: ${totalProcessed}`,
+                description: `Successfully collected: ${successCount.value}`,
                 style: {
                   background: "#F0FDF4",
                   border: "1px solid #BBF7D0",
@@ -67,7 +68,7 @@ export const useProgressWebSocket = () => {
 
               disconnect();
 
-              reset();
+              //   reset();
             }, 1000);
           }
 
@@ -164,6 +165,7 @@ export const useProgressWebSocket = () => {
     reset,
     progress,
     status,
+    jobStatus,
     message,
     successCount,
     failureCount,
