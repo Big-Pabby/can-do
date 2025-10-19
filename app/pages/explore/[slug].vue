@@ -25,7 +25,6 @@
         <h3 class="text-lg font-semibold text-red-800 mb-2">
           Error Loading Service
         </h3>
-        <!-- <p class="text-red-600">{{ error.message }}</p> -->
         <button
           @click="refetch()"
           class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
@@ -45,66 +44,20 @@
         <Icon icon="tabler:arrow-left" width="20" height="20" />
         Back
       </button>
-      <!-- <div
-        class="border md:flex hidden border-[#F3F4F6] bg-white rounded-[12px] p-6 justify-between items-center"
-      >
-        <div class="space-y-1">
-          <h2 class="text-2xl font-bold text-[#12A0D8]">Service Details</h2>
-          <p class="text-sm text-[#6B7280]">Information about this service</p>
-        </div>
-        <div class="flex gap-6 items-center">
-          <button
-            @click="shareService"
-            class="p-2 rounded-full flex items-center justify-center border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition"
-            aria-label="Share"
-          >
-            <svg
-              class="w-5 h-5 text-[#B0B72E]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-              />
-            </svg>
-          </button>
-          <button
-            @click="toggleBookmark"
-            class="p-2 rounded-full bg-[#EAF8FE] border border-[#80D6F7] hover:bg-gray-50 transition"
-            aria-label="Bookmark"
-          >
-            <svg
-              class="w-5 h-5 text-[#12A0D8]"
-              :class="{ 'fill-current text-cyan-600': isBookmarked }"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-              />
-            </svg>
-          </button>
-        </div>
-      </div> -->
+
+      <!-- Header Section -->
       <div
         class="md:bg-white bg-[#12A0D8] md:rounded-[12px] p-6 flex flex-col gap-4 justify-between items-start"
       >
+        <!-- Mobile Header with Back and Actions -->
         <div class="md:hidden w-full flex items-center justify-between">
           <button
             @click="$router.back()"
-            class="md:hidden flex gap-2 p-2 border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition rounded-full items-center text-[#B0B72E]"
+            class="flex gap-2 p-2 border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition rounded-full items-center text-[#B0B72E]"
           >
             <Icon icon="tabler:arrow-left" width="20" height="20" />
           </button>
-          <div class="flex gap-6 items-center">
+          <div class="flex gap-3 items-center">
             <button
               @click="shareService"
               class="p-2 rounded-full flex items-center justify-center border border-[#B0B72E80] bg-[#FAFAED] hover:bg-gray-50 transition"
@@ -147,6 +100,7 @@
           </div>
         </div>
 
+        <!-- Service Title and Info -->
         <div class="w-full">
           <div class="flex w-full items-start justify-between mb-4">
             <div class="w-full">
@@ -156,6 +110,7 @@
                 >
                   {{ service.details.name }}
                 </h1>
+                <!-- Desktop Actions -->
                 <div class="md:flex hidden gap-6 items-center">
                   <button
                     @click="shareService"
@@ -199,18 +154,8 @@
                 </div>
               </div>
 
+              <!-- Rating -->
               <div class="flex items-center flex-wrap gap-2 text-sm">
-                <!-- <span
-                  class="px-3 md:hidden block py-1 border border-[#6BCFF6] bg-[#EAF8FE] text-[#12A0D8] text-xs rounded-full font-medium"
-                >
-                  {{ service.details.categories }}
-                </span>
-                <span
-                  v-if="service.details.subcategories"
-                  class="px-3 md:hidden block border border-[#B3DAFF] py-1 bg-[#F0F8FF] text-[#005AAD] text-xs rounded-full"
-                >
-                  {{ service.details.subcategories }}
-                </span> -->
                 <div
                   class="flex bg-[#FFFBEB] border py-[6px] rounded-full px-[8px] border-[#FDE68A] items-center gap-2"
                 >
@@ -239,26 +184,48 @@
                   </div>
                 </div>
               </div>
+              <p
+                class="text-sm flex gap-1 items-start line-clamp-1 font-medium mt-4 text-white"
+              >
+                <Icon
+                  icon="akar-icons:location"
+                  width="16"
+                  height="16"
+                  style="color: #fff"
+                />
+                {{ service.details.address }}
+              </p>
             </div>
           </div>
-
-          <!-- <div
-            class="flex items-center gap-4 text-sm md:text-gray-600 text-white mb-4"
-          >
-            <div class="flex items-center gap-2">
-              <Icon icon="akar-icons:location" width="16" height="16" />
-              <span>{{
-                service.details.address || "Hours not specified"
-              }}</span>
-            </div>
-          </div> -->
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Mobile Tabs -->
+      <div
+        class="md:hidden bg-white border-b border-gray-200 sticky top-0 z-30"
+      >
+        <div class="flex">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            class="flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors"
+            :class="
+              activeTab === tab.id
+                ? 'border-[#B0B72E] text-[#B0B72E]'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            "
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop Layout (2 Columns) -->
+      <div class="hidden md:grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Main Content -->
         <div class="space-y-6 md:p-0 p-4">
-          <!-- Contact Information -->
+          <!-- Service Information -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
               Service Information
@@ -293,7 +260,7 @@
                 <p class="text-sm font-medium text-[#111827]">
                   {{ service.details.address }}
                   <span
-                    class="md:inline hidden underline text-[#12A0D8]"
+                    class="md:inline hidden underline text-[#12A0D8] cursor-pointer"
                     @click="handleDirections(service)"
                     >View on Map</span
                   >
@@ -302,6 +269,8 @@
               <hr />
             </div>
           </div>
+
+          <!-- Contact Information -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
               Contact Information
@@ -365,7 +334,7 @@
 
         <!-- Sidebar -->
         <div class="lg:col-span-1 space-y-6 md:p-0 p-4">
-          <!-- Map Preview -->
+          <!-- Opening Hours -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
               Opening Hours
@@ -387,10 +356,12 @@
                   />
                   <p class="text-sm flex-1">{{ item }}</p>
                 </div>
-                <hr />
+                <hr v-if="index < hours.length - 1" />
               </div>
             </div>
           </div>
+
+          <!-- Eligibility Criteria -->
           <div class="space-y-1">
             <h2 class="text-base font-medium text-gray-900 mb-4">
               Eligibility Criteria
@@ -411,26 +382,116 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Similar Services -->
-          <!-- <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Similar Services</h3>
+      <!-- Mobile Tab Content -->
+      <div class="md:hidden pb-24">
+        <!-- About Service Tab -->
+        <div v-show="activeTab === 'about'" class="p-4 space-y-6">
+          <div class="bg-white rounded-lg p-6 space-y-4">
+            <h3 class="text-base font-semibold text-gray-900">
+              Service Description
+            </h3>
+            <p class="text-sm text-[#4B5563]">
+              {{ service.details.description || "No description available." }}
+            </p>
+
+            <hr />
+
+            <div class="space-y-1">
+              <h5 class="text-xs text-[#4B5563]">Service Category</h5>
+              <span class="text-sm font-medium text-[#111827]">
+                {{ service.details.category }}
+              </span>
+            </div>
+
+            <hr />
+
+            <div class="space-y-1" v-if="service.details.subcategories">
+              <h5 class="text-xs text-[#4B5563]">Service Sub category</h5>
+              <span class="text-sm font-medium text-[#111827]">
+                {{ service.details.subcategories }}
+              </span>
+            </div>
+
+            <hr v-if="service.details.subcategories" />
+
+            <div class="space-y-1">
+              <h5 class="text-xs text-[#4B5563]">Address</h5>
+              <p class="text-sm font-medium text-[#111827]">
+                {{ service.details.address }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Eligibility Criteria -->
+          <div class="bg-white rounded-lg p-6 space-y-4">
+            <h3 class="text-base font-semibold text-gray-900">
+              Eligibility Criteria
+            </h3>
             <div class="space-y-3">
-              <div v-for="similar in similarServices" :key="similar.id" class="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
-                <NuxtLink 
-                  :to="`/services/${similar.id}`"
-                  class="block hover:text-cyan-600 transition"
-                >
-                  <h4 class="font-medium text-sm text-gray-900 mb-1">{{ similar.name }}</h4>
-                  <p class="text-xs text-gray-600">{{ similar.category }}</p>
-                </NuxtLink>
+              <div
+                v-for="(item, index) in eligibility"
+                :key="index"
+                class="flex gap-2 items-start"
+              >
+                <Icon
+                  icon="icon-park-outline:check-one"
+                  width="20"
+                  height="20"
+                  class="flex-shrink-0 mt-0.5"
+                  style="color: #b0b72e"
+                />
+                <p class="text-sm text-[#4B5563] flex-1">{{ item }}</p>
               </div>
             </div>
-          </div> -->
+          </div>
+        </div>
+
+        <!-- Opening Hours Tab -->
+        <div v-show="activeTab === 'hours'" class="p-4">
+          <div class="bg-white rounded-lg p-6 space-y-4">
+            <div v-for="(item, index) in hours" :key="index">
+              <div class="flex gap-3 items-start py-2">
+                <Icon
+                  icon="mdi:clock-outline"
+                  width="20"
+                  height="20"
+                  class="flex-shrink-0 mt-0.5"
+                  style="color: #b0b72e"
+                />
+                <p class="text-sm text-[#4B5563] flex-1">{{ item }}</p>
+              </div>
+              <hr v-if="index < hours.length - 1" />
+            </div>
+          </div>
+        </div>
+
+        <!-- User Reviews Tab -->
+        <div v-show="activeTab === 'reviews'" class="p-4">
+          <div class="bg-white rounded-lg p-6">
+            <div class="text-center py-8">
+              <Icon
+                icon="mdi:star-outline"
+                width="48"
+                height="48"
+                class="mx-auto text-gray-300 mb-3"
+              />
+              <p class="text-sm text-gray-500">No reviews yet</p>
+              <button
+                class="mt-4 px-4 py-2 bg-[#12A0D8] text-white text-sm rounded-lg"
+              >
+                Be the first to review
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Mobile Action Buttons -->
   <div
     class="fixed w-full bg-[#F9FAFB] bottom-0 left-0 p-4 z-40 grid grid-cols-2 gap-4 md:hidden"
   >
@@ -460,6 +521,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import https from "@/utils/https";
 import type { Service } from "#imports";
@@ -469,9 +531,19 @@ import { useLocationStore } from "~/store/location";
 const route = useRoute();
 const router = useRouter();
 const serviceId = route.params.slug as string;
+
 definePageMeta({
   layout: "user",
 });
+
+// Tabs configuration
+const tabs = [
+  { id: "about", label: "About Service" },
+  { id: "hours", label: "Opening Hours" },
+  { id: "reviews", label: "User Reviews" },
+];
+
+const activeTab = ref("about");
 
 const {
   data: service,
@@ -486,32 +558,34 @@ const {
   },
   enabled: !!serviceId,
 });
+
 const eligibility = computed(() => {
   return service.value?.details.eligibility_criteria
-    ? service.value.details.eligibility_criteria.split(";").map((item) => item.trim())
+    ? service.value.details.eligibility_criteria
+        .split(";")
+        .map((item) => item.trim())
     : [];
 });
+
 const hours = computed(() => {
   return service.value?.details.opening_hours
     ? service.value.details.opening_hours.split(";").map((item) => item.trim())
     : [];
 });
+
 function getStarFill(rating: number | undefined, position: number): string {
   if (!rating) return "text-gray-300";
-
   const roundedRating = Math.round(rating);
   return position <= roundedRating ? "text-yellow-400" : "text-gray-300";
 }
+
 function handleCall(phoneNumber: string) {
   if (!phoneNumber) return;
-
-  // Format number safely
   const formatted = phoneNumber.replace(/\s+/g, "");
   window.location.href = `tel:${formatted}`;
 }
-const handleDirections = (
- service: any
-) => {
+
+const handleDirections = (service: any) => {
   if (useLocationStore().lat && useLocationStore().lng) {
     const origin = `${useLocationStore().lat},${useLocationStore().lng}`;
     const destination = `${service.details.lat},${service.details.lng}`;
@@ -524,13 +598,10 @@ const handleDirections = (
   }
 };
 
-// Reactive state
 const isBookmarked = ref(false);
 
-// Methods
 const toggleBookmark = () => {
   isBookmarked.value = !isBookmarked.value;
-  // TODO: Call API to save bookmark
 };
 
 const shareService = async () => {
@@ -545,13 +616,11 @@ const shareService = async () => {
       console.log("Error sharing:", err);
     }
   } else {
-    // Fallback: Copy to clipboard
     await navigator.clipboard.writeText(window.location.href);
     alert("Link copied to clipboard!");
   }
 };
 
-// SEO Meta
 useHead({
   title: () => service.value?.details.name || "Service Details",
   meta: [
@@ -564,7 +633,6 @@ useHead({
 </script>
 
 <style scoped>
-/* Custom scrollbar for better UX */
 .overflow-y-auto::-webkit-scrollbar {
   width: 8px;
 }

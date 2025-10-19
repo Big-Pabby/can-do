@@ -130,9 +130,9 @@
               <TableCell>
                 <div class="flex flex-wrap gap-2">
                   <template
-                    v-for="cat in typeof service.details?.categories ===
+                    v-for="cat in typeof service.details?.category ===
                     'string'
-                      ? service.details.categories
+                      ? service.details.category
                           .split(',')
                           .map((c) => c.trim())
                           .filter(Boolean)
@@ -179,7 +179,7 @@
                     service.details?.rating
                   }}</span>
                   <span class="text-muted-foreground"
-                    >({{ service.details?.total_ratings }})</span
+                    >({{ service.details?.reviews }})</span
                   >
                 </div>
               </TableCell>
@@ -357,7 +357,7 @@ const { mutate, isPending: collectPending } = UseDataCollection();
 const handleDataSubmit = (data: any) => {
   console.log("Selected data:", data);
   mutate(
-    { locations: data.districts, radius: data.radius * 1000 },
+    { location_query: data.district, radius: data.radius * 1000 },
     {
       onSuccess: async ({ data }) => {
         toast.success("Data Collection Initiated!", {

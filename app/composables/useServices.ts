@@ -28,7 +28,7 @@ export interface Service {
     access: string;
     evidence_links: string[];
     verification_status: string;
-    total_ratings: number;
+    reviews: number;
     rating: number;
     lat: string;
     lng: string;
@@ -231,7 +231,7 @@ export const useServices = () => {
 
   // Filter services based on search query and category
   const filteredServices = computed(() => {
-    return coreServices.value.filter((service) => {
+    return services.value.filter((service) => {
       // Search matching
       const matchesSearch =
         searchQuery.value === "" ||

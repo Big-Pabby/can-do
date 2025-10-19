@@ -9,7 +9,7 @@ interface Response {
 }
 
 interface Coordinates {
-  locations: string[];
+  location_query: string;
   radius: number;
 }
 
@@ -25,18 +25,17 @@ export const UseDistrict = () => {
   });
 };
 export function UseDataCollection() {
-   interface DataCollectionResponse {
-  job_id: string;
-  detail: string;
-}
+  interface DataCollectionResponse {
+    job_id: string;
+    detail: string;
+  }
 
   return useMutation({
     mutationFn: async (query: Coordinates) => {
-      const locationsParam = query.locations.join(",");
+      const locationsParam = query.location_query;
       return await https.post<DataCollectionResponse>(
-        `/v1/services/intiate_data_collection?locations=${encodeURIComponent(
-          locationsParam
-        )}&radius=${query.radius}`
+        `/v1/services/intiate_data_collection`,
+        query
       );
     },
   });

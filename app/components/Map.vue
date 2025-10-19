@@ -1,5 +1,5 @@
 <template>
-  <div class="relative z-20 w-full h-full md:rounded-xl">
+  <div class="relative z-20 w-full h-full -mb-[10px] md:rounded-xl">
     <div ref="mapRef" class="w-full h-full md:rounded-xl"></div>
 
     <!-- Recenter Button -->

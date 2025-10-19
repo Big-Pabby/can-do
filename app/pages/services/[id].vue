@@ -36,7 +36,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Categories</label>
             <select
-              v-model="editForm.categories"
+              v-model="editForm.category"
               class="w-full border rounded-[10px] px-3 py-3.5"
             >
               <option
@@ -78,7 +78,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Hours</label>
             <input
-              v-model="editForm.hours"
+              v-model="editForm.opening_hours"
               type="text"
               class="w-full border rounded-[10px] px-3 py-3.5"
             />
@@ -93,7 +93,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Eligibility</label>
             <textarea
-              v-model="editForm.eligibility"
+              v-model="editForm.eligibility_criteria"
               class="w-full border h-[200px] rounded-[10px] px-3 py-3.5"
             ></textarea>
           </div>
@@ -277,7 +277,7 @@
             <div class="flex flex-col items-start gap-2">
               <span class="font-semibold">Hours:</span>
               <span class="text-muted-foreground">{{
-                service.details.hours
+                service.details.opening_hours
               }}</span>
             </div>
             <hr />
@@ -296,7 +296,7 @@
             <div class="flex flex-col items-start gap-2">
               <span class="font-semibold">Eligibility:</span>
               <span class="text-muted-foreground">{{
-                service.details.eligibility
+                service.details.eligibility_criteria
               }}</span>
             </div>
           </div>
@@ -307,7 +307,7 @@
               <span class="text-yellow-400">★</span>
               <span class="font-semibold">{{ service.details.rating }}</span>
               <span class="text-muted-foreground"
-                >({{ service.details.total_ratings }} reviews)</span
+                >({{ service.details.reviews }} reviews)</span
               >
             </div>
           </div>
@@ -392,6 +392,7 @@ import InfoDialog from "../components/InfoDialog.vue";
 import ProgressToast from "../components/ProgressToast.vue";
 import { UseProgress } from "../hooks";
 import { CORE_SERVICE_CATEGORIES } from "#imports";
+import type { Service } from "#imports";
 definePageMeta({
   layout: "admin",
 });
@@ -446,7 +447,7 @@ const editForm = ref<{ [key: string]: string }>({
   description: "",
   address: "",
   phone: "",
-  categories: "",
+  category: "",
   sub_category: "",
   hours: "",
   eligibility: "",
@@ -467,7 +468,9 @@ const { data, isLoading, isError, refetch } = useQuery({
 const { mutate: rerunMutation, isPending: rerunPending } =
   useFetchServiceUpdates();
 
-const service = data;
+const service = computed<Service | null>(() => {
+  return data?.value ?? null;
+});
 function handleRerun() {
   const selectedIds = [id];
   rerunMutation(selectedIds, {
@@ -497,12 +500,12 @@ watch(showEdit, (val) => {
     editForm.value = {
       name: d.name ?? "",
       description: d.description ?? "",
-      categories: d.categories ?? "",
-      sub_category: d.sub_category ?? "",
+      categories: d.category ?? "",
+      sub_category: d.subcategories ?? "",
       address: d.address ?? "",
       phone: d.phone ?? "",
-      hours: d.hours ?? "",
-      eligibility: d.eligibility ?? "",
+      hours: d.opening_hours ?? "",
+      eligibility: d.eligibility_criteria ?? "",
     };
     editError.value = "";
     editSuccess.value = false;
@@ -571,7 +574,7 @@ const {
 
 const categoriesArr = computed(() => {
   if (!service?.value) return [];
-  const cats = service.value.details.categories;
+  const cats = service.value.details.category;
   return typeof cats === "string"
     ? cats
         .split(",")

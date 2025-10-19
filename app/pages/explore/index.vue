@@ -47,7 +47,7 @@
       } flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5`"
     >
       <div
-        class="bg-white border border-gray-300 md:rounded-[10px] rounded-full p-3 focus:outline-none flex gap-4 w-full justify-between items-center focus:ring-2 flex-1 focus:ring-blue-500"
+        class="bg-white border border-gray-300 md:rounded-[10px] rounded-full p-3 focus:outline-none flex gap-4 w-full justify-between items-center focus:ring-2 flex-1 focus:ring-blue-500 relative"
       >
         <Icon
           icon="ri:search-line"
@@ -241,6 +241,8 @@ const selectedServiceLocation = computed(() => {
 
 // Filter/search refs
 const searchQuery = ref("");
+const searchPending = ref(false);
+const searchTimeout = ref<number>(10);
 const selectedCategory = ref<string>("");
 const selectedDistance = ref<string>("5");
 const excludedAreas = ref<string[] | null>(null);
@@ -324,17 +326,45 @@ const handleClose = () => {
   console.log("Modal closed");
 };
 
-// Debounced search watcher
+// Debounced search watcher with 10 second delay and countdown
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
 watch(
   () => searchQuery.value,
   () => {
+    // Clear existing timers
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-      currentPage.value = 1;
-      refetch();
-    }, 500);
-  }
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    // Only start timer if there's a search query
+    if (searchQuery.value.trim()) {
+      searchPending.value = true;
+      searchTimeout.value = 10; // Reset to 10 seconds
+
+      // Start countdown
+      countdownInterval = setInterval(() => {
+        searchTimeout.value--;
+        if (searchTimeout.value <= 0 && countdownInterval) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      // Set the actual search timer
+      searchDebounceTimer = setTimeout(() => {
+        currentPage.value = 1;
+        searchPending.value = false;
+        if (countdownInterval) clearInterval(countdownInterval);
+        refetch();
+      }, 10000); // 10 seconds
+    } else {
+      // If search is cleared, don't trigger immediate search
+      searchPending.value = false;
+      searchTimeout.value = 0;
+      if (countdownInterval) clearInterval(countdownInterval);
+    }
+  },
+  { immediate: false } // Prevent immediate trigger on component mount
 );
 
 // Pagination page numbers logic
