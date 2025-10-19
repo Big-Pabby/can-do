@@ -1190,7 +1190,7 @@ const formatTime = (timestamp: number) => {
 @media (max-width: 767px) {
   .input-container {
     position: fixed;
-    bottom: 15vh;
+    bottom: 10vh;
     left: 0;
     right: 0;
   }
