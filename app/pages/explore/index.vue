@@ -122,7 +122,7 @@
     <div>
       <div
         v-if="toggleType === 'map'"
-        class="flex items-start md:h-screen h-[85vh] gap-6"
+        class="flex items-start md:h-screen h-[90vh] gap-6"
       >
         <div class="flex-1 bg-white h-full md:rounded-[16px] relative">
           <div

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="block fixed md:top-0 bottom-0 left-0 md:w-[220px] w-full bg-white md:h-[100vh] h-[15vh] z-30 md:p-6 p-4"
+    class="block fixed md:top-0 bottom-0 left-0 md:w-[220px] w-full bg-white md:h-[100vh] h-[10vh] z-30 md:p-6 p-4"
   >
     <div class="md:flex md:h-full md:pt-[86px] justify-between flex-col">
       <div class="flex md:flex-col items-start flex-row">

@@ -1,6 +1,24 @@
 <template>
   <div class="relative z-20 w-full h-full md:rounded-xl">
     <div ref="mapRef" class="w-full h-full md:rounded-xl"></div>
+
+    <!-- Recenter Button -->
+    <transition name="fade">
+      <button
+        v-if="showRecenterButton"
+        @click="recenterMap"
+        class="recenter-button"
+      >
+        <svg class="button-icon" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <span class="button-text">Back to my location</span>
+      </button>
+    </transition>
   </div>
 </template>
 
@@ -54,6 +72,7 @@ const lng = ref(0);
 const address = ref("");
 const district = ref("");
 const userLocation = ref<{ lat: number; lng: number } | null>(null);
+const showRecenterButton = ref(false);
 
 const categoryColors: Record<string, string> = {
   "Food & Nutrition": "#FF8C00",
@@ -174,7 +193,7 @@ const setMarker = async (latVal: number, lngVal: number) => {
   currentMarker = window.L.marker([latVal, lngVal], { icon: redIcon }).addTo(
     map
   );
-  currentMarker.bindPopup("<b>Your Location</b>").openPopup();
+  currentMarker.bindPopup("<b>Your Current Location</b>").openPopup();
 
   map.setView([latVal, lngVal], 15);
 
@@ -186,6 +205,16 @@ const setMarker = async (latVal: number, lngVal: number) => {
     address: address.value,
     district: district.value,
   });
+};
+
+const recenterMap = () => {
+  if (userLocation.value) {
+    map.setView([userLocation.value.lat, userLocation.value.lng], 15);
+    showRecenterButton.value = false;
+    if (currentMarker) {
+      currentMarker.openPopup();
+    }
+  }
 };
 
 onMounted(async () => {
@@ -441,10 +470,73 @@ onMounted(async () => {
       map.closePopup(searchPopup);
     }, 10000);
   });
+
+  // Track map movement to show/hide recenter button
+  map.on("moveend", () => {
+    if (userLocation.value) {
+      const center = map.getCenter();
+      const distance = map.distance(
+        [userLocation.value.lat, userLocation.value.lng],
+        [center.lat, center.lng]
+      );
+      // Show button if user has moved more than 100 meters away
+      showRecenterButton.value = distance > 100;
+    }
+  });
 });
 </script>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.recenter-button {
+  position: absolute;
+  bottom: 48px;
+  right: 24px;
+  z-index: 1000;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 9999px;
+  padding: 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recenter-button:hover {
+  background: #f9fafb;
+}
+
+.button-icon {
+  width: 20px;
+  height: 20px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.button-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  display: none;
+}
+
+.recenter-button:hover .button-text {
+  display: inline;
+}
+
 :deep(.custom-marker) {
   background: none;
   border: none;

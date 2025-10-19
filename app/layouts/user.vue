@@ -4,7 +4,7 @@
 
     <user-nav />
     <div
-      class="md:ml-[220px] h-[calc(100vh-15vh)] overflow-y-auto md:p-8 md:mt-[86px]"
+      class="md:ml-[220px] h-[calc(100vh-10vh)] overflow-y-auto md:p-8 md:mt-[86px]"
     >
       <slot />
     </div>
