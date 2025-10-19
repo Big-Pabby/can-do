@@ -1,70 +1,35 @@
 <template>
-  <div class="relative w-full h-full md:rounded-xl">
+  <div class="relative z-20 w-full h-full md:rounded-xl">
     <div ref="mapRef" class="w-full h-full md:rounded-xl"></div>
-
-    <!-- Enhanced Directions Info Card -->
-    <div v-if="routeDistance && routeDuration" class="directions-card">
-      <button
-        @click="cancelDirections"
-        class="close-btn"
-        title="Cancel directions"
-      >
-        <Icon icon="mdi:close" class="w-5 h-5" />
-      </button>
-
-      <div class="directions-content">
-        <!-- Route Information -->
-        <div class="route-info">
-          <div class="info-row">
-            <Icon
-              icon="mdi:map-marker-distance"
-              class="w-5 h-5 text-gray-500"
-            />
-            <div class="info-content">
-              <span class="info-label">Distance</span>
-              <span class="info-value">{{ routeDistance }}</span>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="info-row">
-            <Icon icon="mdi:clock-outline" class="w-5 h-5 text-gray-500" />
-            <div class="info-content">
-              <span class="info-label">Duration</span>
-              <span class="info-value">{{ routeDuration }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Travel Mode Selector -->
-        <div class="travel-mode-selector">
-          <button
-            v-for="mode in travelModes"
-            :key="mode.value"
-            @click="changeTravelMode(mode.value)"
-            :class="['mode-btn', { active: travelMode === mode.value }]"
-            :title="mode.label"
-          >
-            <Icon :icon="mode.icon" class="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-import { Icon } from "@iconify/vue";
+import { onMounted, ref } from "vue";
 import type { Service } from "#imports";
-import { useLocationStore } from "~/store/location";
+
+const loadLeaflet = () => {
+  return new Promise((resolve) => {
+    if (window.L) {
+      resolve(window.L);
+      return;
+    }
+
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = () => resolve(window.L);
+    document.head.appendChild(script);
+  });
+};
 
 declare global {
   interface Window {
-    google: {
-      maps: any;
-    };
+    L: any;
   }
 }
 
@@ -72,8 +37,6 @@ const props = defineProps<{
   services: Service[];
   initialLat?: number;
   initialLng?: number;
-  origin?: { lat: number; lng: number };
-  destination?: { lat: number; lng: number };
 }>();
 
 const emit = defineEmits<{
@@ -84,410 +47,346 @@ const emit = defineEmits<{
 }>();
 
 let map: any = null;
-let directionsRenderer: any = null;
-let directionsService: any = null;
-let originMarker: any = null;
-let destinationMarker: any = null;
-let currentOpenInfoWindow: any = null; // Track currently open info window
+let currentMarker: any = null;
 const mapRef = ref<HTMLDivElement | null>(null);
 const lat = ref(0);
 const lng = ref(0);
 const address = ref("");
 const district = ref("");
-const routeDistance = ref<string>("");
-const routeDuration = ref<string>("");
-const travelMode = ref<string>("DRIVING");
+const userLocation = ref<{ lat: number; lng: number } | null>(null);
 
-const travelModes = [
-  { value: "TRANSIT", label: "Transit", icon: "mdi:bus" },
-  { value: "BICYCLING", label: "Bicycling", icon: "mdi:bike" },
-  { value: "WALKING", label: "Walking", icon: "mdi:walk" },
-  { value: "DRIVING", label: "Driving", icon: "mdi:car" },
-];
+const categoryColors: Record<string, string> = {
+  "Food & Nutrition": "#FF8C00",
+  "Shelter & Housing": "#1E90FF",
+  "Clothing & Essentials": "#9370DB",
+  "Addiction & Recovery": "#FFD700",
+  "Mental Health & Wellbeing": "#FF69B4",
+  "Health & Medical": "#32CD32",
+  "Justice & Legal Support": "#87CEEB",
+  "Financial & Benefits Support": "#8B4513",
+  "Employment, Training & Education": "#90EE90",
+  "Community & General Support": "#808080",
+};
 
-const getTransportIcon = (mode: string) => {
-  const modeMap: Record<string, string> = {
-    DRIVING: "mdi:car",
-    WALKING: "mdi:walk",
-    BICYCLING: "mdi:bike",
-    TRANSIT: "mdi:bus",
+const getCategoryIcon = (category: string) => {
+  const icons: Record<string, string> = {
+    "Food & Nutrition": "🍽️",
+    "Shelter & Housing": "🏠",
+    "Clothing & Essentials": "👕",
+    "Addiction & Recovery": "💪",
+    "Mental Health & Wellbeing": "🧠",
+    "Health & Medical": "🏥",
+    "Justice & Legal Support": "⚖️",
+    "Financial & Benefits Support": "💰",
+    "Employment, Training & Education": "📚",
+    "Community & General Support": "🤝",
   };
-  return modeMap[mode] || "mdi:car";
+  return icons[category] || "🤝";
 };
 
-const cancelDirections = () => {
-  if (directionsRenderer) {
-    directionsRenderer.setDirections({ routes: [] });
-  }
-  if (originMarker) originMarker.setMap(null);
-  if (destinationMarker) destinationMarker.setMap(null);
-  routeDistance.value = "";
-  routeDuration.value = "";
-
-  // Show all service markers again
-  console.log("Showing all service markers again");
-  const markersMap = (map as any).__serviceMarkersMap;
-  if (markersMap) {
-    for (const [key, value] of markersMap.entries()) {
-      value.marker.setMap(map); // Re-add to map
-      value.marker.setVisible(true);
-      console.log("Showing marker at:", key);
-    }
-  }
-
-  useLocationStore().setSelectedServiceLocation(null);
-};
-
-const changeTravelMode = (mode: string) => {
-  console.log("Changing travel mode to:", mode);
-  travelMode.value = mode;
-  
-  if (props.origin && props.destination && map) {
-    const markersMap = (map as any).__serviceMarkersMap;
-    if (markersMap) {
-      console.log("Recalculating route with new mode:", mode);
-      // Clear existing route first
-      if (directionsRenderer) {
-        directionsRenderer.setDirections({ routes: [] });
-      }
-      // Recalculate with new mode
-      calculateRoute(props.origin, props.destination, mode, markersMap);
-    }
-  }
-};
-
-const calculateRoute = (
-  origin: any,
-  destination: any,
-  mode: string = "DRIVING",
-  serviceMarkersMap: any
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
 ) => {
-  if (!directionsService || !directionsRenderer) return;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
 
-  console.log("Hiding all service markers, total:", serviceMarkersMap.size);
-  
-  // Hide all service markers when showing directions
-  for (const [key, value] of serviceMarkersMap.entries()) {
-    console.log("Hiding marker at:", key);
-    value.marker.setVisible(false);
-    value.marker.setMap(null); // Also remove from map completely
+  if (distance < 1) {
+    return `${Math.round(distance * 1000)}m`;
   }
-
-  directionsService.route(
-    {
-      origin,
-      destination,
-      travelMode: window.google.maps.TravelMode[mode], // Use the proper Google Maps TravelMode enum
-    },
-    (result: any, status: string) => {
-      console.log("Route calculation result:", status, "for mode:", mode);
-      if (status === "OK") {
-        directionsRenderer.setDirections(result);
-        const leg = result.routes[0]?.legs[0];
-        routeDistance.value = leg?.distance?.text || "";
-        routeDuration.value = leg?.duration?.text || "";
-
-        // Clear existing custom markers
-        if (originMarker) originMarker.setMap(null);
-        if (destinationMarker) destinationMarker.setMap(null);
-
-        // Create custom origin marker (Point A)
-        originMarker = new google.maps.Marker({
-          position: leg.start_location,
-          map,
-          icon: {
-            url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
-            scaledSize: new google.maps.Size(40, 40),
-          },
-          title: "Your Location",
-          label: {
-            text: "A",
-            color: "white",
-            fontWeight: "bold",
-            fontSize: "16px",
-          },
-          zIndex: 10001,
-          optimized: false,
-        });
-
-        // Ensure all service markers stay hidden after route is calculated
-        console.log("Double-checking markers are hidden");
-        for (const [key, value] of serviceMarkersMap.entries()) {
-          value.marker.setVisible(false);
-          value.marker.setMap(null); // Completely remove from map
-        }
-
-        // Get the actual destination coordinates that were passed
-        const destLat =
-          typeof destination.lat === "function"
-            ? destination.lat()
-            : destination.lat;
-        const destLng =
-          typeof destination.lng === "function"
-            ? destination.lng()
-            : destination.lng;
-
-        console.log("Looking for service at:", destLat, destLng);
-        console.log(
-          "Available services:",
-          Array.from(serviceMarkersMap.keys())
-        );
-
-        // Find the service by coordinates with a more lenient matching
-        let serviceData = null;
-        let minDistance = Infinity;
-
-        for (const [key, value] of serviceMarkersMap.entries()) {
-          const [lat, lng] = key.split(",").map(Number);
-          const distance = Math.sqrt(
-            Math.pow(lat - destLat, 2) + Math.pow(lng - destLng, 2)
-          );
-
-          if (distance < minDistance && distance < 0.001) {
-            // Within ~100 meters
-            minDistance = distance;
-            serviceData = value;
-          }
-        }
-
-        console.log(
-          "Found service:",
-          serviceData ? serviceData.service.details.name : "None"
-        );
-
-        // Create custom destination marker (Point B) at the exact service location
-        if (serviceData) {
-          // Get the service marker position
-          const servicePosition = serviceData.marker.getPosition();
-
-          destinationMarker = new google.maps.Marker({
-            position: servicePosition,
-            map,
-            icon: {
-              url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
-              scaledSize: new google.maps.Size(40, 40), // Make it slightly larger
-            },
-            title: "Destination: " + serviceData.service.details.name,
-            label: {
-              text: "B",
-              color: "white",
-              fontWeight: "bold",
-              fontSize: "16px",
-            },
-            zIndex: 10000, // Much higher z-index to ensure it appears on top
-            optimized: false, // Disable optimization to ensure proper layering
-          });
-
-          // When clicking Point B, show the service info window
-          destinationMarker.addListener("click", () => {
-            // Close any currently open info window
-            if (currentOpenInfoWindow) {
-              currentOpenInfoWindow.close();
-            }
-            serviceData.info.open(map, serviceData.marker);
-            currentOpenInfoWindow = serviceData.info; // Track this as the currently open window
-          });
-
-          // Also make the original service marker clickable to open info
-          serviceData.marker.setZIndex(9999);
-
-          console.log("Point B marker created successfully");
-        } else {
-          console.warn("No service found for destination coordinates");
-        }
-      } else {
-        directionsRenderer.setDirections({ routes: [] });
-        routeDistance.value = "";
-        routeDuration.value = "";
-        if (originMarker) originMarker.setMap(null);
-        if (destinationMarker) destinationMarker.setMap(null);
-        console.warn("Directions request failed:", status);
-      }
-    }
-  );
+  return `${distance.toFixed(1)}km`;
 };
 
-onMounted(() => {
-  if (!window.google) return;
+const getDirections = (
+  serviceLat: number,
+  serviceLng: number,
+  serviceName: string
+) => {
+  if (userLocation.value) {
+    const origin = `${userLocation.value.lat},${userLocation.value.lng}`;
+    const destination = `${serviceLat},${serviceLng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&destination_place_id=${encodeURIComponent(
+      serviceName
+    )}`;
+    window.open(url, "_blank");
+  } else {
+    alert("Please allow location access to get directions");
+  }
+};
 
-  map = new google.maps.Map(mapRef.value!, {
-    zoom: 17,
+const reverseGeocode = async (latVal: number, lngVal: number) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latVal}&lon=${lngVal}&zoom=18&addressdetails=1`
+    );
+    const data = await response.json();
+
+    if (data && data.address) {
+      address.value = data.display_name || "Address not found";
+      district.value =
+        data.address.suburb ||
+        data.address.neighbourhood ||
+        data.address.city ||
+        data.address.town ||
+        "";
+    } else {
+      address.value = "Address not found";
+      district.value = "";
+    }
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    address.value = "Address not found";
+    district.value = "";
+  }
+};
+
+const setMarker = async (latVal: number, lngVal: number) => {
+  lat.value = latVal;
+  lng.value = lngVal;
+  userLocation.value = { lat: latVal, lng: lngVal };
+
+  if (currentMarker) {
+    map.removeLayer(currentMarker);
+  }
+
+  const redIcon = window.L.icon({
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
   });
 
-  const categoryColors: Record<string, string> = {
-    "Food & Nutrition":
-      "http://maps.google.com/mapfiles/ms/icons/orange-dot.png",
-    "Shelter & Housing":
-      "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-    "Clothing & Essentials":
-      "http://maps.google.com/mapfiles/ms/icons/purple-dot.png",
-    "Addiction & Recovery":
-      "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
-    "Mental Health & Wellbeing":
-      "http://maps.google.com/mapfiles/ms/icons/pink-dot.png",
-    "Health & Medical":
-      "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
-    "Justice & Legal Support":
-      "http://maps.google.com/mapfiles/ms/icons/ltblue-dot.png",
-    "Financial & Benefits Support":
-      "http://maps.google.com/mapfiles/ms/icons/brown-dot.png",
-    "Employment, Training & Education":
-      "http://maps.google.com/mapfiles/ms/icons/ltgreen-dot.png",
-    "Community & General Support":
-      "http://maps.google.com/mapfiles/ms/icons/grey-dot.png",
-  };
+  currentMarker = window.L.marker([latVal, lngVal], { icon: redIcon }).addTo(
+    map
+  );
+  currentMarker.bindPopup("<b>Your Location</b>").openPopup();
 
-  // Store service markers and info windows for later access
-  const serviceMarkersMap = new Map();
+  map.setView([latVal, lngVal], 15);
 
-  // Store the map reference for later use
-  (map as any).__serviceMarkersMap = serviceMarkersMap;
+  await reverseGeocode(latVal, lngVal);
 
+  emit("locationSelected", {
+    lat: latVal,
+    lng: lngVal,
+    address: address.value,
+    district: district.value,
+  });
+};
+
+onMounted(async () => {
+  await loadLeaflet();
+
+  map = window.L.map(mapRef.value!, {
+    preferCanvas: true,
+    zoomControl: false,
+  }).setView([51.5074, -0.1278], 13);
+
+  window.L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 19,
+    }
+  ).addTo(map);
+
+  // Add service markers
   props.services.forEach((service) => {
     const serviceLat = Number(service.details.lat);
     const serviceLng = Number(service.details.lng);
 
     if (!isNaN(serviceLat) && !isNaN(serviceLng)) {
       const category =
-        service.details.categories || "Community & General Support";
-      const icon =
+        service.details.category || "Community & General Support";
+      const color =
         categoryColors[category] ||
         categoryColors["Community & General Support"];
+      const categoryEmoji = getCategoryIcon(category);
 
-      const marker = new google.maps.Marker({
-        position: { lat: serviceLat, lng: serviceLng },
-        map,
-        title: service.details.name,
-        icon,
+      const iconHtml = `
+        <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 21.9 12.5 41 12.5 41S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="${color}"/>
+          <circle cx="12.5" cy="12.5" r="6" fill="white"/>
+        </svg>
+      `;
+
+      const customIcon = window.L.divIcon({
+        html: iconHtml,
+        className: "custom-marker",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
       });
 
-      const info = new google.maps.InfoWindow({
-        content: `
-          <div style="max-width: 400px" class="space-y-3">
-            <h4 class="font-medium text-[#111827]">${service.details.name}</h4>
-            <em>${category}</em>
-            <div class="space-y-1">
-              <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.address}</p>
-              <p class="text-sm text-[#6B7280] line-clamp-1">${service.details.hours}</p>
+      const marker = window.L.marker([serviceLat, serviceLng], {
+        icon: customIcon,
+      }).addTo(map);
+
+      // Calculate distance if user location exists
+      let distanceText = "";
+      if (userLocation.value) {
+        const dist = calculateDistance(
+          userLocation.value.lat,
+          userLocation.value.lng,
+          serviceLat,
+          serviceLng
+        );
+        distanceText = `
+          <div style="display: inline-block; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-top: 8px;">
+            📍 ${dist} away
+          </div>
+        `;
+      }
+
+      // Get star rating HTML
+      const rating =
+        service.details?.rating !== "null"
+          ? parseFloat(service.details.rating)
+          : 0;
+      const getStarHTML = () => {
+        let starsHTML = "";
+        for (let i = 1; i <= 5; i++) {
+          const fillClass =
+            i <= Math.floor(rating)
+              ? "#FCD34D"
+              : i - 0.5 <= rating
+              ? "#FCD34D"
+              : "#D1D5DB";
+          starsHTML += `
+            <svg class="w-4 h-4" style="color: ${fillClass};" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          `;
+        }
+        return starsHTML;
+      };
+
+      const verifiedBadge =
+        service.details.verification_status === "verified"
+          ? '<div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 8px; background: #ECFDF5; color: #047857; font-size: 11px; border-radius: 12px;"><span>✓</span><span>Verified</span></div>'
+          : "";
+
+      // Service Card Popup
+      const popupContent = `
+        <div style="border: 1px solid #F3F4F6; background: white; width: 100%; border-radius: 12px; padding: 16px; font-family: system-ui, -apple-system, sans-serif; width: 300px;">
+          <h4 style="font-weight: 500; color: #111827; margin: 0 0 12px 0; font-size: 15px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+            ${service.details.name}
+          </h4>
+          
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+            <p style="display: inline-block; padding: 4px 12px; border: 1px solid #6BCFF6; background: #EAF8FE; color: #12A0D8; font-size: 11px; border-radius: 16px; font-weight: 500; margin: 0;">
+              ${category}
+            </p>
+          </div>
+
+          <!-- Star Rating -->
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <div style="display: flex; gap: 2px;">
+              ${getStarHTML()}
             </div>
-            <div class="flex gap-3 justify-between">
-              <button id="call-btn-${service.id}" class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white">
+            <span style="color: #374151; font-weight: 500; font-size: 13px;">
+              ${rating > 0 ? rating.toFixed(1) : "N/A"}
+            </span>
+            ${verifiedBadge}
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <p style="font-size: 13px; color: #6B7280; display: flex; gap: 6px; align-items: flex-start; margin: 4px 0;">
+              <svg style="width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+              </svg>
+              <span style="flex: 1; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+                ${
+                  service.details.address === "null" || !service.details.address
+                    ? "N/A"
+                    : service.details.address
+                }
+              </span>
+            </p>
+            <p style="font-size: 13px; color: #6B7280; display: flex; gap: 6px; align-items: flex-start; margin: 4px 0;">
+              <svg style="width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+              </svg>
+              <span style="flex: 1; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+                ${
+                  service.details?.opening_hours === "null" ||
+                  !service.details.opening_hours
+                    ? "N/A"
+                    : service.details.opening_hours
+                }
+              </span>
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            ${
+              service.details.phone && service.details.phone !== "null"
+                ? `
+              <button onclick="window.location.href='tel:${service.details.phone}'" style="background: #12A0D8; border-radius: 20px; padding: 8px 14px; font-size: 13px; color: white; border: none; cursor: pointer; transition: background 0.2s;">
                 Call Now
               </button>
-              <button id="directions-btn-${service.id}" class="border border-[#FE4D67] rounded-full py-2 px-3.5 text-sm text-[#FE4D67]">
-                Directions
-              </button>
-              <a id="details-btn-${service.id}" href="/explore/${service.id}" class="border border-[#B0B72E] rounded-full py-2 px-3.5 text-sm text-[#B0B72E] no-underline inline-block text-center">
-                Details
-              </a>
-            </div>
+            `
+                : ""
+            }
+            <button id="directions-btn-${
+              service.id
+            }" style="border: 1px solid #FE4D67; border-radius: 20px; padding: 8px 14px; font-size: 13px; color: #FE4D67; background: white; cursor: pointer; transition: all 0.2s;">
+              Directions
+            </button>
+            <a href="/explore/${
+              service.id
+            }" style="border: 1px solid #B0B72E; border-radius: 20px; padding: 8px 14px; font-size: 13px; color: #B0B72E; background: white; text-decoration: none; cursor: pointer; transition: all 0.2s;">
+              Details
+            </a>
           </div>
-        `,
-      });
+        </div>
+      `;
 
-      // Add listener to reset tracking when info window is closed
-      info.addListener("closeclick", () => {
-        if (currentOpenInfoWindow === info) {
-          currentOpenInfoWindow = null;
+      const popup = window.L.popup({
+        maxWidth: 320,
+        className: "service-card-popup",
+      }).setContent(popupContent);
+
+      marker.bindPopup(popup);
+
+      // Add event listener for directions button after popup opens
+      marker.on("popupopen", () => {
+        const directionsBtn = document.getElementById(
+          `directions-btn-${service.id}`
+        );
+        if (directionsBtn) {
+          directionsBtn.addEventListener("click", () => {
+            getDirections(serviceLat, serviceLng, service.details.name);
+          });
         }
-      });
-
-      // Store marker and info window for later access
-      serviceMarkersMap.set(`${serviceLat},${serviceLng}`, {
-        marker,
-        info,
-        service,
-      });
-
-      marker.addListener("click", () => {
-        // Close any currently open info window before opening a new one
-        if (currentOpenInfoWindow) {
-          currentOpenInfoWindow.close();
-        }
-        
-        info.open(map, marker);
-        currentOpenInfoWindow = info; // Track this as the currently open window
-
-        google.maps.event.addListenerOnce(info, "domready", () => {
-          const directionsBtn = document.getElementById(
-            `directions-btn-${service.id}`
-          );
-          if (directionsBtn) {
-            directionsBtn.addEventListener("click", () => {
-              if (props.origin?.lat && props.origin.lng) {
-                calculateRoute(
-                  { lat: props.origin.lat, lng: props.origin.lng },
-                  { lat: serviceLat, lng: serviceLng },
-                  travelMode.value,
-                  serviceMarkersMap
-                );
-                info.close();
-              } else {
-                alert("Please select your location on the map first.");
-              }
-            });
-          }
-
-          const callBtn = document.getElementById(`call-btn-${service.id}`);
-          if (callBtn && service.details.phone) {
-            callBtn.addEventListener("click", () => {
-              window.location.href = `tel:${service.details.phone}`;
-            });
-          }
-
-          const detailsBtn = document.getElementById(
-            `details-btn-${service.id}`
-          );
-          if (detailsBtn) {
-            detailsBtn.addEventListener("click", (e) => {
-              e.preventDefault();
-              navigateTo(`/explore/${service.id}`);
-            });
-          }
-        });
       });
     }
   });
 
-  let currentMarker: any = null;
-  const geocoder = new google.maps.Geocoder();
-
-  function setMarker(latVal: number, lngVal: number) {
-    lat.value = latVal;
-    lng.value = lngVal;
-
-    if (currentMarker) currentMarker.setMap(null);
-
-    currentMarker = new google.maps.Marker({
-      position: { lat: latVal, lng: lngVal },
-      map,
-      icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
-      title: "Selected Location",
-    });
-
-    map.setCenter({ lat: latVal, lng: lngVal });
-
-    geocoder.geocode(
-      { location: { lat: latVal, lng: lngVal } },
-      (results, status) => {
-        if (status === "OK" && results && results[0]) {
-          address.value = results[0].formatted_address;
-          district.value = results[0].address_components[2]?.short_name || "";
-        } else {
-          address.value = "Address not found";
-        }
-      }
-    );
-  }
-
+  // Set initial location
   if (props.initialLat && props.initialLng) {
-    setMarker(props.initialLat, props.initialLng);
-    map.setZoom(17);
+    await setMarker(props.initialLat, props.initialLng);
   } else if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setMarker(pos.coords.latitude, pos.coords.longitude);
-        map.setZoom(17);
+      async (pos) => {
+        await setMarker(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
         console.warn("Geolocation error:", err);
@@ -496,260 +395,99 @@ onMounted(() => {
       { enableHighAccuracy: true }
     );
   } else {
-    setMarker(51.5074, -0.1278);
+    await setMarker(51.5074, -0.1278);
   }
 
-  map.addListener("click", (e: any) => {
-    if (e.latLng) {
-      setMarker(e.latLng.lat(), e.latLng.lng());
-    }
-  });
+  map.on("click", async (e: any) => {
+    // Show search button popup at clicked location
+    const searchPopup = window.L.popup({
+      closeButton: true,
+      className: "search-location-popup",
+    })
+      .setLatLng(e.latlng)
+      .setContent(
+        `
+        <div >
+          <button id="search-location-btn" style="display: flex; align-items: center; gap: 8px; background: #12A0D8; color: white; border: none; padding: 14px 24px; border-radius: 50px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;">
+            <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+            </svg>
+            <span>Search in this area</span>
+          </button>
+        </div>
+      `
+      )
+      .openOn(map);
 
-  directionsRenderer = new window.google.maps.DirectionsRenderer({
-    polylineOptions: {
-      strokeColor: "#1976D2",
-      strokeWeight: 7,
-      strokeOpacity: 1,
-    },
-    suppressMarkers: true, // We'll create custom markers
-  });
-  directionsService = new window.google.maps.DirectionsService();
-  directionsRenderer.setMap(map);
+    // Add click handler for the search button
+    setTimeout(() => {
+      const searchBtn = document.getElementById("search-location-btn");
+      if (searchBtn) {
+        searchBtn.addEventListener("click", async () => {
+          await setMarker(e.latlng.lat, e.latlng.lng);
+          searchPopup.remove();
 
-  if (props.origin && props.destination) {
-    const markersMap = (map as any).__serviceMarkersMap;
-    if (markersMap) {
-      calculateRoute(
-        props.origin,
-        props.destination,
-        travelMode.value,
-        markersMap
-      );
-    }
-  }
+          // Emit the locationSelected event
+          emit("locationSelected", {
+            lat: e.latlng.lat,
+            lng: e.latlng.lng,
+            address: address.value,
+            district: district.value,
+          });
+        });
+      }
+    }, 100);
+    setTimeout(() => {
+      map.closePopup(searchPopup);
+    }, 10000);
+  });
 });
-
-watch(
-  () => [props.origin, props.destination],
-  ([origin, destination]) => {
-    if (
-      map &&
-      directionsRenderer &&
-      directionsService &&
-      origin &&
-      destination
-    ) {
-      const markersMap = (map as any).__serviceMarkersMap;
-      if (markersMap) {
-        calculateRoute(origin, destination, travelMode.value, markersMap);
-      }
-    } else if (directionsRenderer) {
-      directionsRenderer.setDirections({ routes: [] });
-      routeDistance.value = "";
-      routeDuration.value = "";
-      
-      // Show all markers when no directions
-      console.log("No directions, showing all markers");
-      const markersMap = (map as any).__serviceMarkersMap;
-      if (markersMap) {
-        for (const [key, value] of markersMap.entries()) {
-          value.marker.setMap(map); // Re-add to map
-          value.marker.setVisible(true);
-        }
-      }
-    }
-  },
-  { deep: true, immediate: true }
-);
-
-watch(
-  [lat, lng, address, district],
-  ([newLat, newLng, newAddress, newDistrict]) => {
-    if (newLat && newLng && newAddress && newDistrict) {
-      emit("locationSelected", {
-        lat: newLat,
-        lng: newLng,
-        address: newAddress,
-        district: newDistrict,
-      });
-    }
-  }
-);
 </script>
 
 <style scoped>
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  overflow: hidden;
-}
-
-.directions-card {
-  position: fixed;
-  bottom: 0px;
-  left: 0;
-
-  transform: none;
-  background: white;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border-radius: 1rem;
-  padding: 1.25rem;
-  z-index: 60;
-
-  border: 1px solid #e5e7eb;
-  min-width: 320px;
-  width: 100%;
-
-  max-width: 100vw;
-}
-
-@media (min-width: 640px) {
-  .directions-card {
-    min-width: 400px;
-    position: absolute;
-    left: 50%;
-    bottom: 1rem;
-    width: 400px;
-    transform: translateX(-50%);
-  }
-}
-
-.close-btn {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: #f3f4f6;
+:deep(.custom-marker) {
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #6b7280;
 }
 
-.close-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
-  transform: scale(1.1);
+:deep(.service-card-popup .leaflet-popup-content-wrapper) {
+  box-shadow: none;
+  background: none;
+}
+:deep(.search-location-popup .leaflet-popup-content-wrapper) {
+  box-shadow: none;
+  background: none;
 }
 
-.directions-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+:deep(.service-card-popup .leaflet-popup-content) {
+  margin: 0;
+  width: auto !important;
+}
+:deep(.search-location-popup .leaflet-popup-content) {
+  margin: 0;
 }
 
-.transport-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  background: #eff6ff;
-  border-radius: 50%;
-  margin: 0 auto;
+:deep(.search-location-popup .leaflet-popup-tip) {
+  margin-top: -8px;
+  background: #12a0d8;
 }
-
-.route-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 0;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.info-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.info-label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.info-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e3a8a;
-}
-
-.divider {
-  width: 1px;
-  height: 2.5rem;
-  background: #e5e7eb;
-}
-
-.travel-mode-selector {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.mode-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.625rem;
+:deep(.service-card-popup .leaflet-popup-tip) {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #6b7280;
 }
 
-.mode-btn:hover {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #3b82f6;
+:deep(.leaflet-popup-close-button) {
+  font-size: 24px !important;
+
+  color: #6b7280 !important;
+}
+:deep(.search-location-popup .leaflet-popup-close-button) {
+  font-size: 24px !important;
+  padding-right: 10px;
+  display: none;
+  color: white !important;
 }
 
-.mode-btn.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-}
-
-/* Mobile responsive */
-@media (max-width: 640px) {
-  .directions-card {
-    bottom: 0.5rem;
-    padding: 32px;
-    min-width: auto;
-  }
-
-  .route-info {
-    gap: 0.75rem;
-  }
-
-  .info-row {
-    width: 100%;
-  }
-
-  .transport-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-
-  .info-value {
-    font-size: 0.875rem;
-  }
+:deep(.leaflet-popup-close-button:hover) {
+  color: #111827 !important;
 }
 </style>

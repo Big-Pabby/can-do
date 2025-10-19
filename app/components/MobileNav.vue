@@ -1,6 +1,6 @@
 <template>
   <div
-    class="block w-full border border-[#F3F4F6] md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5"
+    class="block w-full border border-[#F3F4F6] md:bg-white bg-[#12A0D8] md:h-fit h-[20vh] md:rounded-[12px] p-5"
   >
     <SetLocationModal
       v-model="showLocationModal"

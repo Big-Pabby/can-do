@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border space-y-3 bg-white rounded-[12px] p-4 transition-all duration-300"
+    class="border space-y-3 bg-white w-full rounded-[12px] p-4 transition-all duration-300"
     :class="isSelected ? 'border-[#12A0D8] shadow-lg ' : 'border-[#F3F4F6]'"
   >
     <!-- Selected Badge -->
@@ -20,7 +20,7 @@
       <p
         class="px-3 inline-block py-1 border border-[#6BCFF6] bg-[#EAF8FE] text-[#12A0D8] text-xs rounded-full font-medium"
       >
-        {{ service.details.categories }}
+        {{ service.details.category }}
       </p>
     </div>
 
@@ -43,7 +43,7 @@
       <div class="flex items-center gap-1 text-sm">
         <span class="text-gray-700 font-medium">
           {{
-            service.details?.rating === "null" ? "N/A" : service.details.rating
+           service.details.rating
           }}
         </span>
       </div>
@@ -68,7 +68,7 @@
       <p class="text-sm text-[#6B7280] flex gap-1 items-center">
         <Icon icon="mdi:clock-outline" width="16" height="16" />
         <span class="flex-1 line-clamp-1">{{
-          service.details?.hours === "null" ? "N/A" : service.details.hours
+          service.details?.opening_hours === "null" ? "N/A" : service.details.opening_hours
         }}</span>
       </p>
     </div>

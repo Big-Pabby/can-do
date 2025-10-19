@@ -1,6 +1,27 @@
 <template>
   <div class="md:space-y-4">
-    <div v-if="!selectedServiceLocation" class="md:hidden block">
+    <div
+      v-if="toggleType !== 'list'"
+      class="w-full md:hidden fixed top-0 left-0 px-4 py-4 flex justify-between items-center z-30"
+    >
+      <div
+        @click="showModal = true"
+        class="w-[48px] h-[48px] rounded-full bg-[#FAFAED] flex items-center justify-center text-[#B0B72E]"
+      >
+        <Icon icon="mage:filter" width="24" height="24" />
+      </div>
+      <div
+        @click.stop="
+          selectedDistance = '';
+          toggleType = 'list';
+          pageSize = 12;
+        "
+        class="w-[48px] h-[48px] rounded-full bg-[#FAFAED] flex items-center justify-center text-[#B0B72E]"
+      >
+        <Icon icon="tabler:list" width="24" height="24" />
+      </div>
+    </div>
+    <div v-if="toggleType === 'list'" class="md:hidden block">
       <mobile-nav />
     </div>
     <AdvanceFilter
@@ -21,9 +42,9 @@
       </p>
     </div>
     <div
-      :class="`md:border ${
-        !selectedServiceLocation ? 'flex' : 'hidden'
-      } border-[#F3F4F6] md:flex-row flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5`"
+      :class="`md:border border-[#F3F4F6] md:flex-row md:flex ${
+        toggleType === 'list' ? 'flex' : 'hidden'
+      } flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5`"
     >
       <div
         class="bg-white border border-gray-300 md:rounded-[10px] rounded-full p-3 focus:outline-none flex gap-4 w-full justify-between items-center focus:ring-2 flex-1 focus:ring-blue-500"
@@ -61,8 +82,9 @@
         >
           <div
             @click="
+              selectedDistance = '5';
               toggleType = 'map';
-              pageSize = 10000;
+              pageSize = 1000;
             "
             :class="`${
               toggleType === 'map'
@@ -79,6 +101,7 @@
           </div>
           <div
             @click="
+              selectedDistance = '';
               toggleType = 'list';
               pageSize = 12;
             "
@@ -94,12 +117,26 @@
         </div>
       </div>
     </div>
-    <div class="text-center text-[#6B7280]" v-if="isLoading">Loading...</div>
-    <div v-else :class="`${selectedService ? 'md:mb-0 mb-[120px]' : ''}`">
-      <div v-if="toggleType === 'map'" class="flex items-start h-screen gap-6">
-        <div class="flex-1 bg-white h-full md:rounded-[16px]">
+    <SearchModal :isOpen="isLoading" @close="!isLoading" />
+
+    <div>
+      <div
+        v-if="toggleType === 'map'"
+        class="flex items-start md:h-screen h-[85vh] gap-6"
+      >
+        <div class="flex-1 bg-white h-full md:rounded-[16px] relative">
+          <div
+            v-if="isLoading"
+            class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10"
+          >
+            <div class="text-[#12A0D8] flex items-center gap-2">
+              <Icon icon="eos-icons:loading" width="24" height="24" />
+              <span>Loading services...</span>
+            </div>
+          </div>
           <Map
-            :services="data?.results || []"
+            v-else
+            :services="services"
             :initial-lat="selectedCoordinates?.lat"
             :initial-lng="selectedCoordinates?.lng"
             :origin="selectedCoordinates"
@@ -118,7 +155,10 @@
           </div>
         </div>
       </div>
-      <div v-else-if="toggleType === 'list'" class="space-y-4 md:px-0 px-5">
+      <div
+        v-else-if="toggleType === 'list'"
+        class="space-y-4 md:px-0 px-5 py-4"
+      >
         <div
           v-if="data?.results.length"
           class="grid md:grid-cols-3 grid-cols-1 gap-6"
@@ -139,7 +179,7 @@
               :disabled="currentPage === 1"
               @click="prevPage"
             >
-              Previous
+              Prev
             </button>
 
             <div class="flex items-center space-x-1">
@@ -202,12 +242,12 @@ const selectedServiceLocation = computed(() => {
 // Filter/search refs
 const searchQuery = ref("");
 const selectedCategory = ref<string>("");
-const selectedDistance = ref<string>("");
+const selectedDistance = ref<string>("5");
 const excludedAreas = ref<string[] | null>(null);
 
 // Pagination state
 const currentPage = ref(1);
-const pageSize = ref(10000);
+const pageSize = ref(1000);
 const totalPages = computed(() => {
   if (!data?.value?.count) return 1;
   return Math.ceil(data.value.count / pageSize.value);
@@ -226,10 +266,24 @@ const { data, error, isLoading, refetch } = UseMapServices(
     excludedAreas: excludedAreas,
   }
 );
-const sortedServices = computed(() => {
-  if (!data.value) return [];
 
-  const services = data.value.results.slice(0, 10);
+// Refetch when coordinates change
+watch(
+  () => coords.value,
+  () => {
+    if (coords.value?.lat && coords.value?.lng) {
+      refetch();
+    }
+  },
+  { immediate: true }
+);
+const services = computed(() => {
+  return data.value?.results ?? [];
+});
+const sortedServices = computed(() => {
+  if (!data.value?.results) return [];
+
+  const services = [...data.value.results].slice(0, 10);
   const selectedId = selectedService.value?.id;
 
   if (!selectedId) {
@@ -290,7 +344,7 @@ const paginationPages = computed(() => {
     for (let i = 1; i <= totalPages.value; i++) pages.push(i);
   } else {
     if (currentPage.value <= 4) {
-      pages.push(1, 2, 3, 4, 5, "...", totalPages.value);
+      pages.push(1, 2, 3, "...", totalPages.value);
     } else if (currentPage.value >= totalPages.value - 3) {
       pages.push(
         1,
@@ -373,6 +427,6 @@ function handleDirections(service: any) {
     { lat: destLat, lng: destLng },
     service
   );
-  pageSize.value = 10000;
+  pageSize.value = 1000;
 }
 </script>

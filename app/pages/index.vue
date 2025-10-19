@@ -100,7 +100,7 @@
             Sign In
           </nuxt-link>
           <p class="text-sm text-[#374151] text-center">
-            <nuxt-link to="/home" class="text-base font-medium"
+            <nuxt-link to="/chat" class="text-base font-medium"
               >Try Anonymously</nuxt-link
             >
           </p>

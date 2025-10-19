@@ -16,14 +16,15 @@ export interface Service {
     email: string;
     website: string;
     org_name: string;
-    categories: string;
+    category: string;
+
     subcategories: string;
     description: string;
-    eligibility: string;
+    eligibility_criteria: string;
     contact: string;
     address: string;
     phone: string;
-    hours: string;
+    opening_hours: string;
     access: string;
     evidence_links: string[];
     verification_status: string;
@@ -238,7 +239,7 @@ export const useServices = () => {
           service.details.name,
           service.details.description,
           service.details.org_name,
-          service.details.categories,
+          service.details.category,
         ].some((field) =>
           field?.toLowerCase().includes(searchQuery.value.toLowerCase())
         );

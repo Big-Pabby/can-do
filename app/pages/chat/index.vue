@@ -161,7 +161,7 @@
         <div ref="messagesContainer" class="messages-container">
           <!-- Welcome Message -->
           <div v-if="messages.length === 0" class="welcome-message">
-            <div class="message-wrapper" :class="'message-bot'">
+            <!-- <div class="message-wrapper" :class="'message-bot'">
               <div class="message-content">
                 <img src="/images/mark.svg" alt="Mark" class="avatar" />
                 <div :class="['message-bubble', 'bubble-mark']">
@@ -169,13 +169,11 @@
                     Welcome! I'm Mark, I'm here to help you find the right
                     support around Suffolk. What's going on for you today?
                   </p>
-                  <!-- <span class="message-time">{{
-                  formatTime(msg.timestamp)
-                }}</span> -->
+                 
                 </div>
               </div>
 
-              <!-- Services for this message -->
+            
             </div>
             <div class="flex flex-wrap gap-4">
               <div
@@ -189,15 +187,35 @@
               >
                 {{ value }}
               </div>
-            </div>
-            <!-- <img src="/images/mark.svg" alt="Mark" class="w-16 h-16 mb-4" />
+            </div> -->
+            <img src="/images/mark.svg" alt="Mark" class="w-16 h-16 mb-4" />
             <h3 class="text-lg font-semibold text-gray-800 mb-2">
               Welcome! I'm Mark
             </h3>
             <p class="text-sm text-gray-600 text-center max-w-md">
               I'm here to help you find the right support around Suffolk. What's
               going on for you today?
-            </p> -->
+            </p>
+            <div
+              class="space-y-2 flex-col items-center text-center justify-center mt-6"
+            >
+              <p class="text-sm text-[#111827]">
+                Tap a category below to get instant support.
+              </p>
+              <div class="flex flex-wrap items-center justify-center gap-4">
+                <div
+                  v-for="(value, index) in categories"
+                  :key="index"
+                  :class="`border ${value.color} ${value.borderColor}  text-sm px-3 py-1.5 rounded-full cursor-pointer`"
+                  @click="
+                    input = value.message;
+                    sendMessage();
+                  "
+                >
+                  {{ value.name }}
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Messages -->
@@ -393,14 +411,62 @@ const messagesContainer = ref<HTMLElement | null>(null);
 const chatHistory = ref<ChatSession[]>([]);
 const currentSessionId = ref<string>("");
 const showChatOnMobile = ref(false); // Controls mobile view state
-const othermessages = ref([
-  "I need somewhere to get food",
-  "Look for work",
-  "Need food help",
-  "Feeling rough mentally",
-  "Got money problems",
-  "I need somewhere to stay",
-]);
+const categories = [
+  {
+    name: "Employment",
+    color: "bg-[#FAFAED] text-[#B0B72E]",
+    borderColor: "border-yellow-[#B0B72E]",
+    message: "I need employment support services",
+  },
+  {
+    name: "Housing",
+    color: "bg-[#EAF8FE] text-[#12A0D8]",
+    borderColor: "border-[#12A0D8]",
+    message: "I need housing support services",
+  },
+  {
+    name: "Food & Basic Needs",
+    color: "bg-[#FFEDF0] text-[#FE4D67]",
+    borderColor: "border-[#FE4D67]",
+    message: "I need food & basic needs support services",
+  },
+  {
+    name: "Mental Health",
+    color: "bg-[#F0FDF4] text-[#16A34A]",
+    borderColor: "border-[#16A34A]",
+    message: "I need mental health support services",
+  },
+  {
+    name: "Clothes & Essentials",
+    color: "bg-[#FFFBEB] text-[#F59E0B]",
+    borderColor: "border-[#F59E0B]",
+    message: "I need clothes & essentials support services",
+  },
+  {
+    name: "Financial Support",
+    color: "bg-[#EEF2FF] text-[#6366F1]",
+    borderColor: "border-[#6366F1]",
+    message: "I need financial support services",
+  },
+  {
+    name: "Healthcare Help",
+    color: "bg-[#F7FEE7] text-[#84CC16]",
+    borderColor: "border-[#84CC16]",
+    message: "I need healthcare help support services",
+  },
+  {
+    name: "Addiction & Recovery",
+    color: "bg-[#FAF5FF] text-[#A855F7]",
+    borderColor: "border-[#A855F7]",
+    message: "I need addiction & recovery support services",
+  },
+  {
+    name: "Legal assistance",
+    color: "bg-[#F0FDFA] text-[#14B8A6]",
+    borderColor: "border-[#14B8A6]",
+    message: "I need legal assistance support services",
+  },
+];
 
 // Chat composable
 const { mutate } = UseChatBot();
@@ -440,7 +506,10 @@ function handleDirections(service: any) {
     alert("Service location not available");
     return;
   }
-  useLocationStore().setSelectedServiceLocation({lat:destLat, lng: destLng}, service);
+  useLocationStore().setSelectedServiceLocation(
+    { lat: destLat, lng: destLng },
+    service
+  );
   navigateTo("/explore");
 }
 
@@ -581,7 +650,6 @@ const sendMessage = () => {
   const allTexts = messages.value.map((msg) => msg.text);
   const combinedText = allTexts.join(",");
 
-
   mutate(
     { ...location, message: `${userInput}, ${JSON.stringify(combinedText)}` },
     {
@@ -631,9 +699,11 @@ const formatTime = (timestamp: number) => {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - 10vh);
   background: white;
   overflow: hidden;
+  border-radius: 12px;
+  position: relative;
 }
 
 .chat-header {
@@ -644,6 +714,7 @@ const formatTime = (timestamp: number) => {
   border-bottom: 1px solid #e5e7eb;
   background: white;
   flex-shrink: 0;
+  height: 15%;
   z-index: 10;
 }
 
@@ -702,6 +773,7 @@ const formatTime = (timestamp: number) => {
 .main-content {
   display: flex;
   flex: 1;
+  height: 85%;
   overflow: hidden;
 }
 
@@ -829,6 +901,7 @@ const formatTime = (timestamp: number) => {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  padding-bottom: 2rem;
 }
 
 @media (min-width: 1024px) {
@@ -943,8 +1016,10 @@ const formatTime = (timestamp: number) => {
 .messages-container {
   flex: 1;
   overflow-y: auto;
+  height: calc(100% - 86px); /* Account for input container */
   padding: 1.5rem;
   padding-bottom: 1rem;
+  scroll-behavior: smooth;
 }
 
 @media (max-width: 767px) {
@@ -1115,7 +1190,7 @@ const formatTime = (timestamp: number) => {
 @media (max-width: 767px) {
   .input-container {
     position: fixed;
-    bottom: 86px;
+    bottom: 15vh;
     left: 0;
     right: 0;
   }

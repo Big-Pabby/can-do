@@ -161,7 +161,7 @@ const handleFormSubmit = () => {
       });
       useAuthStore().setTokens(data);
       // Redirect to another page or show success message
-      useRouter().push("/home");
+      useRouter().push("/chat");
     },
     onError(err: any) {
       const msg = err?.response?.data?.detail || "Failed to signup.";

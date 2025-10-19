@@ -274,7 +274,7 @@
               <div class="space-y-1 py-2">
                 <h5 class="text-xs text-[#4B5563]">Service Category</h5>
                 <span class="text-sm font-medium text-[#111827]">
-                  {{ service.details.categories }}
+                  {{ service.details.category }}
                 </span>
               </div>
               <hr />
@@ -293,7 +293,7 @@
                 <p class="text-sm font-medium text-[#111827]">
                   {{ service.details.address }}
                   <span
-                    class="underline text-[#12A0D8]"
+                    class="md:inline hidden underline text-[#12A0D8]"
                     @click="handleDirections(service)"
                     >View on Map</span
                   >
@@ -352,7 +352,7 @@
                   <a
                     :href="service.details.website"
                     target="_blank"
-                    class="text-sm underline text-[#12A0D8] font-medium line-clamp-1"
+                    class="text-sm underline max-w-[250px] text-[#12A0D8] font-medium line-clamp-1"
                   >
                     {{ service.details.website || "website not available" }}
                   </a>
@@ -378,14 +378,14 @@
                 :key="index"
                 class="space-y-4"
               >
-                <div class="flex gap-2 items-center">
+                <div class="flex gap-2 items-start">
                   <Icon
                     icon="mdi:clock-outline"
                     width="20"
                     height="20"
                     style="color: #b0b72e"
                   />
-                  <p class="text-sm">{{ item }}</p>
+                  <p class="text-sm flex-1">{{ item }}</p>
                 </div>
                 <hr />
               </div>
@@ -487,13 +487,13 @@ const {
   enabled: !!serviceId,
 });
 const eligibility = computed(() => {
-  return service.value?.details.eligibility
-    ? service.value.details.eligibility.split(";").map((item) => item.trim())
+  return service.value?.details.eligibility_criteria
+    ? service.value.details.eligibility_criteria.split(";").map((item) => item.trim())
     : [];
 });
 const hours = computed(() => {
-  return service.value?.details.hours
-    ? service.value.details.hours.split(";").map((item) => item.trim())
+  return service.value?.details.opening_hours
+    ? service.value.details.opening_hours.split(";").map((item) => item.trim())
     : [];
 });
 function getStarFill(rating: number | undefined, position: number): string {
@@ -509,20 +509,20 @@ function handleCall(phoneNumber: string) {
   const formatted = phoneNumber.replace(/\s+/g, "");
   window.location.href = `tel:${formatted}`;
 }
-function handleDirections(service: any) {
-  const destLat = Number(service.details.lat);
-  const destLng = Number(service.details.lng);
-  if (!destLat || !destLng) {
-    alert("Service location not available");
-    return;
+const handleDirections = (
+ service: any
+) => {
+  if (useLocationStore().lat && useLocationStore().lng) {
+    const origin = `${useLocationStore().lat},${useLocationStore().lng}`;
+    const destination = `${service.details.lat},${service.details.lng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&destination_place_id=${encodeURIComponent(
+      service.details.name
+    )}`;
+    window.open(url, "_blank");
+  } else {
+    alert("Please allow location access to get directions");
   }
-
-  useLocationStore().setSelectedServiceLocation(
-    { lat: destLat, lng: destLng },
-    service
-  );
-  navigateTo("/explore");
-}
+};
 
 // Reactive state
 const isBookmarked = ref(false);
