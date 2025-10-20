@@ -75,7 +75,7 @@
     <div class="flex gap-3 flex-wrap">
       <button
         v-if="!actions"
-        @click="handleCall(service.details.phone)"
+        @click="handleCall(service.details.phone_number)"
         class="bg-[#12A0D8] rounded-full py-2 px-3.5 text-sm text-white hover:bg-[#0E8AB8] transition-colors cursor-pointer"
       >
         Call Now

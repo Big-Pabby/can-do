@@ -7,11 +7,18 @@
           <div class="modal-header">
             <div>
               <h2 class="modal-title">Advance Filter</h2>
-              <p class="modal-subtitle">Filter to discover services just right for you.</p>
+              <p class="modal-subtitle">
+                Filter to discover services just right for you.
+              </p>
             </div>
             <button @click="closeModal" class="close-btn" aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path
+                  d="M15 5L5 15M5 5L15 15"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
           </div>
@@ -19,14 +26,34 @@
           <!-- Category Selection -->
           <div class="section">
             <div class="select-wrapper">
-              <select v-model="selectedCategory" class="select-input" @change="onCategoryChange">
-                <option value="" disabled>Select Category</option>
-                <option v-for="category in categories" :key="category" :value="category">
+              <select
+                v-model="selectedCategory"
+                class="select-input"
+                @change="onCategoryChange"
+              >
+                <option value="">All Categories</option>
+                <option
+                  v-for="category in categories"
+                  :key="category"
+                  :value="category"
+                >
                   {{ category }}
                 </option>
               </select>
-              <svg class="select-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M6 8L10 12L14 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <svg
+                class="select-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <path
+                  d="M6 8L10 12L14 8"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </div>
           </div>
@@ -34,22 +61,34 @@
           <!-- Sub Category Selection -->
           <div class="section">
             <div class="select-wrapper">
-              <select 
-                v-model="selectedSubCategory" 
-                class="select-input" 
+              <select
+                v-model="selectedSubCategory"
+                class="select-input"
                 :disabled="!selectedCategory"
               >
-                <option value="" disabled>Select Sub Category</option>
-                <option 
-                  v-for="subCategory in availableSubCategories" 
-                  :key="subCategory" 
+                <option value="">All Sub Categories</option>
+                <option
+                  v-for="subCategory in availableSubCategories"
+                  :key="subCategory"
                   :value="subCategory"
                 >
                   {{ formatSubCategory(subCategory) }}
                 </option>
               </select>
-              <svg class="select-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M6 8L10 12L14 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <svg
+                class="select-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <path
+                  d="M6 8L10 12L14 8"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </div>
           </div>
@@ -67,14 +106,18 @@
                 {{ dist }}km
               </button>
             </div>
-            <p class="helper-text">You'll see services within {{ selectedDistance }}km of your location.</p>
+            <p class="helper-text">
+              You'll see services within {{ selectedDistance }}km of your
+              location.
+            </p>
           </div>
 
           <!-- Exclude Areas -->
           <div class="section">
             <h3 class="section-title">Exclude Areas</h3>
             <p class="section-description">
-              Enter neighborhoods, post code, streets, or areas you want to exclude from the search results.
+              Enter neighborhoods, post code, streets, or areas you want to
+              exclude from the search results.
             </p>
             <div class="input-group">
               <input
@@ -84,18 +127,36 @@
                 class="exclude-input"
                 @keypress.enter="addExcludedArea"
               />
-              <button type="button" @click="addExcludedArea" class="add-btn" aria-label="Add area">
+              <button
+                type="button"
+                @click="addExcludedArea"
+                class="add-btn"
+                aria-label="Add area"
+              >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 5V15M5 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path
+                    d="M10 5V15M5 10H15"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
                 </svg>
               </button>
             </div>
 
             <!-- Excluded Areas Tags -->
             <div v-if="excludedAreas.length" class="tags-container">
-              <span v-for="(area, index) in excludedAreas" :key="index" class="tag">
+              <span
+                v-for="(area, index) in excludedAreas"
+                :key="index"
+                class="tag"
+              >
                 {{ area }}
-                <button @click="removeExcludedArea(index)" class="tag-remove" aria-label="Remove">
+                <button
+                  @click="removeExcludedArea(index)"
+                  class="tag-remove"
+                  aria-label="Remove"
+                >
                   ×
                 </button>
               </span>
@@ -104,7 +165,7 @@
 
           <!-- Action Buttons -->
           <div class="action-buttons">
-            <button @click="handleClose" class="btn-secondary">Close</button>
+            <button @click="handleReset" class="btn-reset">Reset</button>
             <button @click="handleApply" class="btn-primary">Apply</button>
           </div>
         </div>
@@ -114,106 +175,118 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { CORE_SERVICE_CATEGORIES } from '#imports'
-
-
+import { ref, computed, watch } from "vue";
+import { CORE_SERVICE_CATEGORIES } from "#imports";
 
 interface Props {
-  modelValue?: boolean
-  initialDistance?: string
-  initialExcludedAreas?: string[]
-  initialCategory?: string
-  initialSubCategory?: string
+  modelValue?: boolean;
+  initialDistance?: string;
+  initialExcludedAreas?: string[];
+  initialCategory?: string;
+  initialSubCategory?: string;
 }
 
 interface FilterData {
-  category: string
-  subCategory: string
-  distance: string
-  excludedAreas: string[]
+  category: string;
+  subCategory: string;
+  distance: string;
+  excludedAreas: string[];
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'apply', data: FilterData): void
-  (e: 'close'): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "apply", data: FilterData): void;
+  (e: "close"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
-  initialDistance: '10km',
+  initialDistance: "5",
   initialExcludedAreas: () => [],
-  initialCategory: '',
-  initialSubCategory: ''
-})
+  initialCategory: "",
+  initialSubCategory: "",
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const distances = ['0.5', '1', '1.5', '2', '2.5', '3']
-const categories = Object.keys(CORE_SERVICE_CATEGORIES)
+const distances = ["0.5", "1", "1.5", "2", "2.5", "3"];
+const categories = Object.keys(CORE_SERVICE_CATEGORIES);
 
-const selectedCategory = ref(props.initialCategory)
-const selectedSubCategory = ref(props.initialSubCategory)
-const selectedDistance = ref(props.initialDistance)
-const excludedAreas = ref<string[]>([...props.initialExcludedAreas])
-const excludeInput = ref('')
-const isOpen = ref(props.modelValue)
+const selectedCategory = ref(props.initialCategory);
+const selectedSubCategory = ref(props.initialSubCategory);
+const selectedDistance = ref(props.initialDistance);
+const excludedAreas = ref<string[]>([...props.initialExcludedAreas]);
+const excludeInput = ref("");
+const isOpen = ref(props.modelValue);
 
 const availableSubCategories = computed(() => {
-  if (!selectedCategory.value) return []
-  return CORE_SERVICE_CATEGORIES[selectedCategory.value as keyof typeof CORE_SERVICE_CATEGORIES] || []
-})
+  if (!selectedCategory.value) return [];
+  return (
+    CORE_SERVICE_CATEGORIES[
+      selectedCategory.value as keyof typeof CORE_SERVICE_CATEGORIES
+    ] || []
+  );
+});
 
 const formatSubCategory = (subCategory: string): string => {
   return subCategory
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 const onCategoryChange = () => {
-  selectedSubCategory.value = ''
-}
+  // Reset subcategory when category changes
+  if (!selectedCategory.value) {
+    selectedSubCategory.value = "";
+  }
+};
 
-watch(() => props.modelValue, (newVal) => {
-  isOpen.value = newVal
-})
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    isOpen.value = newVal;
+  }
+);
 
 watch(isOpen, (newVal) => {
-  emit('update:modelValue', newVal)
-})
+  emit("update:modelValue", newVal);
+});
 
 const closeModal = () => {
-  isOpen.value = false
-  emit('close')
-}
+  isOpen.value = false;
+  emit("close");
+};
 
-const handleClose = () => {
-  closeModal()
-}
+const handleReset = () => {
+  selectedCategory.value = "";
+  selectedSubCategory.value = "";
+  selectedDistance.value = "5";
+  excludedAreas.value = [];
+  excludeInput.value = "";
+};
 
 const handleApply = () => {
-  emit('apply', {
+  emit("apply", {
     category: selectedCategory.value,
     subCategory: selectedSubCategory.value,
     distance: selectedDistance.value,
-    excludedAreas: excludedAreas.value
-  })
-  closeModal()
-}
+    excludedAreas: excludedAreas.value,
+  });
+  closeModal();
+};
 
 const addExcludedArea = () => {
-  const trimmed = excludeInput.value.trim()
+  const trimmed = excludeInput.value.trim();
   if (trimmed && !excludedAreas.value.includes(trimmed)) {
-    excludedAreas.value.push(trimmed)
-    excludeInput.value = ''
+    excludedAreas.value.push(trimmed);
+    excludeInput.value = "";
   }
-}
+};
 
 const removeExcludedArea = (index: number) => {
-  excludedAreas.value.splice(index, 1)
-}
+  excludedAreas.value.splice(index, 1);
+};
 </script>
 
 <style scoped>
@@ -456,7 +529,7 @@ const removeExcludedArea = (index: number) => {
   margin-top: 1.5rem;
 }
 
-.btn-secondary,
+.btn-reset,
 .btn-primary {
   flex: 1;
   padding: 0.75rem 1.5rem;
@@ -468,15 +541,16 @@ const removeExcludedArea = (index: number) => {
   border: none;
 }
 
-.btn-secondary {
+.btn-reset {
   background: white;
   border: 1px solid #e5e7eb;
   color: #6b7280;
 }
 
-.btn-secondary:hover {
+.btn-reset:hover {
   background: #f9fafb;
   border-color: #d1d5db;
+  color: #374151;
 }
 
 .btn-primary {

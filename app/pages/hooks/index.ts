@@ -11,7 +11,7 @@ export function useFetchServiceUpdates() {
   return useMutation({
     mutationFn: async (serviceIds: string[]) => {
       return await https.post<Response>(
-        `/v1/services/fetch_updates/`,
+        `/v1/services/fetch_updates`,
         serviceIds
       );
     },

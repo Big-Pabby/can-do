@@ -1,5 +1,5 @@
 <template>
-  <div class="md:hidden block"><mobile-nav /></div>
+  <!-- <div class="md:hidden block"><mobile-nav /></div> -->
 
   <div class="chat-container">
     <!-- Header -->
@@ -284,7 +284,7 @@
             <input
               v-model="input"
               type="text"
-              placeholder="Type your question or use the mic..."
+              placeholder="Type your question..."
               class="chat-input !pr-12"
               @keyup.enter="sendMessage"
               :disabled="isPending"

@@ -14,6 +14,7 @@
       :initialProgress="progressWS.progress.value"
       @complete="handleComplete"
       @refresh="handleRefresh"
+      @cancel="handleCancel"
     />
     <div class="bg-white rounded-[16px] px-4 space-y-4 py-8 sm:px-6 lg:px-8">
       <div class="mb-8 flex justify-between items-center gap-6">
@@ -88,7 +89,7 @@
               </TableHead>
               <TableHead><p class="text-left">Service Name</p> </TableHead>
               <TableHead>Categories </TableHead>
-              <TableHead>Sub-Categories </TableHead>
+              <!-- <TableHead>Sub-Categories </TableHead> -->
               <TableHead>Location </TableHead>
               <TableHead>Rating </TableHead>
               <TableHead> Action </TableHead>
@@ -130,8 +131,7 @@
               <TableCell>
                 <div class="flex flex-wrap gap-2">
                   <template
-                    v-for="cat in typeof service.details?.category ===
-                    'string'
+                    v-for="cat in typeof service.details?.category === 'string'
                       ? service.details.category
                           .split(',')
                           .map((c) => c.trim())
@@ -146,7 +146,7 @@
                   </template>
                 </div>
               </TableCell>
-              <TableCell>
+              <!-- <TableCell>
                 <div class="flex flex-wrap gap-2">
                   <template
                     v-for="cat in typeof service.details?.subcategories ===
@@ -164,7 +164,7 @@
                     >
                   </template>
                 </div>
-              </TableCell>
+              </TableCell> -->
               <TableCell>
                 <div class="w-[150px] line-clamp-2 block truncate text-wrap">
                   <p class="line-clamp-2 text-wrap">
@@ -346,6 +346,26 @@ const handleComplete = () => {
   // Optionally close the modal after a delay
 };
 
+const handleCancel = () => {
+  // Clear the job ID which will trigger the watcher to clean up
+  useAuthStore().setJobId(null);
+
+  // Show cancellation toast
+  toast.info("Data collection cancelled", {
+    style: {
+      background: "#F3F4F6",
+      border: "1px solid #E5E7EB",
+      color: "#374151",
+    },
+  });
+
+  // Close the progress modal
+  isProgressOpen.value = false;
+
+  // Disconnect WebSocket
+  progressWS.disconnect();
+};
+
 const handleRefresh = () => {
   // Reload the page or refresh data
   window.location.reload();
@@ -357,7 +377,7 @@ const { mutate, isPending: collectPending } = UseDataCollection();
 const handleDataSubmit = (data: any) => {
   console.log("Selected data:", data);
   mutate(
-    { location_query: data.district, radius: data.radius * 1000 },
+    { location_query: data.districts.join(","), radius: data.radius * 1000 },
     {
       onSuccess: async ({ data }) => {
         toast.success("Data Collection Initiated!", {

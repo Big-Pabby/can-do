@@ -184,17 +184,7 @@
                   </div>
                 </div>
               </div>
-              <p
-                class="text-sm flex gap-1 items-start line-clamp-1 font-medium mt-4 text-white"
-              >
-                <Icon
-                  icon="akar-icons:location"
-                  width="16"
-                  height="16"
-                  style="color: #fff"
-                />
-                {{ service.details.address }}
-              </p>
+             
             </div>
           </div>
         </div>
@@ -245,10 +235,10 @@
                 </span>
               </div>
               <hr />
-              <div class="space-y-1 py-2">
+              <div v-if="service.details.subcategories" class="space-y-1 py-2">
                 <h5 class="text-xs text-[#4B5563]">Service Sub category</h5>
                 <span
-                  v-if="service.details.subcategories"
+                  
                   class="text-sm font-medium text-[#111827]"
                 >
                   {{ service.details.subcategories }}
@@ -287,7 +277,7 @@
                 <div class="space-y-1">
                   <h4 class="text-xs text-[#4B5563]">Phone</h4>
                   <p class="text-sm font-medium">
-                    {{ service.details.phone || "Phone number not available" }}
+                    {{ service.details.phone_number || "Phone number not available" }}
                   </p>
                 </div>
               </div>
@@ -305,7 +295,7 @@
                 <div class="space-y-1">
                   <h4 class="text-xs text-[#4B5563]">Email</h4>
                   <p class="text-sm font-medium">
-                    {{ service.details.email || "Email not available" }}
+                    {{ service.details.email === 'null' ? "Email not available" : service.details.email }}
                   </p>
                 </div>
               </div>
@@ -496,7 +486,7 @@
     class="fixed w-full bg-[#F9FAFB] bottom-0 left-0 p-4 z-40 grid grid-cols-2 gap-4 md:hidden"
   >
     <button
-      @click="handleCall(service?.details.phone as string)"
+      @click="handleCall(service?.details.phone_number as string)"
       class="bg-[#12A0D8] py-2.5 px-4.5 rounded-full w-full text-white text-sm font-medium"
     >
       Call Now

@@ -23,7 +23,7 @@ export interface Service {
     eligibility_criteria: string;
     contact: string;
     address: string;
-    phone: string;
+    phone_number: string;
     opening_hours: string;
     access: string;
     evidence_links: string[];

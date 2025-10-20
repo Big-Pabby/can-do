@@ -249,18 +249,17 @@ onMounted(async () => {
       const categoryEmoji = getCategoryIcon(category);
 
       const iconHtml = `
-        <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 21.9 12.5 41 12.5 41S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="${color}"/>
-          <circle cx="12.5" cy="12.5" r="6" fill="white"/>
-        </svg>
+        <div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: ${color}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 20px;">
+          ${categoryEmoji}
+        </div>
       `;
 
       const customIcon = window.L.divIcon({
         html: iconHtml,
         className: "custom-marker",
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20],
       });
 
       const marker = window.L.marker([serviceLat, serviceLng], {
@@ -366,9 +365,9 @@ onMounted(async () => {
           <!-- Action Buttons -->
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
             ${
-              service.details.phone && service.details.phone !== "null"
+              service.details.phone_number && service.details.phone_number !== "null"
                 ? `
-              <button onclick="window.location.href='tel:${service.details.phone}'" style="background: #12A0D8; border-radius: 20px; padding: 8px 14px; font-size: 13px; color: white; border: none; cursor: pointer; transition: background 0.2s;">
+              <button onclick="window.location.href='tel:${service.details.phone_number}'" style="background: #12A0D8; border-radius: 20px; padding: 8px 14px; font-size: 13px; color: white; border: none; cursor: pointer; transition: background 0.2s;">
                 Call Now
               </button>
             `

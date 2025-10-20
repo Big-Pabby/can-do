@@ -30,21 +30,21 @@
             Data Collection
           </h2>
           <p class="text-sm text-gray-500 mb-6">
-            Pull services data from a specific district
+            Pull services data from specific districts
           </p>
 
           <!-- District Selection -->
           <div class="mb-4">
             <div class="flex items-center justify-between mb-2">
               <label class="block text-sm font-medium text-gray-700">
-                Select District
+                Select Districts
               </label>
               <button
-                v-if="selectedDistrict"
+                v-if="selectedDistricts.length > 0"
                 @click="clearSelection"
                 class="text-xs text-[#DC2626] hover:underline font-medium"
               >
-                Clear Selection
+                Clear All
               </button>
             </div>
             <div class="relative">
@@ -53,9 +53,13 @@
                 class="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
               >
                 <span
-                  :class="selectedDistrict ? 'text-gray-700' : 'text-gray-400'"
+                  :class="selectedDistricts.length > 0 ? 'text-gray-700' : 'text-gray-400'"
                 >
-                  {{ selectedDistrict || "Select a district" }}
+                  {{
+                    selectedDistricts.length > 0
+                      ? `${selectedDistricts.length} district${selectedDistricts.length > 1 ? 's' : ''} selected`
+                      : "Select districts"
+                  }}
                 </span>
                 <svg
                   class="w-5 h-5 text-gray-400"
@@ -101,17 +105,33 @@
                   </div>
                 </div>
 
+                <!-- Select All Option -->
+                <div
+                  v-if="filteredDistricts.length > 0"
+                  class="px-4 py-2 border-b border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center"
+                  @click="toggleSelectAll"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    :indeterminate="isIndeterminate"
+                    class="mr-2"
+                    readonly
+                  />
+                  <span class="font-medium text-gray-700">Select All</span>
+                </div>
+
                 <!-- Districts List -->
                 <div class="max-h-48 overflow-y-auto">
                   <div
                     v-for="district in filteredDistricts"
                     :key="district"
-                    @click="selectDistrict(district)"
+                    @click="toggleDistrict(district)"
                     class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                   >
                     <input
-                      type="radio"
-                      :checked="selectedDistrict === district"
+                      type="checkbox"
+                      :checked="selectedDistricts.includes(district)"
                       class="mr-2"
                       readonly
                     />
@@ -127,14 +147,16 @@
               </div>
             </div>
 
-            <!-- Selected District Display -->
-            <div v-if="selectedDistrict" class="mt-3">
+            <!-- Selected Districts Display -->
+            <div v-if="selectedDistricts.length > 0" class="mt-3 flex flex-wrap gap-2">
               <span
+                v-for="district in selectedDistricts"
+                :key="district"
                 class="inline-flex items-center px-3 py-1 rounded-full border border-[#12A0D8] text-sm bg-[#F0F8FF] text-[#12A0D8]"
               >
-                {{ selectedDistrict }}
+                {{ district }}
                 <button
-                  @click="clearSelection"
+                  @click="removeDistrict(district)"
                   class="ml-2 text-[#12A0D8] hover:text-blue-900"
                 >
                   ×
@@ -144,7 +166,7 @@
           </div>
 
           <!-- Radius Input -->
-          <div class="mb-6">
+          <!-- <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">
               Radius (in km)
             </label>
@@ -162,12 +184,12 @@
               </div>
             </div>
             <p class="text-xs text-gray-500 mt-1">
-              Specify the search radius from the selected district
+              Specify the search radius from the selected districts
             </p>
-          </div>
+          </div> -->
 
           <!-- Action Buttons -->
-          <div class="flex gap-3">
+          <div class="flex gap-3 mt-12">
             <button
               @click="closeModal"
               class="flex-1 px-4 py-2 border border-[#B0B72E] text-[#B0B72E] bg-[#FAFAED] font-medium transition-colors rounded-full"
@@ -175,7 +197,7 @@
               Close
             </button>
             <button
-              :disabled="loading || !selectedDistrict || !radius"
+              :disabled="loading || selectedDistricts.length === 0 || !radius"
               @click="pullData"
               class="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white rounded-full bg-[#12A0D8] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -216,8 +238,8 @@ const { data, isLoading } = UseDistrict();
 const emit = defineEmits(["close", "submit"]);
 
 const showDistrictDropdown = ref(false);
-const selectedDistrict = ref("");
-const radius = ref(100);
+const selectedDistricts = ref([]);
+const radius = ref(10);
 const searchQuery = ref("");
 
 // Computed property to filter districts based on search query
@@ -230,16 +252,63 @@ const filteredDistricts = computed(() => {
   );
 });
 
-// Select a single district
-const selectDistrict = (district) => {
-  selectedDistrict.value = district;
-  showDistrictDropdown.value = false;
-  searchQuery.value = "";
+// Check if all filtered districts are selected
+const isAllSelected = computed(() => {
+  if (filteredDistricts.value.length === 0) return false;
+  return filteredDistricts.value.every((district) =>
+    selectedDistricts.value.includes(district)
+  );
+});
+
+// Check if some but not all districts are selected (for indeterminate state)
+const isIndeterminate = computed(() => {
+  const selectedCount = filteredDistricts.value.filter((district) =>
+    selectedDistricts.value.includes(district)
+  ).length;
+  return selectedCount > 0 && selectedCount < filteredDistricts.value.length;
+});
+
+// Toggle a single district
+const toggleDistrict = (district) => {
+  const index = selectedDistricts.value.indexOf(district);
+  if (index > -1) {
+    selectedDistricts.value.splice(index, 1);
+  } else {
+    selectedDistricts.value.push(district);
+  }
 };
 
-// Clear the selected district
+// Remove a specific district
+const removeDistrict = (district) => {
+  const index = selectedDistricts.value.indexOf(district);
+  if (index > -1) {
+    selectedDistricts.value.splice(index, 1);
+  }
+};
+
+// Toggle select all filtered districts
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    // Deselect all filtered districts
+    filteredDistricts.value.forEach((district) => {
+      const index = selectedDistricts.value.indexOf(district);
+      if (index > -1) {
+        selectedDistricts.value.splice(index, 1);
+      }
+    });
+  } else {
+    // Select all filtered districts
+    filteredDistricts.value.forEach((district) => {
+      if (!selectedDistricts.value.includes(district)) {
+        selectedDistricts.value.push(district);
+      }
+    });
+  }
+};
+
+// Clear all selected districts
 const clearSelection = () => {
-  selectedDistrict.value = "";
+  selectedDistricts.value = [];
 };
 
 const closeModal = () => {
@@ -249,12 +318,12 @@ const closeModal = () => {
 };
 
 const pullData = () => {
-  if (!selectedDistrict.value || !radius.value) {
+  if (selectedDistricts.value.length === 0 || !radius.value) {
     return;
   }
 
   const payload = {
-    district: selectedDistrict.value, // Changed from array to single value
+    districts: selectedDistricts.value, // Changed to plural and array
     radius: radius.value,
   };
   emit("submit", payload);
@@ -283,5 +352,12 @@ input[type="number"]::-webkit-outer-spin-button {
 /* Hide number input arrows for Firefox */
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+/* Indeterminate checkbox state */
+input[type="checkbox"]:indeterminate {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");
+  background-color: #3b82f6;
+  border-color: #3b82f6;
 }
 </style>

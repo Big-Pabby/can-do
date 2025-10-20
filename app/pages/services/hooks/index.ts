@@ -32,7 +32,6 @@ export function UseDataCollection() {
 
   return useMutation({
     mutationFn: async (query: Coordinates) => {
-      const locationsParam = query.location_query;
       return await https.post<DataCollectionResponse>(
         `/v1/services/intiate_data_collection`,
         query

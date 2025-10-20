@@ -6,7 +6,7 @@
         <!-- Modal Content -->
         <div class="bg-white rounded-lg shadow-xl w-[450px] p-6 relative">
           <!-- Close Button (only shown when completed) -->
-          
+
           <button
             v-if="status === 'Completed'"
             @click="handleClose"
@@ -54,6 +54,15 @@
                 {{ progress.toFixed() }}%
               </span>
             </div>
+          </div>
+          <!-- Cancel Button (only shown when in progress) -->
+          <div v-if="status !== 'Completed'" class="mt-4 flex justify-end">
+            <button
+              @click="$emit('cancel')"
+              class="text-sm cursor-pointer text-gray-600 hover:text-gray-800 font-medium"
+            >
+              Cancel
+            </button>
           </div>
           <div
             v-if="status === 'Completed'"

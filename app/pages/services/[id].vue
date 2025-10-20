@@ -70,7 +70,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Contact</label>
             <input
-              v-model="editForm.phone"
+              v-model="editForm.phone_number"
               type="text"
               class="w-full border rounded-[10px] px-3 py-3.5"
             />
@@ -284,8 +284,8 @@
             <div class="flex flex-col items-start gap-2">
               <span class="font-semibold">Contact:</span>
               <div class="flex flex-wrap gap-4 text-muted-foreground">
-                <p v-if="service.details.phone">
-                  Phone Number: {{ service.details.phone }}
+                <p v-if="service.details.phone_number">
+                  Phone Number: {{ service.details.phone_number }}
                 </p>
                 <p v-if="service.details.email">
                   Phone Number: {{ service.details.email }}
@@ -446,11 +446,11 @@ const editForm = ref<{ [key: string]: string }>({
   name: "",
   description: "",
   address: "",
-  phone: "",
+  phone_number: "",
   category: "",
   sub_category: "",
-  hours: "",
-  eligibility: "",
+  opening_hours: "",
+  eligibility_criteria: "",
 });
 // Remove editLoading, use mutation state
 const editError = ref("");
