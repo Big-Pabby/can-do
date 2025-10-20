@@ -365,7 +365,7 @@ watch(
       currentPage.value = 1;
       searchPending.value = false;
       if (countdownInterval) clearInterval(countdownInterval);
-    }, 1000); // 10 seconds
+    }, 1000); // 1 seconds
   }
 );
 
