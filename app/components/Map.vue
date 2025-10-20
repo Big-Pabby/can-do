@@ -75,15 +75,15 @@ const userLocation = ref<{ lat: number; lng: number } | null>(null);
 const showRecenterButton = ref(false);
 
 const categoryColors: Record<string, string> = {
-  "Food & Nutrition": "#FF8C00",
-  "Shelter & Housing": "#1E90FF",
-  "Clothing & Essentials": "#9370DB",
-  "Addiction & Recovery": "#FFD700",
-  "Mental Health & Wellbeing": "#FF69B4",
-  "Health & Medical": "#32CD32",
-  "Justice & Legal Support": "#87CEEB",
-  "Financial & Benefits Support": "#8B4513",
-  "Employment, Training & Education": "#90EE90",
+  "Food & Nutrition": "#DBEEFF",
+  "Shelter & Housing": "#DCFCE7",
+  "Clothing & Essentials": "#FEF3C7",
+  "Addiction & Recovery": "#FEE2E2",
+  "Mental Health & Wellbeing": "#ECFCCB",
+  "Health & Medical": "#E0E7FF",
+  "Justice & Legal Support": "#FAE8FF",
+  "Financial & Benefits Support": "#EDE9FE",
+  "Employment, Training & Education": "#FCE7F3",
   "Community & General Support": "#808080",
 };
 
@@ -249,7 +249,7 @@ onMounted(async () => {
       const categoryEmoji = getCategoryIcon(category);
 
       const iconHtml = `
-        <div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: ${color}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 20px;">
+        <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: ${color}; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 2px rgba(0,0,0,0.3); font-size: 20px;">
           ${categoryEmoji}
         </div>
       `;
@@ -257,7 +257,7 @@ onMounted(async () => {
       const customIcon = window.L.divIcon({
         html: iconHtml,
         className: "custom-marker",
-        iconSize: [40, 40],
+        iconSize: [36, 36],
         iconAnchor: [20, 20],
         popupAnchor: [0, -20],
       });

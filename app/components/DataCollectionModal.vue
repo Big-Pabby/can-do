@@ -30,14 +30,14 @@
             Data Collection
           </h2>
           <p class="text-sm text-gray-500 mb-6">
-            Pull services data from specific districts
+            Pull services data from specific local authority
           </p>
 
           <!-- District Selection -->
           <div class="mb-4">
             <div class="flex items-center justify-between mb-2">
               <label class="block text-sm font-medium text-gray-700">
-                Select Districts
+                Select Local Authority
               </label>
               <button
                 v-if="selectedDistricts.length > 0"
@@ -58,7 +58,7 @@
                   {{
                     selectedDistricts.length > 0
                       ? `${selectedDistricts.length} district${selectedDistricts.length > 1 ? 's' : ''} selected`
-                      : "Select districts"
+                      : "Local authority"
                   }}
                 </span>
                 <svg
