@@ -411,6 +411,7 @@ const messagesContainer = ref<HTMLElement | null>(null);
 const chatHistory = ref<ChatSession[]>([]);
 const currentSessionId = ref<string>("");
 const showChatOnMobile = ref(false); // Controls mobile view state
+const abortController = ref<AbortController | null>(null);
 const categories = [
   {
     name: "Employment",
@@ -485,6 +486,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  // Cancel any pending request before component unmounts
+  if (abortController.value) {
+    abortController.value.abort();
+  }
   saveCurrentChatToHistory();
   window.removeEventListener("beforeunload", saveCurrentChatToHistory);
 });
@@ -618,6 +623,13 @@ const goBackToHistory = () => {
 };
 
 const startNewChat = () => {
+  // Cancel any pending request
+  if (abortController.value) {
+    abortController.value.abort();
+    abortController.value = null;
+    isPending.value = false;
+  }
+
   if (messages.value.length > 0) {
     saveCurrentChatToHistory();
   }
@@ -641,6 +653,9 @@ const sendMessage = () => {
   input.value = "";
   isPending.value = true;
 
+  // Create new abort controller for this request
+  abortController.value = new AbortController();
+
   const locationStore = useLocationStore();
   const location = {
     place: locationStore.district || locationStore.address || "Suffolk, UK",
@@ -650,8 +665,12 @@ const sendMessage = () => {
   const allTexts = messages.value.map((msg) => msg.text);
   const combinedText = allTexts.join(",");
 
-  mutate(
-    { ...location, message: `${userInput}, ${JSON.stringify(combinedText)}` },
+ mutate(
+    { 
+      ...location, 
+      message: `${userInput}, Chat History:${JSON.stringify(combinedText)}`,
+      signal: abortController.value?.signal 
+    },
     {
       onSuccess: async ({ data }) => {
         const botMessage: Message = {
@@ -662,8 +681,16 @@ const sendMessage = () => {
         };
         messages.value.push(botMessage);
         isPending.value = false;
+        abortController.value = null;
       },
-      onError: (error) => {
+      onError: (error: any) => {
+        // Don't show error message if request was aborted
+        if (error.name === "AbortError" || error.message === "canceled" || error.code === "ERR_CANCELED") {
+          isPending.value = false;
+          abortController.value = null;
+          return;
+        }
+
         const errorMessage: Message = {
           sender: "mark",
           text: "Sorry, I couldn't process your request. Please try again.",
@@ -671,6 +698,7 @@ const sendMessage = () => {
         };
         messages.value.push(errorMessage);
         isPending.value = false;
+        abortController.value = null;
       },
     }
   );

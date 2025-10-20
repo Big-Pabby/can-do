@@ -13,6 +13,7 @@ interface Coordinates {
   lat: number;
   lng: number;
   message?: string;
+  signal?: AbortSignal;
 }
 
 export function UseChatBot() {
@@ -24,7 +25,8 @@ export function UseChatBot() {
     mutationFn: async (query: Coordinates) => {
       return await https.post<Response>(
         `/v1/services/ask-chatbot?place=${query.place}&lat=${query.lat}&lng=${query.lng}`,
-        { message: query.message }
+        { message: query.message },
+        { signal: query.signal }
       );
     },
   });

@@ -241,6 +241,7 @@ const selectedServiceLocation = computed(() => {
 
 // Filter/search refs
 const searchQuery = ref("");
+const debouncedSearchQuery = ref("");
 const searchPending = ref(false);
 const searchTimeout = ref<number>(10);
 const selectedCategory = ref<string>("");
@@ -262,7 +263,7 @@ const { data, error, isLoading, refetch } = UseMapServices(
   reactivePageSize,
   coords,
   {
-    search: searchQuery,
+     search: debouncedSearchQuery,
     category: selectedCategory,
     distance: selectedDistance,
     excludedAreas: excludedAreas,
@@ -332,39 +333,40 @@ let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
 watch(
   () => searchQuery.value,
-  () => {
+  (newValue) => {
     // Clear existing timers
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
     if (countdownInterval) clearInterval(countdownInterval);
 
-    // Only start timer if there's a search query
-    if (searchQuery.value.trim()) {
-      searchPending.value = true;
-      searchTimeout.value = 10; // Reset to 10 seconds
-
-      // Start countdown
-      countdownInterval = setInterval(() => {
-        searchTimeout.value--;
-        if (searchTimeout.value <= 0 && countdownInterval) {
-          clearInterval(countdownInterval);
-        }
-      }, 1000);
-
-      // Set the actual search timer
-      searchDebounceTimer = setTimeout(() => {
-        currentPage.value = 1;
-        searchPending.value = false;
-        if (countdownInterval) clearInterval(countdownInterval);
-        refetch();
-      }, 10000); // 10 seconds
-    } else {
-      // If search is cleared, don't trigger immediate search
+    // If search is empty, immediately update and clear pending state
+    if (!newValue.trim()) {
+      debouncedSearchQuery.value = "";
       searchPending.value = false;
       searchTimeout.value = 0;
-      if (countdownInterval) clearInterval(countdownInterval);
+      currentPage.value = 1;
+      return;
     }
-  },
-  { immediate: false } // Prevent immediate trigger on component mount
+
+    // Start pending state and countdown
+    searchPending.value = true;
+    searchTimeout.value = 1;
+
+    // Start countdown
+    countdownInterval = setInterval(() => {
+      searchTimeout.value--;
+      if (searchTimeout.value <= 0 && countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+    }, 1000);
+
+    // Set the actual search timer
+    searchDebounceTimer = setTimeout(() => {
+      debouncedSearchQuery.value = newValue; // Update the debounced value
+      currentPage.value = 1;
+      searchPending.value = false;
+      if (countdownInterval) clearInterval(countdownInterval);
+    }, 1000); // 10 seconds
+  }
 );
 
 // Pagination page numbers logic
@@ -442,21 +444,15 @@ function handleLocationSelected(coords: {
 
 // Handle directions button click from ServiceCard
 function handleDirections(service: any) {
-  if (!selectedCoordinates.value) {
-    alert("User location not available");
-    return;
+  if (useLocationStore().lat && useLocationStore().lng) {
+    const origin = `${useLocationStore().lat},${useLocationStore().lng}`;
+    const destination = `${service.details.lat},${service.details.lng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&destination_place_id=${encodeURIComponent(
+      service.details.name
+    )}`;
+    window.open(url, "_blank");
+  } else {
+    alert("Please allow location access to get directions");
   }
-  const destLat = Number(service.details.lat);
-  const destLng = Number(service.details.lng);
-  if (!destLat || !destLng) {
-    alert("Service location not available");
-    return;
-  }
-  toggleType.value = "map";
-  useLocationStore().setSelectedServiceLocation(
-    { lat: destLat, lng: destLng },
-    service
-  );
-  pageSize.value = 1000;
 }
 </script>

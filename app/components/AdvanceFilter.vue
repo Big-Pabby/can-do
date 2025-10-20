@@ -59,7 +59,7 @@
           </div>
 
           <!-- Sub Category Selection -->
-          <div class="section">
+          <!-- <div class="section">
             <div class="select-wrapper">
               <select
                 v-model="selectedSubCategory"
@@ -91,7 +91,7 @@
                 />
               </svg>
             </div>
-          </div>
+          </div> -->
 
           <!-- Distance Selection -->
           <div class="section">

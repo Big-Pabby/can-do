@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import type { Service } from "#imports";
+import { useLocationStore } from "~/store/location";
 
 const loadLeaflet = () => {
   return new Promise((resolve) => {
@@ -180,15 +181,15 @@ const setMarker = async (latVal: number, lngVal: number) => {
   }
 
   const redIcon = window.L.icon({
-    iconUrl:
-      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-  });
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [15, 24],        // Reduced from [25, 41] - maintains aspect ratio
+  iconAnchor: [7, 24],       // Reduced from [12, 41] - anchor at bottom center
+  popupAnchor: [1, -20],     // Reduced from [1, -34] - popup offset
+  shadowSize: [24, 24],      // Reduced from [41, 41] - shadow size
+});
 
   currentMarker = window.L.marker([latVal, lngVal], { icon: redIcon }).addTo(
     map
@@ -249,7 +250,7 @@ onMounted(async () => {
       const categoryEmoji = getCategoryIcon(category);
 
       const iconHtml = `
-        <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: ${color}; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 2px rgba(0,0,0,0.3); font-size: 20px;">
+        <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: ${color}; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 2px rgba(0,0,0,0.3); font-size: 14px;">
           ${categoryEmoji}
         </div>
       `;
@@ -257,7 +258,7 @@ onMounted(async () => {
       const customIcon = window.L.divIcon({
         html: iconHtml,
         className: "custom-marker",
-        iconSize: [36, 36],
+        iconSize: [24, 24],
         iconAnchor: [20, 20],
         popupAnchor: [0, -20],
       });
