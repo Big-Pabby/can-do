@@ -1,29 +1,58 @@
 <template>
   <div class="md:space-y-4">
     <div
-      v-if="toggleType !== 'list'"
-      class="w-full md:hidden fixed top-0 left-0 px-4 py-4 flex justify-between items-center z-30"
+      class="w-full fixed top-0 left-0 px-4 py-4 flex justify-between items-center z-30"
     >
       <div
         @click="showModal = true"
-        class="w-[48px] h-[48px] rounded-full bg-[#FAFAED] flex items-center justify-center text-[#B0B72E]"
+        :class="`w-[48px] h-[48px] rounded-full ${
+          toggleType === 'list'
+            ? 'bg-white text-[#12A0D8]'
+            : 'bg-[#12A0D8] text-white'
+        }  flex items-center justify-center `"
       >
         <Icon icon="mage:filter" width="24" height="24" />
       </div>
       <div
-        @click.stop="
-          selectedDistance = '';
-          toggleType = 'list';
-          pageSize = 12;
-        "
-        class="w-[48px] h-[48px] rounded-full bg-[#FAFAED] flex items-center justify-center text-[#B0B72E]"
+        :class="`rounded-full flex items-center gap-2 border ${
+          toggleType === 'list' ? 'bg-white ' : 'bg-[#12A0D8] '
+        } p-1`"
       >
-        <Icon icon="tabler:list" width="24" height="24" />
+        <div
+          @click="
+            selectedDistance = '5';
+            toggleType = 'map';
+            pageSize = 1000;
+          "
+          :class="`${
+            toggleType === 'map' ? 'text-[#12A0D8] bg-white' : 'text-[#12A0D8]'
+          } flex gap-2 items-center  rounded-full flex-1 text-sm font-medium py-2 px-3.5 cursor-pointer`"
+        >
+          <Icon
+            icon="material-symbols:map-outline-rounded"
+            width="20"
+            height="20"
+          />
+          <p>Map</p>
+        </div>
+        <div
+          @click="
+            selectedDistance = '';
+            toggleType = 'list';
+            pageSize = 12;
+          "
+          :class="`${
+            toggleType === 'list' ? 'bg-[#12A0D8] text-white' : 'text-white'
+          } flex gap-2 items-center  rounded-full flex-1 text-sm font-medium py-2 px-3.5 cursor-pointer`"
+        >
+          <Icon icon="tabler:list" width="20" height="20" />
+          <p>List</p>
+        </div>
       </div>
     </div>
-    <div v-if="toggleType === 'list'" class="md:hidden block">
+    <!-- <div v-if="toggleType === 'list'" class="md:hidden block">
       <mobile-nav />
-    </div>
+    </div> -->
     <AdvanceFilter
       v-model="showModal"
       :initial-category="''"
@@ -44,10 +73,10 @@
     <div
       :class="`md:border border-[#F3F4F6] md:flex-row md:flex ${
         toggleType === 'list' ? 'flex' : 'hidden'
-      } flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] md:rounded-[12px] p-5`"
+      } flex-col flex-wrap justify-between gap-6 md:items-center md:bg-white bg-[#12A0D8] z-10 md:rounded-[12px] p-5`"
     >
       <div
-        class="bg-white border border-gray-300 md:rounded-[10px] rounded-full p-3 focus:outline-none flex gap-4 w-full justify-between items-center focus:ring-2 flex-1 focus:ring-blue-500 relative"
+        class="bg-white md:mt-0 mt-16 border border-gray-300 md:rounded-[10px] rounded-full p-3 focus:outline-none flex gap-4 w-full justify-between items-center focus:ring-2 flex-1 focus:ring-blue-500"
       >
         <Icon
           icon="ri:search-line"
@@ -63,7 +92,7 @@
           class="w-full border-0 outline-0 p-0 m-0"
         />
       </div>
-      <div class="flex items-center gap-2">
+      <div class="md:flex hidden items-center gap-2">
         <div
           @click="showModal = true"
           class="py-3 px-5 cursor-pointer rounded-full flex items-center gap-2 border border-[#E5E7EB] bg-[#F9FAFB]"
@@ -263,7 +292,7 @@ const { data, error, isLoading, refetch } = UseMapServices(
   reactivePageSize,
   coords,
   {
-     search: debouncedSearchQuery,
+    search: debouncedSearchQuery,
     category: selectedCategory,
     distance: selectedDistance,
     excludedAreas: excludedAreas,
