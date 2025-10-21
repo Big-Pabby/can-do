@@ -290,90 +290,23 @@
               :disabled="isPending"
             />
             <button
+              v-if="input !== ''"
               class="absolute right-[6px] top-[6px] action-btn send-btn"
               @click="sendMessage"
               :disabled="!input.trim() || isPending"
             >
               <Icon icon="ic:round-send" class="w-5 h-5" />
             </button>
-            <!-- <div class="button-group">
-              
-              <button
-                class="action-btn mic-btn"
-                @click="handleMic"
-                :disabled="isPending"
-              >
-                <Icon icon="ri:mic-line" class="w-5 h-5" />
-              </button>
-            </div> -->
+            <div v-else class="absolute right-[6px] top-[6px]">
+              <VoiceRecorder
+                @audioReady="handleAudioReady"
+                @error="handleRecordingError"
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Mobile History Modal -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="showHistory"
-          class="history-modal-overlay lg:hidden"
-          @click.self="showHistory = false"
-        >
-          <div class="history-modal">
-            <div class="modal-header">
-              <div>
-                <h3 class="modal-title">Chat History</h3>
-                <p class="text-sm text-[#4B5563]">
-                  See your past conversations with Mark
-                </p>
-              </div>
-              <button @click="showHistory = false" class="close-btn">
-                <Icon icon="mdi:close" class="w-6 h-6" />
-              </button>
-            </div>
-
-            <div class="modal-content">
-              <div v-if="chatHistory.length === 0" class="empty-state">
-                <Icon
-                  icon="mdi:message-text-outline"
-                  class="w-16 h-16 text-gray-300 mb-2"
-                />
-                <p class="text-gray-500">No chat history yet</p>
-              </div>
-              <div
-                v-for="(session, index) in chatHistory"
-                :key="index"
-                class="modal-item"
-              >
-                <div
-                  @click="loadChatSession(session)"
-                  class="modal-item-content"
-                >
-                  <p class="modal-item-preview">{{ session.preview }}</p>
-                  <span class="modal-item-count"
-                    >{{ session.messages.length }} messages</span
-                  >
-                </div>
-                <button
-                  @click.stop="deleteSession(session.id)"
-                  class="delete-btn-mobile"
-                  title="Delete this conversation"
-                >
-                  <Icon icon="mdi:delete-outline" class="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button @click="clearHistory" class="clear-btn">
-                <Icon icon="mdi:delete-outline" class="w-5 h-5" />
-                Clear All History
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
   </div>
 </template>
 
@@ -383,6 +316,7 @@ import { Icon } from "@iconify/vue";
 import { useLocationStore } from "~/store/location";
 import { UseChatBot } from "./hooks";
 import type { Service } from "#imports";
+import { useUpload } from "../hooks";
 
 definePageMeta({
   layout: "user",
@@ -708,8 +642,26 @@ const sendMessage = () => {
   );
 };
 
-const handleMic = () => {
-  alert("Mic feature coming soon!");
+const handleAudioReady = (payload: {
+  fileUrl: string;
+  transcript?: string;
+}) => {
+  const { fileUrl, transcript } = payload;
+
+  // If we have a transcript, use it as the message
+  if (transcript && transcript.trim()) {
+    input.value = transcript;
+    sendMessage();
+  } else {
+    // If no transcript, you can still send the audio URL or show an error
+    console.warn("No transcript available for audio file:", fileUrl);
+    // Optionally, you could send the fileUrl to your backend if it accepts audio URLs
+  }
+};
+
+const handleRecordingError = (errorMessage: string) => {
+  console.error("Recording error:", errorMessage);
+  // Optionally show a toast notification to the user
 };
 
 const scrollToBottom = () => {
