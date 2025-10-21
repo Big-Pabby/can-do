@@ -181,15 +181,15 @@ const setMarker = async (latVal: number, lngVal: number) => {
   }
 
   const redIcon = window.L.icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [15, 24],        // Reduced from [25, 41] - maintains aspect ratio
-  iconAnchor: [7, 24],       // Reduced from [12, 41] - anchor at bottom center
-  popupAnchor: [1, -20],     // Reduced from [1, -34] - popup offset
-  shadowSize: [24, 24],      // Reduced from [41, 41] - shadow size
-});
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+    iconSize: [15, 24], // Reduced from [25, 41] - maintains aspect ratio
+    iconAnchor: [7, 24], // Reduced from [12, 41] - anchor at bottom center
+    popupAnchor: [1, -20], // Reduced from [1, -34] - popup offset
+    shadowSize: [24, 24], // Reduced from [41, 41] - shadow size
+  });
 
   currentMarker = window.L.marker([latVal, lngVal], { icon: redIcon }).addTo(
     map
@@ -364,9 +364,10 @@ onMounted(async () => {
           </div>
 
           <!-- Action Buttons -->
-          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 12px;">
             ${
-              service.details.phone_number && service.details.phone_number !== "null"
+              service.details.phone_number &&
+              service.details.phone_number !== "null"
                 ? `
               <button onclick="window.location.href='tel:${service.details.phone_number}'" style="background: #12A0D8; border-radius: 20px; padding: 8px 14px; font-size: 13px; color: white; border: none; cursor: pointer; transition: background 0.2s;">
                 Call Now

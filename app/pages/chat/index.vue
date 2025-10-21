@@ -665,11 +665,11 @@ const sendMessage = () => {
   const allTexts = messages.value.map((msg) => msg.text);
   const combinedText = allTexts.join(",");
 
- mutate(
-    { 
-      ...location, 
-      message: `${userInput}, Chat History:${JSON.stringify(combinedText)}`,
-      signal: abortController.value?.signal 
+  mutate(
+    {
+      ...location,
+      message: `${userInput}`,
+      signal: abortController.value?.signal,
     },
     {
       onSuccess: async ({ data }) => {
@@ -685,7 +685,11 @@ const sendMessage = () => {
       },
       onError: (error: any) => {
         // Don't show error message if request was aborted
-        if (error.name === "AbortError" || error.message === "canceled" || error.code === "ERR_CANCELED") {
+        if (
+          error.name === "AbortError" ||
+          error.message === "canceled" ||
+          error.code === "ERR_CANCELED"
+        ) {
           isPending.value = false;
           abortController.value = null;
           return;

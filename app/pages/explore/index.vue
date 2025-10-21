@@ -37,7 +37,7 @@
         </div>
         <div
           @click="
-            selectedDistance = '';
+            selectedDistance = '5';
             toggleType = 'list';
             pageSize = 12;
           "
@@ -130,7 +130,7 @@
           </div>
           <div
             @click="
-              selectedDistance = '';
+               selectedDistance = '5';
               toggleType = 'list';
               pageSize = 12;
             "
