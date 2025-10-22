@@ -313,7 +313,7 @@ onMounted(async () => {
 
       // Service Card Popup
       const popupContent = `
-        <div style="border: 1px solid #F3F4F6; background: white; width: 100%; border-radius: 12px; padding: 16px; font-family: system-ui, -apple-system, sans-serif; width: 300px;">
+        <div style="border: 1px solid #F3F4F6; background: white; width: 100%; border-radius: 12px; padding: 16px; font-family: system-ui, -apple-system, sans-serif; width: 320px;">
           <h4 style="font-weight: 500; color: #111827; margin: 0 0 12px 0; font-size: 15px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
             ${service.details.name}
           </h4>
