@@ -1,8 +1,9 @@
 <template>
-  <div class="">
+  <div class="space-y-6 relative">
     <DataCollectionModal
       :isOpen="isModalOpen"
       :loading="collectPending"
+      :data="districts"
       @close="isModalOpen = false"
       @submit="handleDataSubmit"
     />
@@ -16,56 +17,88 @@
       @refresh="handleRefresh"
       @cancel="handleCancel"
     />
-    <div class="bg-white rounded-[16px] px-4 space-y-4 py-8 sm:px-6 lg:px-8">
-      <div class="mb-8 flex justify-between items-center gap-6">
-        <div class="flex-1">
-          <h1 class="text-3xl font-bold text-[#12A0D8]">
-            Available Services ({{ filteredServices.length }})
-          </h1>
-          <p class="mt-2 text-sm">
-            Browse and filter through our comprehensive list of services
-          </p>
-        </div>
-        <button
-          class="bg-[#B0B72E] py-2.5 px-12 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          @click="isModalOpen = true"
-        >
-          Data Collection
-        </button>
-        <button
-          class="bg-[#12A0D8] py-2.5 px-12 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="selectedIds.length === 0 || isPending"
-          @click="handleRerun"
-        >
-          <span v-if="isPending">Re-running...</span>
-          <span v-else>Re-run</span>
-        </button>
+    <RerunNotification
+      v-if="progressState.show"
+      :progress="progressState.progress"
+      :status="progressState.status"
+      :title="progressState.title"
+      :message="progressState.message"
+      :cancelable="progressState.status === 'loading'"
+      @cancel="handleProgressCancel"
+      @close="handleProgressClose"
+    />
+    <div
+      class="sticky top-20 left-0 z-20  bg-white border border-[#F3F4F6] rounded-[12px] p-4 flex justify-between items-center gap-6"
+    >
+      <div class="flex-1">
+        <h1 class="text-[28px] font-bold text-[#12A0D8]">
+          Available Services ({{ data?.count }})
+        </h1>
+        <p class="mt-2 text-[#6B7280] text-sm">
+          Browse and filter through our comprehensive list of services
+        </p>
       </div>
-
-      <!-- Filters -->
-      <div class="flex md:flex-row flex-col gap-4">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search services..."
-          class="flex bg-white h-12 md:w-6/12 rounded-md border border-[#E5E7EB] px-3 py-2 text-sm"
+      <button
+        class="bg-[#B0B72E] py-2.5 px-12 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        @click="isModalOpen = true"
+      >
+        Data Collection
+      </button>
+      <button
+        class="bg-[#12A0D8] py-2.5 px-12 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="selectedIds.length === 0 || isPending"
+        @click="handleRerun"
+      >
+        <span v-if="isPending">Re-running...</span>
+        <span v-else>Re-run</span>
+      </button>
+    </div>
+    <div class="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-4">
+      <div
+        v-for="(category, index) in categories"
+        :key="index"
+        class="flex flex-col items-center gap-2 p-4 border border-[#F3F4F6] rounded-[12px] bg-white"
+      >
+        <div
+          class="h-[52px] w-[52px] bg-[#E0E7FF] rounded-full flex items-center justify-center"
+        >
+          <span class="text-2xl">
+            {{ categoryEmojis[index] || "❓" }}
+          </span>
+        </div>
+        <p class="text-[#4B5563] text-xs line-clamp-1">{{ index }}</p>
+        <h4 class="text-[#111827] text-sm font-medium">
+          {{ category }} Services
+        </h4>
+      </div>
+    </div>
+    <!-- Filters -->
+    <div
+      class="bg-white border border-[#F3F4F6] rounded-[12px] p-4 flex md:flex-row flex-col gap-4"
+    >
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search services..."
+        class="flex bg-white h-12 md:w-6/12 rounded-md border border-[#E5E7EB] px-3 py-2 text-sm"
+      />
+      <div class="flex-1 w-full flex gap-4">
+        <CustomSelect
+          v-model="selectedCategory"
+          :options="categories"
+          placeholder="All Categories"
+          class="flex-1"
         />
 
-        <select
-          v-model="selectedCategory"
-          class="flex h-12 flex-1 w-full rounded-md border border-[#E5E7EB] px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-white"
-        >
-          <option value="all">All Categories</option>
-          <option
-            v-for="category in categories"
-            :key="category"
-            :value="category"
-          >
-            {{ category }}
-          </option>
-        </select>
+        <CustomSelect
+          v-model="selectedDistricts"
+          :options="districts"
+          placeholder="All Local Authority"
+          class="flex-1"
+        />
       </div>
-
+    </div>
+    <div class="bg-white rounded-[16px] px-4 space-y-4 py-4 lg:px-4">
       <div class="bg-white overflow-x-auto">
         <Table class="">
           <TableHeader>
@@ -77,7 +110,7 @@
                     @change="
                       (e) => {
                         if (e.target && e.target.checked) {
-                          selectedIds = paginatedServices.map((s) => s.id);
+                          selectedIds = services.map((s) => s.id);
                         } else {
                           selectedIds = [];
                         }
@@ -92,14 +125,12 @@
               <!-- <TableHead>Sub-Categories </TableHead> -->
               <TableHead>Location </TableHead>
               <TableHead>Rating </TableHead>
+              <TableHead>UpdatedAt </TableHead>
               <TableHead> Action </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody class="text-sm">
-            <TableRow
-              v-for="(service, index) in paginatedServices"
-              :key="index"
-            >
+            <TableRow v-for="(service, index) in services" :key="index">
               <TableCell>
                 <div class="">
                   <input
@@ -183,21 +214,9 @@
                   >
                 </div>
               </TableCell>
-              <!-- <TableCell>
-                <span
-                  :class="{
-                    'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold': true,
-                    'bg-green-50 text-green-900':
-                      service.details?.verification_status === 'Verified',
-                    'bg-yellow-50 text-yellow-900':
-                      service.details?.verification_status === 'Pending',
-                    'bg-gray-100 text-gray-700':
-                      !service.details?.verification_status,
-                  }"
-                >
-                  {{ service.details?.verification_status ?? "Unverified" }}
-                </span>
-              </TableCell> -->
+              <TableCell>
+                <p class="w-[200px]">{{ formatDate(service.date_updated) }}</p>
+              </TableCell>
               <TableCell>
                 <div class="flex gap-2 items-center text-[#4B5563]">
                   <nuxt-link
@@ -273,6 +292,7 @@ import { ref, computed } from "vue";
 import { useServices } from "~/composables/useServices";
 import { useFetchServiceUpdates } from "../hooks/index";
 import { Icon } from "@iconify/vue";
+import { UseCategories } from "../hooks/index";
 import {
   Table,
   TableBody,
@@ -288,16 +308,73 @@ import ProgressToast from "../components/ProgressToast.vue";
 import { UseProgress } from "../hooks";
 import { UseDataCollection } from "./hooks";
 import { useAuthStore } from "~/store/auth";
-import { fail } from "assert";
+import { UseMapServices } from "../map/hooks";
+import { UseDistrict } from "~/pages/services/hooks";
 
 definePageMeta({
   layout: "admin",
 });
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 const isProgressOpen = ref(false);
-const currentProgress = ref(0);
+const searchQuery = ref("");
+const selectedDistricts = ref("");
+const selectedCategory = ref<string>("");
 const progressWS = useProgressWebSocket();
 const jobid = computed(() => useAuthStore().jobId);
+
+// Pagination state
+const currentPage = ref(1);
+const pageSize = ref(100);
+const totalPages = computed(() => {
+  if (!data?.value?.count) return 1;
+  return Math.ceil(data.value.count / pageSize.value);
+});
+
+const reactivePage = computed(() => currentPage.value);
+const reactivePageSize = computed(() => pageSize.value);
+const coords = computed(() => null);
+
+const { data: districtsData, isLoading: districtLoading } = UseDistrict();
+const districts = computed(() =>
+  (districtsData.value || [])
+    .slice()
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+);
+const {
+  data,
+  error: serviceError,
+  isLoading,
+  refetch,
+} = UseMapServices(reactivePage, reactivePageSize, coords, {
+  search: searchQuery,
+  category: selectedCategory,
+  district: selectedDistricts,
+});
+const { data: categoriesData, isLoading: categoriesLoading } = UseCategories();
+const categories = computed(() => categoriesData.value || {});
+const services = computed(() => data.value?.results || []);
+const categoryEmojis: Record<string, string> = {
+  "Food & Nutrition": "🍎",
+  "Shelter & Housing": "🏠",
+  "Clothing & Essentials": "👕",
+  "Addiction & Recovery": "💊",
+  "Mental Health & Wellbeing": "🧠",
+  "Health & Medical": "🏥",
+  "Justice & Legal Support": "⚖️",
+  "Financial & Benefits Support": "💰",
+  "Employment, Training & Education": "🎓",
+  "Community & General Support": "🤝",
+};
 const startPulling = () => {
   if (!jobid.value) {
     console.error("No job ID provided");
@@ -345,6 +422,59 @@ const handleComplete = () => {
 
   // Optionally close the modal after a delay
 };
+
+// Pagination page numbers logic
+const paginationPages = computed(() => {
+  const pages: (number | string)[] = [];
+  if (totalPages.value <= 7) {
+    for (let i = 1; i <= totalPages.value; i++) pages.push(i);
+  } else {
+    if (currentPage.value <= 4) {
+      pages.push(1, 2, 3, "...", totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 3) {
+      pages.push(
+        1,
+        "...",
+        totalPages.value - 4,
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push(
+        1,
+        "...",
+        currentPage.value - 1,
+        currentPage.value,
+        currentPage.value + 1,
+        "...",
+        totalPages.value
+      );
+    }
+  }
+  return pages;
+});
+
+function goToPage(page: number) {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+  refetch();
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+    refetch();
+  }
+}
+
+function prevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    refetch();
+  }
+}
 
 const handleCancel = () => {
   // Clear the job ID which will trigger the watcher to clean up
@@ -398,63 +528,69 @@ const handleDataSubmit = (data: any) => {
   );
 };
 
-const {
-  paginatedServices,
-  currentPage,
-  totalPages,
-  categories,
-  searchQuery,
-  filteredServices,
-  selectedCategory,
-  verificationStatuses,
-  selectedVerification,
-  nextPage,
-  prevPage,
-  goToPage,
-  refetch,
-} = useServices();
-
 const selectedIds = ref<string[]>([]);
 const deleteDialogOpen = ref<boolean>(false);
 const jobId = ref<string>("");
 
 const { data: progressData, refetch: progressRefetch } = UseProgress(jobId);
 
-let toastId: string | number | undefined;
+const progressState = ref({
+  show: false,
+  progress: 0,
+  status: "loading" as "loading" | "success" | "error",
+  title: "Processing",
+  message: "Please wait...",
+});
 
+// Watch for progress changes (simpler version)
 watch(
   () => progressData.value?.progress,
   (newProgress) => {
     if (newProgress == null) return;
 
     if (newProgress < 100) {
-      if (!toastId) {
-        toastId = toast.custom(
-          () => h(ProgressToast, { progress: newProgress }),
-          {
-            duration: Infinity,
-          }
-        );
-      } else {
-        toast.custom(() => h(ProgressToast, { progress: newProgress }), {
-          id: toastId,
-          duration: Infinity,
-        });
-      }
+      progressState.value = {
+        show: true,
+        progress: newProgress,
+        status: "loading",
+        title: "Re-running Services",
+        message: "Please wait while we re-run the services...",
+      };
     } else {
-      if (toastId) toast.dismiss(toastId);
-      toast.success("Re-run complete!", {
-        style: {
-          background: "#F0FDF4",
-          border: "1px solid #BBF7D0",
-          color: "#16A34A",
-        },
-      });
+      progressState.value = {
+        show: true,
+        progress: 100,
+        status: "success",
+        title: "Complete!",
+        message: "Re-run complete! Services have been updated.",
+      };
+
       selectedIds.value = [];
       refetch();
     }
   }
 );
+
+// Cancel handler
+const handleProgressCancel = async () => {
+  try {
+    await cancelJob(jobId);
+    progressState.value = {
+      show: true,
+      progress: progressData.value?.progress || 0,
+      status: "error",
+      title: "Cancelled",
+      message: "Operation has been cancelled.",
+    };
+  } catch (error) {
+    console.error("Failed to cancel:", error);
+  }
+};
+
+// Close handler
+const handleProgressClose = () => {
+  progressState.value.show = false;
+};
 
 const {
   mutate: rerunMutation,
@@ -484,30 +620,6 @@ function handleRerun() {
     },
   });
 }
-
-const paginationPages = computed(() => {
-  const pages: (number | string)[] = [];
-  const total = typeof totalPages?.value === "number" ? totalPages.value : 1;
-  const current =
-    typeof currentPage?.value === "number" ? currentPage.value : 1;
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) pages.push(i);
-    return pages;
-  }
-  pages.push(1);
-  if (current > 4) pages.push("...");
-  for (
-    let i = Math.max(2, current - 2);
-    i <= Math.min(total - 1, current + 2);
-    i++
-  ) {
-    if (i === 1 || i === total) continue;
-    pages.push(i);
-  }
-  if (current < total - 3) pages.push("...");
-  pages.push(total);
-  return pages;
-});
 onUnmounted(() => {
   progressWS.disconnect();
 });

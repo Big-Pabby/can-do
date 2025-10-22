@@ -1,20 +1,39 @@
 <template>
   <div class="md:space-y-4">
+    <SetLocationModal
+      v-model="showLocationModal"
+      :initial-address="currentAddress"
+      @save="handleLocationSave"
+      @close="handleLocationClose"
+    />
     <div
       class="w-full fixed top-0 left-0 px-4 py-4 flex justify-between items-center z-30"
     >
-      <div
-        @click="showModal = true"
-        :class="`w-[48px] h-[48px] rounded-full ${
-          toggleType === 'list'
-            ? 'bg-white text-[#12A0D8]'
-            : 'bg-[#12A0D8] text-white'
-        }  flex items-center justify-center `"
-      >
-        <Icon icon="mage:filter" width="24" height="24" />
+      <div class="flex gap-2">
+        <div
+          @click="showModal = true"
+          :class="`w-[48px] shadow-md cursor-pointer h-[48px] rounded-full ${
+            toggleType === 'list'
+              ? 'bg-white text-[#12A0D8]'
+              : 'bg-[#12A0D8] text-white'
+          }  flex items-center justify-center `"
+        >
+          <Icon icon="mage:filter" width="24" height="24" />
+        </div>
+        <div
+          @click="showLocationModal = true"
+          :class="`w-[48px] h-[48px] cursor-pointer shadow-md rounded-full ${
+            toggleType === 'list'
+              ? 'bg-white text-[#12A0D8]'
+              : 'bg-[#12A0D8] text-white'
+          }  flex items-center justify-center `"
+        >
+          <Icon icon="akar-icons:location" width="20" height="20" />
+        </div>
       </div>
+
       <div
-        :class="`rounded-full flex items-center gap-2 border ${
+        :class="`rounded-full shadow-md flex items-center gap-2 border ${
           toggleType === 'list' ? 'bg-white ' : 'bg-[#12A0D8] '
         } p-1`"
       >
@@ -130,7 +149,7 @@
           </div>
           <div
             @click="
-               selectedDistance = '5';
+              selectedDistance = '5';
               toggleType = 'list';
               pageSize = 12;
             "
@@ -173,7 +192,7 @@
             @locationSelected="handleLocationSelected"
           />
         </div>
-        <div class="md:w-4/12 md:block hidden space-y-4 h-full overflow-y-auto">
+        <!-- <div class="md:w-4/12 md:block hidden space-y-4 h-full overflow-y-auto">
           <h4 class="font-medium">Nearby Services</h4>
           <div v-for="service in sortedServices.slice(0, 10)" :key="service.id">
             <ServiceCard
@@ -182,7 +201,7 @@
               :isSelected="service.id === selectedService?.id"
             />
           </div>
-        </div>
+        </div> -->
       </div>
       <div
         v-else-if="toggleType === 'list'"
@@ -254,6 +273,33 @@ import { Icon } from "@iconify/vue";
 definePageMeta({
   layout: "user",
 });
+const showLocationModal = ref(false);
+const currentAddress = ref("");
+
+const handleLocationSave = (data: {
+  address: string;
+  lat?: number;
+  lng?: number;
+  district?: string;
+}) => {
+  console.log("Location saved:", data);
+  currentAddress.value = data.address;
+
+  // Save to local storage or API
+  useLocationStore().setLocation(
+    data.lat || 0,
+    data.lng || 0,
+    data.address,
+    data.district || ""
+  );
+
+  // Optional: Fetch nearby services
+  // await fetchNearbyServices(data.latitude, data.longitude)
+};
+
+const handleLocationClose = () => {
+  console.log("Modal closed");
+};
 
 const selectedCoordinates = computed(() => {
   return {

@@ -29,7 +29,7 @@ export interface Service {
     evidence_links: string[];
     verification_status: string;
     reviews: number;
-    rating: number;
+    rating: number ;
     lat: string;
     lng: string;
     confidence: number;

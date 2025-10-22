@@ -21,6 +21,7 @@ export const UseMapServices = (
     search?: Ref<string> | ComputedRef<string> | string;
     category?: Ref<string> | ComputedRef<string> | string;
     distance?: Ref<string> | ComputedRef<string> | string;
+    district?: Ref<string> | ComputedRef<string> | string;
     excludedAreas?:
       | Ref<string[] | null>
       | ComputedRef<string[] | null>
@@ -56,6 +57,7 @@ export const UseMapServices = (
       const search = normalizeStr(getVal<string>(opts?.search));
       const category = normalizeStr(getVal<string>(opts?.category));
       const distance = normalizeStr(getVal<string>(opts?.distance));
+      const district = normalizeStr(getVal<string>(opts?.district));
       const excluded = normalizeArr(
         getVal<string[] | null>(opts?.excludedAreas)
       );
@@ -69,6 +71,7 @@ export const UseMapServices = (
         search,
         category,
         distance,
+        district,
         excluded.length > 0 ? excluded.join(",") : undefined,
       ];
     }),
@@ -80,6 +83,7 @@ export const UseMapServices = (
       const searchRaw = normalizeStr(getVal<string>(opts?.search));
       const categoryRaw = normalizeStr(getVal<string>(opts?.category));
       const distanceRaw = normalizeStr(getVal<string>(opts?.distance));
+      const districtRaw = normalizeStr(getVal<string>(opts?.district));
       const excludedArr = normalizeArr(
         getVal<string[] | null>(opts?.excludedAreas)
       );
@@ -98,6 +102,8 @@ export const UseMapServices = (
         );
       if (distanceRaw)
         params.push(`distance=${encodeURIComponent(distanceRaw)}`);
+      if (districtRaw)
+        params.push(`district=${encodeURIComponent(districtRaw)}`);
       if (searchRaw) params.push(`search=${encodeURIComponent(searchRaw)}`);
 
       const url = `v1/services/?${params.join("&")}`;

@@ -1,5 +1,15 @@
 <template>
   <div class="space-y-4">
+    <RerunNotification
+      v-if="progressState.show"
+      :progress="progressState.progress"
+      :status="progressState.status"
+      :title="progressState.title"
+      :message="progressState.message"
+      :cancelable="progressState.status === 'loading'"
+      @cancel="handleProgressCancel"
+      @close="handleProgressClose"
+    />
     <nuxt-link
       to="/services"
       class="flex gap-3 items-center font-medium text-[#374151]"
@@ -48,17 +58,7 @@
               </option>
             </select>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Subcategories</label>
-            <input
-              v-model="editForm.sub_category"
-              type="text"
-              class="w-full border rounded-[10px] px-3 py-3.5"
-            />
-            <div class="text-xs text-muted-foreground mt-1">
-              Comma separated
-            </div>
-          </div>
+          
           <div>
             <label class="block text-sm font-medium mb-1">Address</label>
             <input
@@ -118,15 +118,41 @@
         </form>
       </div>
     </div>
-    <div class="border border-[#F3F4F6] rounded-[16px] bg-white p-6 space-y-6">
+    <div class="border border-[#F3F4F6] rounded-[16px] bg-white p-4 space-y-6">
       <div
-        class="flex justify-between md:flex-row flex-col gap-4 md:items-center"
+        class="flex border border-[#F3F4F6] rounded-[12px] p-4 justify-between md:flex-row flex-col gap-4 md:items-center"
       >
         <div class="space-y-3">
-          <h1 class="text-3xl font-bold text-[#12A0D8]">About Service</h1>
-          <p class="text-[#6B7280]">
-            Here is the information about this service
-          </p>
+          <h1
+            class="md:text-2xl text-xl font-bold md:text-gray-900 text-white mb-2"
+          >
+            {{ service?.details.name }}
+          </h1>
+          <div class="flex items-center flex-wrap gap-2 text-sm">
+            <div
+              class="flex bg-[#FFFBEB] border py-[6px] rounded-full px-[8px] border-[#FDE68A] items-center gap-2"
+            >
+              <div class="flex">
+                <template v-for="i in 5" :key="i">
+                  <svg
+                    class="w-4 h-4 transition-colors duration-150"
+                    :class="getStarFill(service?.details.rating, i)"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                    />
+                  </svg>
+                </template>
+              </div>
+              <div class="flex items-center gap-1 text-sm">
+                <span class="text-[#D97706] font-medium">
+                  ({{ service?.details.rating }})
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="flex gap-4 items-center">
           <div>
@@ -165,9 +191,16 @@
       </div>
       <div class="border-b border-[#E5E7EB] flex gap-6">
         <div
-          class="font-medium border-b-[3px] text-[#12A0D8] border-[#12A0D8] p-2 cursor-pointer"
+        @click="toggleType = 'Info'"
+           :class="` ${toggleType === 'Info' ? 'text-[#12A0D8] border-[#12A0D8] border-b-[3px]' : 'text-[#6B7280]'} font-medium hover:border-b-[3px] hover:text-[#12A0D8] hover:border-[#12A0D8]  p-2 cursor-pointer`"
         >
           Service Information
+        </div>
+        <div
+         @click="toggleType = 'Timeline'"
+          :class="` ${toggleType === 'Timeline' ? 'text-[#12A0D8] border-[#12A0D8] border-b-[3px]' : 'text-[#6B7280]'} font-medium hover:border-b-[3px] hover:text-[#12A0D8] hover:border-[#12A0D8]  p-2 cursor-pointer`"
+        >
+          Change Timeline
         </div>
         <div
           class="font-medium hover:border-b-[3px] hover:text-[#12A0D8] hover:border-[#12A0D8] text-[#6B7280] p-2 cursor-pointer"
@@ -175,150 +208,177 @@
           Users Feedback
         </div>
       </div>
-      <div
-        v-if="isLoading"
-        class="text-center py-8 animate-pulse text-lg text-muted-foreground"
-      >
-        Loading service details...
-      </div>
-      <div
-        v-else-if="isError"
-        class="text-center py-8 text-red-500 font-semibold"
-      >
-        Error loading service.
-      </div>
-
-      <div
-        v-else-if="service"
-        class="flex gap-6 justify-between md:flex-row flex-col"
-      >
-        <!-- Left: main service card (spans 2 cols on md+) -->
+      <div v-if="toggleType === 'Info'">
         <div
-          class="md:w-7/12 w-full border bg-[#FEFEFE] rounded-2xl p-6 space-y-4 relative"
+          v-if="isLoading"
+          class="text-center py-8 animate-pulse text-lg text-muted-foreground"
         >
-          <!-- Card Header -->
-          <!-- <span
-            :class="{
-              'inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors': true,
-              'bg-green-50 text-green-900 border-green-200':
-                service.details.verification_status === 'Verified',
-              'bg-yellow-50 text-yellow-900 border-yellow-200':
-                service.details.verification_status === 'Pending',
-              'bg-red-50 text-red-900 border-red-200':
-                service.details.verification_status === 'Rejected',
-            }"
-          >
-            {{ service.details.verification_status }}
-          </span> -->
+          Loading service details...
+        </div>
+        <div
+          v-else-if="isError"
+          class="text-center py-8 text-red-500 font-semibold"
+        >
+          Error loading service.
+        </div>
 
-          <div
-            class="flex md:flex-row flex-col-reverse md:items-center items-start justify-between gap-4 mb-2"
-          >
-            <div class="flex items-center gap-3">
-              <div>
-                <h1 class="text-2xl font-bold leading-tight">
-                  {{ service.details.name }}
-                </h1>
-                <p class="text-muted-foreground text-sm">
-                  {{ service.details.org_name }}
+        <div v-else-if="service" class="grid md:grid-cols-2 grid-cols-1 gap-6">
+          <!-- Left: main service card (spans 2 cols on md+) -->
+          <div class="space-y-6 md:p-0 p-4">
+            <!-- Service Information -->
+            <div class="space-y-1">
+              <h2 class="text-base font-medium text-gray-900 mb-4">
+                Service Information
+              </h2>
+              <div
+                class="bg-white border border-[#F3F4F6] rounded-lg p-4 space-y-2 text-sm font-medium text-[#4B5563]"
+              >
+                <p class="pb-2">
+                  {{
+                    service.details.description || "No description available."
+                  }}
                 </p>
+
+                <hr />
+                <div class="space-y-1 py-2">
+                  <h5 class="text-xs text-[#4B5563]">Service Category</h5>
+                  <span class="text-sm font-medium text-[#111827]">
+                    {{ service.details.category }}
+                  </span>
+                </div>
+                <hr />
+
+                <div class="space-y-1 py-2">
+                  <h5 class="text-xs text-[#4B5563]">Address</h5>
+                  <p class="text-sm font-medium text-[#111827]">
+                    {{ service.details.address }}
+                  </p>
+                </div>
+                <hr />
+                <div class="space-y-4">
+                  <div class="flex gap-2 items-center">
+                    <div
+                      class="w-[30px] h-[30px] flex items-center justify-center bg-[#FAFAED] text-[#B0B72E] rounded-[8px]"
+                    >
+                      <Icon icon="solar:phone-outline" width="20" height="20" />
+                    </div>
+                    <div class="space-y-1">
+                      <h4 class="text-xs text-[#4B5563]">Phone</h4>
+                      <p class="text-sm font-medium">
+                        {{
+                          service.details.phone_number ||
+                          "Phone number not available"
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                  <hr />
+                  <div class="flex gap-2 items-center">
+                    <div
+                      class="w-[30px] h-[30px] flex items-center justify-center bg-[#FAFAED] text-[#B0B72E] rounded-[8px]"
+                    >
+                      <Icon
+                        icon="material-symbols:mail-outline-sharp"
+                        width="20"
+                        height="20"
+                      />
+                    </div>
+                    <div class="space-y-1">
+                      <h4 class="text-xs text-[#4B5563]">Email</h4>
+                      <p class="text-sm font-medium">
+                        {{
+                          service.details.email === "null"
+                            ? "Email not available"
+                            : service.details.email
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                  <hr />
+                  <div class="flex gap-2 items-center">
+                    <div
+                      class="w-[30px] h-[30px] flex items-center justify-center bg-[#FAFAED] text-[#B0B72E] rounded-[8px]"
+                    >
+                      <Icon icon="akar-icons:globe" width="20" height="20" />
+                    </div>
+                    <div class="flex-1 space-y-1">
+                      <h4 class="text-xs text-[#4B5563]">Website</h4>
+                      <a
+                        :href="service.details.website"
+                        target="_blank"
+                        class="text-sm underline max-w-[250px] text-[#12A0D8] font-medium line-clamp-1"
+                      >
+                        {{ service.details.website || "website not available" }}
+                      </a>
+                    </div>
+                  </div>
+                  <hr />
+                </div>
               </div>
             </div>
-          </div>
-          <hr />
 
-          <!-- Description -->
-          <div class="mb-6">
-            <h2 class="font-semibold text-lg mb-2 text-primary">Description</h2>
-            <p class="text-base text-muted-foreground">
-              {{ service.details.description }}
-            </p>
+            <!-- Contact Information -->
           </div>
-          <hr />
 
-          <!-- Categories -->
-          <div class="mb-6">
-            <h2 class="font-semibold text-lg mb-2 text-primary">Categories</h2>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="cat in categoriesArr"
-                :key="cat"
-                class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold bg-secondary text-secondary-foreground shadow"
-                >{{ cat }}</span
+          <!-- Right: timeline card -->
+          <div class="lg:col-span-1 space-y-6 md:p-0 p-4">
+            <!-- Opening Hours -->
+            <div class="space-y-1">
+              <h2 class="text-base font-medium text-gray-900 mb-4">
+                Opening Hours
+              </h2>
+              <div
+                class="bg-white border border-[#F3F4F6] rounded-lg p-4 space-y-2 text-sm font-medium text-[#4B5563]"
               >
-            </div>
-          </div>
-
-          <hr />
-          <div class="mb-6">
-            <h2 class="font-semibold text-lg mb-2 text-primary">
-              Sub-Categories
-            </h2>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="cat in subcategoriesArr"
-                :key="cat"
-                class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold bg-secondary text-secondary-foreground shadow"
-                >{{ cat }}</span
-              >
-            </div>
-          </div>
-
-          <hr />
-          <!-- Info Grid -->
-          <div class="grid grid-cols-1 gap-6 mb-6">
-            <div class="flex flex-col items-start gap-2">
-              <span class="font-semibold">Address:</span>
-              <span class="text-muted-foreground">{{
-                service.details.address
-              }}</span>
-            </div>
-            <hr />
-            <div class="flex flex-col items-start gap-2">
-              <span class="font-semibold">Hours:</span>
-              <span class="text-muted-foreground">{{
-                service.details.opening_hours
-              }}</span>
-            </div>
-            <hr />
-            <div class="flex flex-col items-start gap-2">
-              <span class="font-semibold">Contact:</span>
-              <div class="flex flex-wrap gap-4 text-muted-foreground">
-                <p v-if="service.details.phone_number">
-                  Phone Number: {{ service.details.phone_number }}
-                </p>
-                <p v-if="service.details.email">
-                  Phone Number: {{ service.details.email }}
-                </p>
+                <div
+                  v-for="(item, index) in hours"
+                  :key="index"
+                  class="space-y-4"
+                >
+                  <div class="flex gap-2 items-start">
+                    <Icon
+                      icon="mdi:clock-outline"
+                      width="20"
+                      height="20"
+                      style="color: #b0b72e"
+                    />
+                    <p class="text-sm flex-1">{{ item }}</p>
+                  </div>
+                  <hr v-if="index < hours.length - 1" />
+                </div>
               </div>
             </div>
-            <hr />
-            <div class="flex flex-col items-start gap-2">
-              <span class="font-semibold">Eligibility:</span>
-              <span class="text-muted-foreground">{{
-                service.details.eligibility_criteria
-              }}</span>
-            </div>
-          </div>
 
-          <!-- Ratings & Reviews -->
-          <div class="flex items-center gap-6 border-t pt-6">
-            <div class="flex items-center gap-2">
-              <span class="text-yellow-400">★</span>
-              <span class="font-semibold">{{ service.details.rating }}</span>
-              <span class="text-muted-foreground"
-                >({{ service.details.reviews }} reviews)</span
+            <!-- Eligibility Criteria -->
+            <div class="space-y-1">
+              <h2 class="text-base font-medium text-gray-900 mb-4">
+                Eligibility Criteria
+              </h2>
+              <div
+                class="bg-white border border-[#F3F4F6] rounded-lg p-4 space-y-2 text-sm font-medium text-[#4B5563]"
               >
+                <div v-for="(item, index) in eligibility" :key="index">
+                  <div class="flex gap-2 items-start">
+                    <Icon
+                      icon="icon-park-outline:check-one"
+                      width="20"
+                      height="20"
+                      style="color: #b0b72e"
+                    />
+                    <p class="text-sm flex-1">{{ item }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- Right: timeline card -->
-        <aside
-          class="md:w-5/12 bg-[#FEFEFE] rounded-2xl p-6 border space-y-4 h-fit"
-        >
-          <h3 class="text-lg font-semibold">Change Timeline</h3>
-          <hr />
+        <div v-else class="text-center py-8 text-muted-foreground">
+          Service not found.
+        </div>
+      </div>
+      <div v-else-if="toggleType === 'Timeline'">
+        <aside class=" space-y-4 h-fit">
+          
 
           <div
             v-if="isChangesLoading"
@@ -372,9 +432,6 @@
           </div>
         </aside>
       </div>
-      <div v-else class="text-center py-8 text-muted-foreground">
-        Service not found.
-      </div>
     </div>
   </div>
 </template>
@@ -401,44 +458,67 @@ const route = useRoute();
 const id = route.params.id as string;
 
 const jobId = ref<string>("");
+const toggleType = ref<string>("Info");
 
 const { data: progressData, refetch: progressRefetch } = UseProgress(jobId);
 
-let toastId: string | number | undefined;
+const progressState = ref({
+  show: false,
+  progress: 0,
+  status: "loading" as "loading" | "success" | "error",
+  title: "Processing",
+  message: "Please wait...",
+});
 
+// Watch for progress changes (simpler version)
 watch(
   () => progressData.value?.progress,
   (newProgress) => {
     if (newProgress == null) return;
 
     if (newProgress < 100) {
-      if (!toastId) {
-        toastId = toast.custom(
-          () => h(ProgressToast, { progress: newProgress }),
-          {
-            duration: Infinity,
-          }
-        );
-      } else {
-        toast.custom(() => h(ProgressToast, { progress: newProgress }), {
-          id: toastId,
-          duration: Infinity,
-        });
-      }
+      progressState.value = {
+        show: true,
+        progress: newProgress,
+        status: "loading",
+        title: "Re-running Services",
+        message: "Please wait while we re-run the services...",
+      };
     } else {
-      if (toastId) toast.dismiss(toastId);
-      toast.success("Re-run complete!", {
-        style: {
-          background: "#F0FDF4",
-          border: "1px solid #BBF7D0",
-          color: "#16A34A",
-        },
-      });
+      progressState.value = {
+        show: true,
+        progress: 100,
+        status: "success",
+        title: "Complete!",
+        message: "Re-run complete! Services have been updated.",
+      };
+
+     
       refetch();
-      refetchChanges();
     }
   }
 );
+
+// Cancel handler
+const handleProgressCancel = async () => {
+  try {
+    await cancelJob(jobId);
+    progressState.value = {
+      show: true,
+      progress: progressData.value?.progress || 0,
+      status: "error",
+      title: "Cancelled",
+      message: "Operation has been cancelled.",
+    };
+  } catch (error) {
+    console.error("Failed to cancel:", error);
+  }
+};
+
+// Close handler
+const handleProgressClose = () => {
+  progressState.value.show = false;
+};
 
 // Edit modal state
 const showEdit = ref(false);
@@ -448,7 +528,6 @@ const editForm = ref<{ [key: string]: string }>({
   address: "",
   phone_number: "",
   category: "",
-  sub_category: "",
   opening_hours: "",
   eligibility_criteria: "",
 });
@@ -471,6 +550,25 @@ const { mutate: rerunMutation, isPending: rerunPending } =
 const service = computed<Service | null>(() => {
   return data?.value ?? null;
 });
+
+const eligibility = computed(() => {
+  return service.value?.details.eligibility_criteria
+    ? service.value.details.eligibility_criteria
+        .split(";")
+        .map((item) => item.trim())
+    : [];
+});
+
+const hours = computed(() => {
+  return service.value?.details.opening_hours
+    ? service.value.details.opening_hours.split(";").map((item) => item.trim())
+    : [];
+});
+function getStarFill(rating: number | undefined, position: number): string {
+  if (!rating) return "text-gray-300";
+  const roundedRating = Math.round(rating);
+  return position <= roundedRating ? "text-yellow-400" : "text-gray-300";
+}
 function handleRerun() {
   const selectedIds = [id];
   rerunMutation(selectedIds, {
@@ -500,12 +598,11 @@ watch(showEdit, (val) => {
     editForm.value = {
       name: d.name ?? "",
       description: d.description ?? "",
-      categories: d.category ?? "",
-      sub_category: d.subcategories ?? "",
+      category: d.category ?? "",
       address: d.address ?? "",
-      phone: d.phone ?? "",
-      hours: d.opening_hours ?? "",
-      eligibility: d.eligibility_criteria ?? "",
+      phone_number: d.phone_number ?? "",
+      opening_hours: d.opening_hours ?? "",
+      eligibility_criteria: d.eligibility_criteria ?? "",
     };
     editError.value = "";
     editSuccess.value = false;

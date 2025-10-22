@@ -202,7 +202,7 @@
               <p class="text-sm text-[#111827]">
                 Tap a category below to get instant support.
               </p>
-              <div class="flex flex-wrap items-center justify-center gap-4">
+              <div class="md:w-9/12 mx-auto w-full flex flex-wrap items-center justify-center gap-4">
                 <div
                   v-for="(value, index) in categories"
                   :key="index"
@@ -316,7 +316,6 @@ import { Icon } from "@iconify/vue";
 import { useLocationStore } from "~/store/location";
 import { UseChatBot } from "./hooks";
 import type { Service } from "#imports";
-import { useUpload } from "../hooks";
 
 definePageMeta({
   layout: "user",
@@ -428,7 +427,6 @@ onBeforeUnmount(() => {
   window.removeEventListener("beforeunload", saveCurrentChatToHistory);
 });
 
-// Auto-scroll to bottom when new messages arrive
 watch(
   () => messages.value.length,
   () => {

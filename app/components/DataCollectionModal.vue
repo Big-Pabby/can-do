@@ -14,7 +14,7 @@
           <!-- Close Button -->
           <button
             @click="closeModal"
-            class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -34,7 +34,7 @@
           </p>
 
           <!-- District Selection -->
-          <div class="mb-4">
+          <div class="mb-4" v-click-outside="closeDropdown">
             <div class="flex items-center justify-between mb-2">
               <label class="block text-sm font-medium text-gray-700">
                 Select Local Authority
@@ -42,27 +42,36 @@
               <button
                 v-if="selectedDistricts.length > 0"
                 @click="clearSelection"
-                class="text-xs text-[#DC2626] hover:underline font-medium"
+                class="text-xs text-[#DC2626] hover:underline font-medium transition-colors"
               >
                 Clear All
               </button>
             </div>
             <div class="relative">
               <button
-                @click="showDistrictDropdown = !showDistrictDropdown"
-                class="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
+                ref="dropdownButton"
+                @click="toggleDropdown"
+                class="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between hover:border-gray-400 transition-colors"
+                :class="{ 'ring-2 ring-blue-500': showDistrictDropdown }"
               >
                 <span
-                  :class="selectedDistricts.length > 0 ? 'text-gray-700' : 'text-gray-400'"
+                  :class="
+                    selectedDistricts.length > 0
+                      ? 'text-gray-700'
+                      : 'text-gray-400'
+                  "
                 >
                   {{
                     selectedDistricts.length > 0
-                      ? `${selectedDistricts.length} district${selectedDistricts.length > 1 ? 's' : ''} selected`
-                      : "Local authority"
+                      ? `${selectedDistricts.length} district${
+                          selectedDistricts.length > 1 ? "s" : ""
+                        } selected`
+                      : "Select local authority"
                   }}
                 </span>
                 <svg
-                  class="w-5 h-5 text-gray-400"
+                  class="w-5 h-5 text-gray-400 transition-transform"
+                  :class="{ 'rotate-180': showDistrictDropdown }"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -75,80 +84,106 @@
               </button>
 
               <!-- District Dropdown -->
-              <div
-                v-if="showDistrictDropdown"
-                class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg"
-              >
-                <!-- Search Input -->
-                <div class="p-2 border-b border-gray-200">
-                  <div class="relative">
-                    <input
-                      v-model="searchQuery"
-                      type="text"
-                      placeholder="Search districts..."
-                      class="w-full px-3 py-2 pl-9 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      @click.stop
-                    />
-                    <svg
-                      class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <!-- Select All Option -->
+              <transition name="dropdown">
                 <div
-                  v-if="filteredDistricts.length > 0"
-                  class="px-4 py-2 border-b border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center"
-                  @click="toggleSelectAll"
+                  v-if="showDistrictDropdown"
+                  class="fixed z-[60] bg-white border border-gray-300 rounded-lg shadow-lg"
+                  :style="dropdownStyle"
                 >
-                  <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    :indeterminate="isIndeterminate"
-                    class="mr-2"
-                    readonly
-                  />
-                  <span class="font-medium text-gray-700">Select All</span>
-                </div>
+                  <!-- Search Input -->
+                  <div class="p-2 border-b border-gray-200">
+                    <div class="relative">
+                      <input
+                        ref="searchInput"
+                        v-model="searchQuery"
+                        type="text"
+                        placeholder="Search districts..."
+                        class="w-full px-3 py-2 pl-9 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        @click.stop
+                      />
+                      <svg
+                        class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                      <button
+                        v-if="searchQuery"
+                        @click="searchQuery = ''"
+                        class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
 
-                <!-- Districts List -->
-                <div class="max-h-48 overflow-y-auto">
+                  <!-- Select All Option -->
                   <div
-                    v-for="district in filteredDistricts"
-                    :key="district"
-                    @click="toggleDistrict(district)"
-                    class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                    v-if="filteredDistricts.length > 0"
+                    class="px-4 py-2 border-b border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center transition-colors"
+                    @click="toggleSelectAll"
                   >
                     <input
                       type="checkbox"
-                      :checked="selectedDistricts.includes(district)"
-                      class="mr-2"
-                      readonly
+                      :checked="isAllSelected"
+                      :indeterminate="isIndeterminate"
+                      class="mr-2 cursor-pointer"
+                      @click.stop="toggleSelectAll"
                     />
-                    <span>{{ district }}</span>
+                    <span class="font-medium text-gray-700">Select All</span>
                   </div>
-                  <div
-                    v-if="filteredDistricts.length === 0"
-                    class="px-4 py-3 text-sm text-gray-500 text-center"
-                  >
-                    No districts found
+
+                  <!-- Districts List -->
+                  <div class="max-h-48 overflow-y-auto">
+                    <div
+                      v-for="district in filteredDistricts"
+                      :key="district"
+                      @click="toggleDistrict(district)"
+                      class="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        :checked="selectedDistricts.includes(district)"
+                        class="mr-2 cursor-pointer"
+                        @click.stop="toggleDistrict(district)"
+                      />
+                      <span class="text-gray-700">{{ district }}</span>
+                    </div>
+                    <div
+                      v-if="filteredDistricts.length === 0"
+                      class="px-4 py-3 text-sm text-gray-500 text-center"
+                    >
+                      No districts found
+                    </div>
                   </div>
                 </div>
-              </div>
+              </transition>
             </div>
 
             <!-- Selected Districts Display -->
-            <div v-if="selectedDistricts.length > 0" class="mt-3 flex flex-wrap gap-2">
+            <transition-group
+              name="tag"
+              tag="div"
+              v-if="selectedDistricts.length > 0"
+              class="mt-3 flex flex-wrap gap-2"
+            >
               <span
                 v-for="district in selectedDistricts"
                 :key="district"
@@ -157,56 +192,32 @@
                 {{ district }}
                 <button
                   @click="removeDistrict(district)"
-                  class="ml-2 text-[#12A0D8] hover:text-blue-900"
+                  class="ml-2 text-[#12A0D8] hover:text-blue-900 transition-colors"
                 >
                   ×
                 </button>
               </span>
-            </div>
+            </transition-group>
           </div>
-
-          <!-- Radius Input -->
-          <!-- <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Radius (in km)
-            </label>
-            <div class="relative">
-              <input
-                v-model.number="radius"
-                type="number"
-                min="1"
-                step="1"
-                placeholder="Enter radius in kilometers"
-                class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <div class="absolute right-3 top-2.5 text-gray-400 text-sm">
-                km
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">
-              Specify the search radius from the selected districts
-            </p>
-          </div> -->
 
           <!-- Action Buttons -->
           <div class="flex gap-3 mt-12">
             <button
               @click="closeModal"
-              class="flex-1 px-4 py-2 border border-[#B0B72E] text-[#B0B72E] bg-[#FAFAED] font-medium transition-colors rounded-full"
+              class="flex-1 px-4 py-2 border border-[#B0B72E] text-[#B0B72E] bg-[#FAFAED] font-medium transition-colors rounded-full hover:bg-[#F5F5E6]"
             >
               Close
             </button>
             <button
-              :disabled="loading || selectedDistricts.length === 0 || !radius"
+              :disabled="loading || selectedDistricts.length === 0"
               @click="pullData"
-              class="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white rounded-full bg-[#12A0D8] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white rounded-full bg-[#12A0D8] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0E8BC0] disabled:hover:bg-[#12A0D8]"
             >
               <Icon
                 v-if="loading"
-                icon="codex:loader"
+                icon="eos-icons:loading"
                 width="20"
                 height="20"
-                style="color: #fff"
               />
               Pull Data
             </button>
@@ -219,8 +230,7 @@
 
 <script setup>
 import { Icon } from "@iconify/vue";
-import { ref, computed } from "vue";
-import { UseDistrict } from "~/pages/services/hooks";
+import { ref, computed, watch, nextTick } from "vue";
 
 const props = defineProps({
   isOpen: {
@@ -231,9 +241,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  data: {
+    type: Array,
+    default: [],
+  },
 });
-
-const { data, isLoading } = UseDistrict();
 
 const emit = defineEmits(["close", "submit"]);
 
@@ -241,13 +253,38 @@ const showDistrictDropdown = ref(false);
 const selectedDistricts = ref([]);
 const radius = ref(10);
 const searchQuery = ref("");
+const searchInput = ref(null);
+const dropdownButton = ref(null);
+const dropdownStyle = ref({});
+
+// Update dropdown position when it opens
+const updateDropdownPosition = () => {
+  if (!dropdownButton.value) return;
+  
+  const rect = dropdownButton.value.getBoundingClientRect();
+  dropdownStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  };
+};
+
+// Watch for dropdown opening to focus search input
+watch(showDistrictDropdown, (newVal) => {
+  if (newVal) {
+    updateDropdownPosition();
+    nextTick(() => {
+      searchInput.value?.focus();
+    });
+  }
+});
 
 // Computed property to filter districts based on search query
 const filteredDistricts = computed(() => {
-  if (!data.value) return [];
-  if (!searchQuery.value) return data.value;
+  if (!props.data) return [];
+  if (!searchQuery.value) return props.data;
 
-  return data.value.filter((district) =>
+  return props.data.filter((district) =>
     district.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
@@ -267,6 +304,16 @@ const isIndeterminate = computed(() => {
   ).length;
   return selectedCount > 0 && selectedCount < filteredDistricts.value.length;
 });
+
+// Toggle dropdown
+const toggleDropdown = () => {
+  showDistrictDropdown.value = !showDistrictDropdown.value;
+};
+
+// Close dropdown
+const closeDropdown = () => {
+  showDistrictDropdown.value = false;
+};
 
 // Toggle a single district
 const toggleDistrict = (district) => {
@@ -318,20 +365,36 @@ const closeModal = () => {
 };
 
 const pullData = () => {
-  if (selectedDistricts.value.length === 0 || !radius.value) {
+  if (selectedDistricts.value.length === 0) {
     return;
   }
 
   const payload = {
-    districts: selectedDistricts.value, // Changed to plural and array
+    districts: selectedDistricts.value,
     radius: radius.value,
   };
   emit("submit", payload);
   closeModal();
 };
+
+// Click outside directive
+const vClickOutside = {
+  mounted(el, binding) {
+    el.clickOutsideEvent = (event) => {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value();
+      }
+    };
+    document.addEventListener("click", el.clickOutsideEvent);
+  },
+  unmounted(el) {
+    document.removeEventListener("click", el.clickOutsideEvent);
+  },
+};
 </script>
 
 <style scoped>
+/* Fade transition */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -340,6 +403,30 @@ const pullData = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Tag transition */
+.tag-enter-active,
+.tag-leave-active {
+  transition: all 0.3s ease;
+}
+
+.tag-enter-from,
+.tag-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
 }
 
 /* Hide number input arrows for webkit browsers */
@@ -359,5 +446,29 @@ input[type="checkbox"]:indeterminate {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");
   background-color: #3b82f6;
   border-color: #3b82f6;
+}
+
+/* Smooth scrollbar for dropdown list */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }
 </style>

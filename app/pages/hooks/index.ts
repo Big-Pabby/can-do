@@ -200,7 +200,7 @@ export function UseDeleteService() {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      queryClient.invalidateQueries({ queryKey: ["map_services"] });
     },
   });
 }
