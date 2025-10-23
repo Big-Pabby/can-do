@@ -39,7 +39,7 @@
         </p>
       </div>
       <button
-        class="bg-[#B0B72E] py-2.5 px-12 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        class="bg-[#B0B72E] py-2.5 px-4 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
         @click="isModalOpen = true"
       >
         Data Collection
@@ -52,25 +52,6 @@
         <span v-if="isPending">Re-running...</span>
         <span v-else>Re-run</span>
       </button>
-    </div>
-    <div class="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-4">
-      <div
-        v-for="(category, index) in categories"
-        :key="index"
-        class="flex flex-col items-center gap-2 p-4 border border-[#F3F4F6] rounded-[12px] bg-white"
-      >
-        <div
-          class="h-[52px] w-[52px] bg-[#E0E7FF] rounded-full flex items-center justify-center"
-        >
-          <span class="text-2xl">
-            {{ categoryEmojis[index] || "❓" }}
-          </span>
-        </div>
-        <p class="text-[#4B5563] text-xs line-clamp-1">{{ index }}</p>
-        <h4 class="text-[#111827] text-sm font-medium">
-          {{ category }} Services
-        </h4>
-      </div>
     </div>
     <!-- Filters -->
     <div
@@ -98,6 +79,26 @@
         />
       </div>
     </div>
+    <div class="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-4">
+      <div
+        v-for="(category, index) in categories"
+        :key="index"
+        class="flex flex-col items-center gap-2 p-4 border border-[#F3F4F6] rounded-[12px] bg-white"
+      >
+        <div
+          class="h-[52px] w-[52px] bg-[#E0E7FF] rounded-full flex items-center justify-center"
+        >
+          <span class="text-2xl">
+            {{ categoryEmojis[index] || "❓" }}
+          </span>
+        </div>
+        <p class="text-[#4B5563] text-xs line-clamp-1">{{ index }}</p>
+        <h4 class="text-[#111827] text-sm font-medium">
+          {{ category }} Services
+        </h4>
+      </div>
+    </div>
+
     <div class="bg-white rounded-[16px] px-4 space-y-4 py-4 lg:px-4">
       <div class="bg-white overflow-x-auto">
         <Table class="">
@@ -120,13 +121,97 @@
                   />
                 </div>
               </TableHead>
-              <TableHead><p class="text-left">Service Name</p> </TableHead>
-              <TableHead>Categories </TableHead>
-              <!-- <TableHead>Sub-Categories </TableHead> -->
-              <TableHead>Location </TableHead>
-              <TableHead>Rating </TableHead>
-              <TableHead>UpdatedAt </TableHead>
-              <TableHead> Action </TableHead>
+              <TableHead>
+                <div
+                  @click="handleSort('name')"
+                  class="text-left flex items-center gap-1 cursor-pointer hover:text-[#12A0D8]"
+                >
+                  <p>Service Name</p>
+                  <Icon
+                    v-if="sortBy === 'name'"
+                    :icon="
+                      sortOrder === 'desc'
+                        ? 'material-symbols:arrow-drop-down'
+                        : 'material-symbols:arrow-drop-up'
+                    "
+                    width="20"
+                    height="20"
+                  />
+                </div>
+              </TableHead>
+              <TableHead>
+                <div
+                  @click="handleSort('category')"
+                  class="flex items-center gap-1 cursor-pointer hover:text-[#12A0D8]"
+                >
+                  <p>Categories</p>
+                  <Icon
+                    v-if="sortBy === 'category'"
+                    :icon="
+                      sortOrder === 'desc'
+                        ? 'material-symbols:arrow-drop-down'
+                        : 'material-symbols:arrow-drop-up'
+                    "
+                    width="20"
+                    height="20"
+                  />
+                </div>
+              </TableHead>
+              <TableHead>
+                <div
+                  @click="handleSort('address')"
+                  class="flex items-center gap-1 cursor-pointer hover:text-[#12A0D8]"
+                >
+                  <p>Location</p>
+                  <Icon
+                    v-if="sortBy === 'address'"
+                    :icon="
+                      sortOrder === 'desc'
+                        ? 'material-symbols:arrow-drop-down'
+                        : 'material-symbols:arrow-drop-up'
+                    "
+                    width="20"
+                    height="20"
+                  />
+                </div>
+              </TableHead>
+              <TableHead>
+                <div
+                  @click="handleSort('rating')"
+                  class="flex items-center gap-1 cursor-pointer hover:text-[#12A0D8]"
+                >
+                  <p>Rating</p>
+                  <Icon
+                    v-if="sortBy === 'rating'"
+                    :icon="
+                      sortOrder === 'desc'
+                        ? 'material-symbols:arrow-drop-down'
+                        : 'material-symbols:arrow-drop-up'
+                    "
+                    width="20"
+                    height="20"
+                  />
+                </div>
+              </TableHead>
+              <TableHead>
+                <div
+                  @click="handleSort('date_updated')"
+                  class="flex items-center gap-1 cursor-pointer hover:text-[#12A0D8]"
+                >
+                  <p>UpdatedAt</p>
+                  <Icon
+                    v-if="sortBy === 'date_updated'"
+                    :icon="
+                      sortOrder === 'desc'
+                        ? 'material-symbols:arrow-drop-down'
+                        : 'material-symbols:arrow-drop-up'
+                    "
+                    width="20"
+                    height="20"
+                  />
+                </div>
+              </TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody class="text-sm">
@@ -365,7 +450,48 @@ const { data: categoriesData, isLoading: categoriesLoading } = UseCategories(
   selectedDistricts as any
 );
 const categories = computed(() => categoriesData.value || {});
-const services = computed(() => data.value?.results || []);
+const services = computed(() => {
+  const results = data.value?.results || [];
+  if (!sortBy.value) return results;
+
+  return [...results].sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortBy.value) {
+      case "name":
+        aValue = a.details?.name || "";
+        bValue = b.details?.name || "";
+        break;
+      case "category":
+        aValue = a.details?.category || "";
+        bValue = b.details?.category || "";
+        break;
+      case "address":
+        aValue = a.details?.address || "";
+        bValue = b.details?.address || "";
+        break;
+      case "rating":
+        aValue = parseFloat(a.details?.rating) || 0;
+        bValue = parseFloat(b.details?.rating) || 0;
+        break;
+      case "date_updated":
+        aValue = new Date(a.date_updated).getTime();
+        bValue = new Date(b.date_updated).getTime();
+        break;
+      default:
+        return 0;
+    }
+
+    if (typeof aValue === "string") {
+      const comparison = aValue.localeCompare(bValue);
+      return sortOrder.value === "asc" ? comparison : -comparison;
+    } else {
+      const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      return sortOrder.value === "asc" ? comparison : -comparison;
+    }
+  });
+});
 const categoryEmojis: Record<string, string> = {
   "Food & Nutrition": "🍎",
   "Shelter & Housing": "🏠",
@@ -534,6 +660,21 @@ const handleDataSubmit = (data: any) => {
 const selectedIds = ref<string[]>([]);
 const deleteDialogOpen = ref<boolean>(false);
 const jobId = ref<string>("");
+
+// Sorting state
+const sortBy = ref<string>("");
+const sortOrder = ref<"asc" | "desc">("desc");
+
+const handleSort = (column: string) => {
+  if (sortBy.value === column) {
+    // If clicking the same column, toggle order
+    sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+  } else {
+    // If clicking a new column, set it with desc order
+    sortBy.value = column;
+    sortOrder.value = "desc";
+  }
+};
 
 const { data: progressData, refetch: progressRefetch } = UseProgress(jobId);
 
