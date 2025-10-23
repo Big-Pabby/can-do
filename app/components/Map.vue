@@ -226,11 +226,16 @@ onMounted(async () => {
     zoomControl: false,
   }).setView([51.5074, -0.1278], 13);
 
-  window.L.tileLayer("https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}", {
-    attribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>',
-    maxZoom: 20,
-    subdomains: ["mt0", "mt1", "mt2", "mt3"],
-  }).addTo(map);
+  window.L.tileLayer(
+    "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=NlaOKzBzbBq7BPE9AGEg",
+    {
+      attribution:
+        '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 22,
+      tileSize: 512,
+      zoomOffset: -1,
+    }
+  ).addTo(map);
 
   // Add service markers
   props.services.forEach((service) => {
