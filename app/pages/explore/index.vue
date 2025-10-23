@@ -76,7 +76,7 @@
       v-model="showModal"
       :initial-category="''"
       :initial-sub-category="''"
-      :initial-distance="''"
+      :initial-distance="'5'"
       :initial-excluded-areas="[]"
       @apply="handleApply"
       @close="handleClose"
