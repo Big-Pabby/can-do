@@ -232,8 +232,6 @@ onMounted(async () => {
       attribution:
         '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 22,
-      tileSize: 512,
-      zoomOffset: -1,
     }
   ).addTo(map);
 
