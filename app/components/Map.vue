@@ -29,19 +29,41 @@ import { useLocationStore } from "~/store/location";
 
 const loadLeaflet = () => {
   return new Promise((resolve) => {
-    if (window.L) {
+    if (window.L && window.L.markerClusterGroup) {
       resolve(window.L);
       return;
     }
 
+    // Leaflet CSS
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
     document.head.appendChild(link);
 
+    // MarkerCluster CSS
+    const clusterCss = document.createElement("link");
+    clusterCss.rel = "stylesheet";
+    clusterCss.href =
+      "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css";
+    document.head.appendChild(clusterCss);
+
+    const clusterDefaultCss = document.createElement("link");
+    clusterDefaultCss.rel = "stylesheet";
+    clusterDefaultCss.href =
+      "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css";
+    document.head.appendChild(clusterDefaultCss);
+
+    // Leaflet JS
     const script = document.createElement("script");
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => resolve(window.L);
+    script.onload = () => {
+      // MarkerCluster JS (load after Leaflet)
+      const clusterScript = document.createElement("script");
+      clusterScript.src =
+        "https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js";
+      clusterScript.onload = () => resolve(window.L);
+      document.head.appendChild(clusterScript);
+    };
     document.head.appendChild(script);
   });
 };
@@ -226,6 +248,15 @@ onMounted(async () => {
     zoomControl: false,
   }).setView([51.5074, -0.1278], 13);
 
+  //  window.L.tileLayer(
+  //     "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+  //     {
+  //       attribution:
+  //         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  //       subdomains: "abcd",
+  //       maxZoom: 19,
+  //     }
+  //   ).addTo(map);
   window.L.tileLayer(
     "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=NlaOKzBzbBq7BPE9AGEg",
     {
@@ -235,12 +266,61 @@ onMounted(async () => {
     }
   ).addTo(map);
 
+  // Create marker cluster group with custom styling
+  const markers = window.L.markerClusterGroup({
+    chunkedLoading: true,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    maxClusterRadius: 50,
+    iconCreateFunction: function (cluster) {
+      const count = cluster.getChildCount();
+      let size = "small";
+      if (count > 10) size = "medium";
+      if (count > 20) size = "large";
+
+      return window.L.divIcon({
+        html: `<div style="
+          background: #12A0D8;
+          border: 3px solid white;
+          border-radius: 50%;
+          width: ${
+            size === "large" ? "50px" : size === "medium" ? "40px" : "30px"
+          };
+          height: ${
+            size === "large" ? "50px" : size === "medium" ? "40px" : "30px"
+          };
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: ${
+            size === "large" ? "16px" : size === "medium" ? "14px" : "12px"
+          };
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        ">${count}</div>`,
+        className: "custom-cluster-icon",
+        iconSize: window.L.point(
+          size === "large" ? 50 : size === "medium" ? 40 : 30,
+          size === "large" ? 50 : size === "medium" ? 40 : 30
+        ),
+      });
+    },
+  });
+
+  // Track all marker coordinates for bounds
+  const allMarkerCoords: [number, number][] = [];
+
   // Add service markers
   props.services.forEach((service) => {
     const serviceLat = Number(service.details.lat);
     const serviceLng = Number(service.details.lng);
 
     if (!isNaN(serviceLat) && !isNaN(serviceLng)) {
+      // Add coordinates to bounds array
+      allMarkerCoords.push([serviceLat, serviceLng]);
+
       const category =
         service.details.category || "Community & General Support";
       const color =
@@ -258,13 +338,13 @@ onMounted(async () => {
         html: iconHtml,
         className: "custom-marker",
         iconSize: [24, 24],
-        iconAnchor: [20, 20],
-        popupAnchor: [0, -20],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12],
       });
 
       const marker = window.L.marker([serviceLat, serviceLng], {
         icon: customIcon,
-      }).addTo(map);
+      });
 
       // Calculate distance if user location exists
       let distanceText = "";
@@ -406,9 +486,37 @@ onMounted(async () => {
           });
         }
       });
+
+      // Add marker to cluster group instead of directly to map
+      markers.addLayer(marker);
     }
   });
 
+  // Add the cluster group to the map
+  map.addLayer(markers);
+
+  // Debug: Check for duplicates
+  console.log("Total services:", props.services.length);
+  console.log("Total coordinates:", allMarkerCoords.length);
+  const uniqueCoords = new Set(
+    allMarkerCoords.map((coord) => `${coord[0]},${coord[1]}`)
+  );
+  console.log("Unique locations:", uniqueCoords.size);
+  console.log(
+    "Services sharing locations:",
+    allMarkerCoords.length - uniqueCoords.size
+  );
+
+  // Fit map to show all markers
+  if (allMarkerCoords.length > 0) {
+    const bounds = window.L.latLngBounds(allMarkerCoords);
+    map.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 13, // Adjusted for better clustering view
+    });
+  }
+
+  // Rest of your code for initial location, map click, etc...
   // Set initial location
   if (props.initialLat && props.initialLng) {
     await setMarker(props.initialLat, props.initialLng);
@@ -428,7 +536,6 @@ onMounted(async () => {
   }
 
   map.on("click", async (e: any) => {
-    // Show search button popup at clicked location
     const searchPopup = window.L.popup({
       closeButton: true,
       className: "search-location-popup",
@@ -448,15 +555,12 @@ onMounted(async () => {
       )
       .openOn(map);
 
-    // Add click handler for the search button
     setTimeout(() => {
       const searchBtn = document.getElementById("search-location-btn");
       if (searchBtn) {
         searchBtn.addEventListener("click", async () => {
           await setMarker(e.latlng.lat, e.latlng.lng);
           searchPopup.remove();
-
-          // Emit the locationSelected event
           emit("locationSelected", {
             lat: e.latlng.lat,
             lng: e.latlng.lng,
@@ -471,7 +575,6 @@ onMounted(async () => {
     }, 10000);
   });
 
-  // Track map movement to show/hide recenter button
   map.on("moveend", () => {
     if (userLocation.value) {
       const center = map.getCenter();
@@ -479,7 +582,6 @@ onMounted(async () => {
         [userLocation.value.lat, userLocation.value.lng],
         [center.lat, center.lng]
       );
-      // Show button if user has moved more than 100 meters away
       showRecenterButton.value = distance > 100;
     }
   });
