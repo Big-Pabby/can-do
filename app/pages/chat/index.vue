@@ -1191,7 +1191,6 @@ const formatTime = (timestamp: number) => {
   background: white;
   border: 1px solid #d1d5db;
   border-radius: 9999px;
-  font-size: 0.875rem;
   outline: none;
   transition: all 0.2s;
 }

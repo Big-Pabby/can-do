@@ -1,6 +1,17 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
+  app: {
+    head: {
+      meta: [
+        {
+          name: "viewport",
+          content:
+            "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+        },
+      ],
+    },
+  },
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   plugins: ["~/plugins/vue-query-plugin", "~/plugins/google-maps.client"],
