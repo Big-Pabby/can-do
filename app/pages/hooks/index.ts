@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { https } from "#imports";
 import type { User } from "~/store/auth";
+import { computed, type Ref } from "vue";
 
 import { useAuthStore } from "~/store/auth";
 
@@ -205,15 +206,23 @@ export function UseDeleteService() {
   });
 }
 
-export function UseCategories() {
+export function UseCategories(districtRef?: Ref<string | string[] | null>) {
   const queryFn = async () => {
-    const response = await https.get(`/v1/services/categories`);
+    const districtParam =
+      districtRef && districtRef.value
+        ? `?district=${encodeURIComponent(String(districtRef.value))}`
+        : "";
+    const response = await https.get(`/v1/services/categories${districtParam}`);
     return response.data;
   };
 
   return useQuery({
-    queryKey: ["categories"],
+    queryKey: computed(() => [
+      "categories",
+      districtRef ? districtRef.value : null,
+    ]),
     queryFn,
+    enabled: computed(() => true),
   });
 }
 export function UseProfile() {
@@ -227,6 +236,5 @@ export function UseProfile() {
   return useQuery<User>({
     queryKey: ["user_profile"],
     queryFn,
-   
   });
 }

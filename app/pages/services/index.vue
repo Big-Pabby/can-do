@@ -28,7 +28,7 @@
       @close="handleProgressClose"
     />
     <div
-      class="sticky top-20 left-0 z-20  bg-white border border-[#F3F4F6] rounded-[12px] p-4 flex justify-between items-center gap-6"
+      class="sticky top-20 left-0 z-20 bg-white border border-[#F3F4F6] rounded-[12px] p-4 flex justify-between items-center gap-6"
     >
       <div class="flex-1">
         <h1 class="text-[28px] font-bold text-[#12A0D8]">
@@ -360,7 +360,10 @@ const {
   category: selectedCategory,
   district: selectedDistricts,
 });
-const { data: categoriesData, isLoading: categoriesLoading } = UseCategories();
+// Call UseCategories with selectedDistricts so categories are scoped to the district
+const { data: categoriesData, isLoading: categoriesLoading } = UseCategories(
+  selectedDistricts as any
+);
 const categories = computed(() => categoriesData.value || {});
 const services = computed(() => data.value?.results || []);
 const categoryEmojis: Record<string, string> = {
