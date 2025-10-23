@@ -202,7 +202,9 @@
               <p class="text-sm text-[#111827]">
                 Tap a category below to get instant support.
               </p>
-              <div class="md:w-9/12 mx-auto w-full flex flex-wrap items-center justify-center gap-4">
+              <div
+                class="md:w-9/12 mx-auto w-full flex flex-wrap items-center justify-center gap-4"
+              >
                 <div
                   v-for="(value, index) in categories"
                   :key="index"
@@ -437,17 +439,16 @@ watch(
 );
 
 function handleDirections(service: any) {
-  const destLat = Number(service.details.lat);
-  const destLng = Number(service.details.lng);
-  if (!destLat || !destLng) {
-    alert("Service location not available");
-    return;
+  if (useLocationStore().lat && useLocationStore().lng) {
+    const origin = `${useLocationStore().lat},${useLocationStore().lng}`;
+    const destination = `${service.details.lat},${service.details.lng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&destination_place_id=${encodeURIComponent(
+      service.details.name
+    )}`;
+    window.open(url, "_blank");
+  } else {
+    alert("Please allow location access to get directions");
   }
-  useLocationStore().setSelectedServiceLocation(
-    { lat: destLat, lng: destLng },
-    service
-  );
-  navigateTo("/explore");
 }
 
 const generateSessionId = () => {
