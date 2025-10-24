@@ -1,13 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@600&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-@theme {
-  --color-primary: #33339c;
-  --color-brand-dark: #0d8ddb;
-  --color-brand-light: #4db8ff;
-}
+
 body {
   font-family: "Space Grotesk", sans-serif;
   color: #000000;
@@ -17,6 +14,7 @@ select,
 textarea {
   font-size: 16px !important;
 }
+
 
 @theme inline {
   --color-background: var(--background);
