@@ -271,7 +271,7 @@ const initAutocomplete = () => {
           "address_components",
           "place_id",
         ],
-        // componentRestrictions: { country: "gb" }, // Restrict to UK - remove or change as needed
+        componentRestrictions: { country: "gb" }, // Restrict to UK - remove or change as needed
       }
     );
 
